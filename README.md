@@ -3,6 +3,8 @@
 # Server (flask)
 Python 3.9.6
 #### `pip install -r requirements.txt`
+To run the server,
+#### `python app.py`
 
 # DB (Postgresql)
 Please refer dbmanager/configs.py and set postgresql
@@ -15,7 +17,7 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 ### Available Scripts
 
-In the project directory, you can run:
+In the fronted directory, you can run:
 
 #### `yarn start`
 
