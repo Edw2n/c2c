@@ -27,3 +27,5 @@ frontend/yarn-error.log*
 */__pycache__/
 
 uploads/*.*
+
+!uploads/.gitkeep
