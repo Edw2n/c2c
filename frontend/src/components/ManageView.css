@@ -1,0 +1,9 @@
+.ids {
+    width: 800px;
+    text-align: center;
+    align-items: center;
+    margin: auto;
+    display: grid;
+    grid-template-columns: 80% 10%;
+    gap : 1%;
+  }

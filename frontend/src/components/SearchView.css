@@ -1,0 +1,49 @@
+.App {
+  text-align: center;
+  align-items: center;
+}
+
+.App-header {
+  text-align: center;
+  align-items: center;
+  background-color: #259a6d;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  font-size: calc(30px + 3vmin);
+  color: white;
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.Uploader {
+  width: 950px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: 49% 40% 13%;
+  /* gap : 1%; */
+}
+
+.Searcher {
+  width: 950px;
+  height: 30px;
+  display: grid;
+  grid-template-columns: 25% 8% 14% 9% 7% 9% 12% 9%;
+  gap:1%;
+  margin: auto;
+}
+
+.ResultList {
+  text-align: center;
+  align-items: center;
+  margin: auto;
+  margin-top: 20px;
+}
+
+.leftAlignedText {
+  margin-top: 5px;
+  text-align: left;
+  align-items: baseline;
+  font-size: 14px;
+}

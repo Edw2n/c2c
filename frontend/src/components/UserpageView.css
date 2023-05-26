@@ -1,0 +1,9 @@
+.user-info {
+    width: 75%;
+    text-align: left;
+    align-items: center;
+    margin: auto;
+    display: grid;
+    grid-template-columns: 20% 10%;
+    gap : 70%;
+  }
