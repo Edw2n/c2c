@@ -50,6 +50,30 @@ class CRUD(PostgrestDB):
         except Exception as e :
             print(" create DB err ",e) 
         return success
+    
+    def drop_table(self, schema, table):
+        '''
+        해당 table을 제거
+
+        [input]
+        - schema : 스키마 명, string
+        - table : 테이블 명, string
+
+        [output]
+        - success : drop 문 실행 결과 (테이블 제거 여부) , bool
+        '''
+        success = False
+        schema_table = ".".join([schema, table])
+        sql = "DROP TABLE IF EXISTS {schema_table} CASCADE;".format(schema_table=schema_table)
+        
+        try:
+            self.execute(sql, "Drop Table")
+            self.db.commit()
+            success = True
+            print(f'Table {schema_table} is dropped')
+        except Exception as e :
+            print(" create DB err ",e) 
+        return success
 
     def insertDB(self, schema, table, columns, data):
         '''
@@ -58,7 +82,7 @@ class CRUD(PostgrestDB):
         [input]
         - schema : 스키마 명, string
         - table : 테이블 명, string
-        - columns : 컬럼명 list , a list of strings
+        - columns_info : 컬럼 정보, dictionary { "컬럼명" : "타입정보" } 
         - data : columns 데이터 타입에 각각 순서대로 매핑 되는 데이터 리스트, list of variable values
 
         [output]
@@ -69,7 +93,13 @@ class CRUD(PostgrestDB):
 
         #TODO Insert Query문에 맞게 필요한 Assert 문 작성할 것
 
+        assert schema is not None, "schema is not allowed None!"
+        assert table is not None, "table is not allowed None!"
+        assert columns is not None, "column is not allowed None!"
+        assert data is not None, "data is not allowed None!"
+        assert len(columns) == len(data), f"the number of data should be {len(columns)}, but it is {len(data)}"       
         columns = ", ".join(columns)
+
         data = ', '.join(["'%s'" % x if isinstance(x, str) else str(x) for x in data]) # 아마 string 아니라서 매핑 해줘야 할듯 걍 해도 될지도..?
 
         sql = f" INSERT INTO {schema}.{table} ({columns}) VALUES ({data}) ;"
@@ -98,6 +128,9 @@ class CRUD(PostgrestDB):
         '''
         
         #TODO READ Query문에 맞게 필요한 Assert 문 작성할 것
+        assert schema is not None, "schema is not allowed None!"
+        assert table is not None, "table is not allowed None!"
+        assert columns is not None, "column is not allowed None!"
 
         result = None
 
@@ -127,6 +160,11 @@ class CRUD(PostgrestDB):
         '''
 
         #TODO update Query문에 맞게 필요한 Assert 문 작성할 것
+        assert schema is not None, "schema is not allowed None!"
+        assert table is not None, "table is not allowed None!"
+        assert column is not None, "column is not allowed None!"
+        assert value is not None, "column is not allowed None!"
+
         success = False
         
         
@@ -164,5 +202,59 @@ class CRUD(PostgrestDB):
             success = True
         except Exception as e:
             print( "delete DB err", e)
+        
+        return success
+    
+
+    def addPK(self, schema, table, column):
+        '''
+        table에 PK 추가
+        
+        [input]
+        - schema : 스키마 명, string
+        - table : 테이블 명, string
+        - column : PK로 설정할 칼럼, string
+       
+        [output]
+        - success : delete 문 실행 성공 여부, bool
+        '''
+
+        success = False
+
+        sql = f"ALTER TABLE {schema}.{table} ADD PRIMARY KEY ({column}); "
+        try :
+            self.execute(sql)
+            self.db.commit()
+            success = True
+        except Exception as e:
+            print( "PK gen err", e)
+        
+        return success
+
+
+    def addFK(self, schema, table_PK, column_PK, table_FK, column_FK):
+        '''
+        schema.table에 condition을 만족하는 row를 삭제
+        
+        [input]
+        - schema : 스키마 명, string
+        - table_PK : PK를 가지고 있는 테이블 명, string
+        - column_PK: PK에 해당하는 칼럼명
+        - table_FK : FK를 설정할 테이블 명, string
+        - column_FK: FK에 해당하는 칼럼명
+
+        [output]
+        - success : delete 문 실행 성공 여부, bool
+        '''
+
+        success = False
+
+        sql = f"ALTER TABLE {schema}.{table_FK} ADD FOREIGN KEY ({column_FK}) REFERENCES {schema}.{table_PK} ({column_PK}); "
+        try :
+            self.execute(sql)
+            self.db.commit()
+            success = True
+        except Exception as e:
+            print( "FK gen DB err", e)
         
         return success

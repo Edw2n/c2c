@@ -1,4 +1,4 @@
-from dbmanager.configs import SCHEMA_NAME, TABLE_NAME
+from dbmanager.configs import SCHEMA_NAME, TABLE_NAME, ALL
 
 def crud_basic_ex(db):
     # crud basic examples
