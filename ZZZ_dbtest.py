@@ -11,7 +11,7 @@ from dbmanager.utils import initialize_db_structures
 if __name__ == "__main__":
     db = CRUD(POSTGRES_CONFIG)
     reset_flag = False
-    initialize_db_structures(db=db, reset_flag=reset_flag)
+    initialize_db_structures(db=db)
 
     schema_name = SCHEMA_NAME
     table_name = TABLE_NAME

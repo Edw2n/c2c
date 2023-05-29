@@ -3,13 +3,13 @@ from dbmanager.configs import SCHEMA_NAME, TABLE_NAME, POSTGRES_CONFIG, ALL_COLU
 
 # for Austin
 
-def initialize_db_structures(db, reset_flag = False):
+def initialize_db_structures(db):
     '''
-    db 초기 구조 잡는 함수 (table 생성, key 지정 등)
+    DB 초기화한 이후, 
+    DB 초기 구조 잡는 함수 (table 생성, key 지정 등)
 
     [input]
     - db : target db object (CRUD)
-    - reset_flag: True -> 기존 테이블을 제거함, default: False
 
     [output]
     - success : initalize 성공여부
@@ -23,23 +23,17 @@ def initialize_db_structures(db, reset_flag = False):
 
     success = False
 
-    if reset_flag:
-        for i in range(num_table):
-            success = db.drop_table(schema_name, table_name[i])
-            success = db.create_table(schema_name, table_name[i], all_columns_info[i])
-            success = db.addPK(schema_name, table_name[i], pk_list[i])
+    for i in range(num_table):
+        success = db.drop_table(schema_name, table_name[i])
+        success = db.create_table(schema_name, table_name[i], all_columns_info[i])
+        success = db.addPK(schema_name, table_name[i], pk_list[i])
 
-        for i in range(len(fk_list)):
-            success = db.addFK(schema = schema_name,
-                            table_PK=fk_list[i][0], 
-                            column_PK=fk_list[i][1],
-                            table_FK=fk_list[i][2],
-                            column_FK=fk_list[i][3])
-    else:
-        for i in range(num_table):
-            success = db.create_table(schema_name, table_name[i], all_columns_info[i])
-            print(i)
-
+    for i in range(len(fk_list)):
+        success = db.addFK(schema = schema_name,
+                        table_PK=fk_list[i][0], 
+                        column_PK=fk_list[i][1],
+                        table_FK=fk_list[i][2],
+                        column_FK=fk_list[i][3])
     #지금은 스키마만 있는상태에서 만드는건데, 아예 스키마 존재하면 삭제하고 스키마 생성후 주루룩 하는거도 괜찮아 보임
 
     return success

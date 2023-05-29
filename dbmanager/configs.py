@@ -8,41 +8,47 @@ POSTGRES_CONFIG = { # 보안상 문제로 이렇게 하면 안되긴 하는데 �
 }
 
 SCHEMA_NAME = "public"
-TABLE_NAME = ["GroundTruth", "ProductInfo", "QC", "User", "DatasetInfo", "Features", "Transaction"]
-ALL_COLUMNS = [[   'gt_id', 'gt_object_id', 'gt_object',
-                        'gt_Xordinate', 'gt_Yordinate', 'gt_Zordinate',
-                        'gt_Xrotate', 'gt_Yrotate', 'gt_Zrotate', 'gt_state', 
-                        'gt_occlusion', 'gt_occlusion_kf',
-                        'gt_amt_occlusion', 'gt_amt_occlusion_kf', 'gt_amt_border_l', 'gt_amt_border_r', 'gt_amt_border_kf'
-                     ],
-                     [
-                        'product_id', 'price', 'sold_count' 
-                     ],
-                     [
-                        'qc_id', 'qc_status', 'qc_start_date', 'qc_end_date', 'qc_score', 'object_type', 'object_count', 'tag'
-                     ],
-                     [
-                        'user_id', 'user_idName', 'user_password' 
-                     ],
-                     [
-                        'dataset_id', 'dataset_name'
-                     ],
-                     [
-                        'img_id', 'image_path', 'image_width', 'image_height',
-                        'upload_date', 'contrast', 'brightness', 'sharpness', 'saturation',
-                        'lat', 'lon', 'region', 'alt', 'roll', 'pitch', 'yaw',
-                        'velo_north', 'velo_east', 'velo_forward', 'velo_leftward',
-                        'accel_front', 'accel_left', 'accel_top', 'accel_forward', 'accel_leftward', 'accel_upward',
-                        'ang_x', 'ang_y', 'ang_z', 'ang_forward', 'ang_leftward', 'ang_upward',
-                        'gt_id', 'qc_id', 'user_id', 'product_id', 'dataset_id', 'like_cnt'
-                     ],
-                     [
-                        'tx_id', 'tx_date', 'img_id', 'buyer_id', 'seller_id'
-                     ]
-                    ]
-PK_LIST = ['gt_id', 'product_id', 'qc_id', 'user_id', 'dataset_id','img_id','tx_id']
+TABLE_NAME = ["GroundTruth", "ProductInfo", "QC", "User", "DatasetInfo", "Features", "Transaction", "Object"]
+ALL_COLUMNS = [[   'gt_id', 'gt_object_id',
+                    'gt_Xordinate', 'gt_Yordinate', 'gt_Zordinate',
+                    'gt_Xrotate', 'gt_Yrotate', 'gt_Zrotate', 'gt_state', 
+                    'gt_occlusion', 'gt_occlusion_kf',
+                    'gt_amt_occlusion', 'gt_amt_occlusion_kf', 'gt_amt_border_l', 'gt_amt_border_r', 'gt_amt_border_kf'
+                ],
+                [
+                    'product_id', 'price', 'sold_count' 
+                ],
+                [
+                    'qc_id', 'qc_status', 'qc_start_date', 'qc_end_date', 'qc_score', 'object_type', 'object_count', 'tag'
+                ],
+                [
+                    'user_id', 'user_idName', 'user_password' 
+                ],
+                [
+                    'dataset_id', 'dataset_name'
+                ],
+                [
+                    'img_id', 'image_path', 'image_width', 'image_height',
+                    'upload_date', 'contrast', 'brightness', 'sharpness', 'saturation',
+                    'lat', 'lon', 'alt', 'roll', 'pitch', 'yaw',
+                    'velo_north', 'velo_east', 'velo_forward', 'velo_leftward',
+                    'accel_x', 'accel_y', 'accel_z', 'accel_forward', 'accel_leftward', 'accel_upward',
+                    'ang_x', 'ang_y', 'ang_z', 'ang_forward', 'ang_leftward', 'ang_upward',
+                    'gt_id', 'qc_id', 'user_id', 'product_id', 'dataset_id', 
+                    'like_cnt', 'pos_accuracy', 'vel_accuracy',
+                    'navstat', 'numsats', 'posmode', 'velmode', 'orimode'
+                ],
+                [
+                    'tx_id', 'tx_date', 'img_id', 'buyer_id', 'seller_id'
+                ],
+                [
+                    'gt_object_id', 'gt_object'
+                ]
+            ]
+PK_LIST = ['gt_id', 'product_id', 'qc_id', 'user_id', 'dataset_id','img_id','tx_id', 'gt_object_id']
 ## PK table, PK column, FK table, FK column
 FK_LIST = [('GroundTruth','gt_id', 'Features', 'gt_id'),
+           ('Object', 'gt_object_id', 'GroundTruth', 'gt_object_id'),
            ('ProductInfo', 'product_id', 'Features', 'product_id'),
            ('QC', 'qc_id', 'Features', 'qc_id',),
            ('User', 'user_id', 'Features', 'user_id'),
@@ -56,7 +62,6 @@ FK_LIST = [('GroundTruth','gt_id', 'Features', 'gt_id'),
 GROUNDTRUTH_COLUMNS_INFO = {
     "gt_id":               "bigint NOT NULL",
     "gt_object_id":        "bigint NULL",
-    "gt_object":           "varchar(50) NULL",
     "gt_Xordinate":        "numeric NULL",
     "gt_Yordinate":        "numeric NULL",
     "gt_Zordinate":        "numeric NULL",
@@ -107,8 +112,8 @@ DATASETINFO_COLUMNS_INFO = {
 
 # Features
 FEATURES_COLUMNS_INFO = {
-    "img_id":         "bigint NOT NULL",
-    "image_path":     "varchar(100) NOT NULL",
+    "img_id":         "varchar(128) NOT NULL",
+    "image_path":     "varchar(256) NOT NULL",
     "image_width":    "bigint NOT NULL",
     "image_height":   "bigint NOT NULL",
     "upload_date":    "timestamp with time zone NOT NULL",
@@ -118,7 +123,6 @@ FEATURES_COLUMNS_INFO = {
     "saturation":     "numeric NOT NULL",
     "lat":            "numeric NULL",
     "lon":            "numeric NULL",
-    "region":         "varchar(50) NULL",
     "alt":            "numeric NULL",
     "roll":           "numeric NULL",
     "pitch":          "numeric NULL",
@@ -127,9 +131,10 @@ FEATURES_COLUMNS_INFO = {
     "velo_east":      "numeric NULL",
     "velo_forward":   "numeric NULL",
     "velo_leftward":  "numeric NULL",
-    "accel_front":    "numeric NULL",
-    "accel_left":     "numeric NULL",
-    "accel_top":      "numeric NULL",
+    "velo_upward":    "numeric NULL",
+    "accel_x":        "numeric NULL",
+    "accel_y":        "numeric NULL",
+    "accel_z":        "numeric NULL",
     "accel_forward":  "numeric NULL",
     "accel_leftward": "numeric NULL",
     "accel_upward":   "numeric NULL",
@@ -139,21 +144,36 @@ FEATURES_COLUMNS_INFO = {
     "ang_forward":    "numeric NULL",
     "ang_leftward":   "numeric NULL",
     "ang_upward":     "numeric NULL",
+    "like_cnt":       "bigint NOT NULL",
+    "pos_accuracy":   "numeric NULL",
+    "vel_accuracy":   "numeric NULL",
+    "navstat":        "bigint NULL",
+    "numstat":        "bigint NULL",
+    "posmode":        "bigint NULL",
+    "velmode":        "bigint NULL",
+    "orimode":        "bigint NULL",
     "gt_id":          "bigint NOT NULL",
     "qc_id":          "bigint NOT NULL",
     "user_id":        "bigint NOT NULL",
     "product_id":     "bigint NOT NULL",
     "dataset_id":     "bigint NOT NULL",
-    "like_cnt":       "bigint NOT NULL"
 }
 
 # transaction
 TRANSACTION_COLUMNS_INFO = {
-"tx_id":     "bigint NOT NULL",
-"tx_date":   "timestamp with time zone NOT NULL",
-"img_id":    "bigint NOT NULL",
-"buyer_id":  "bigint NOT NULL",
-"seller_id": "bigint NOT NULL",
+    "tx_id":     "bigint NOT NULL",
+    "tx_date":   "timestamp with time zone NOT NULL",
+    "img_id":    "varchar(128) NOT NULL",
+    "buyer_id":  "bigint NOT NULL",
+    "seller_id": "bigint NOT NULL",
 }
 
-ALL_COLUMNS_INFO = [GROUNDTRUTH_COLUMNS_INFO, PRODUCTINFO_COLUMNS_INFO,QC_COLUMNS_INFO,USER_COLUMNS_INFO, DATASETINFO_COLUMNS_INFO, FEATURES_COLUMNS_INFO, TRANSACTION_COLUMNS_INFO]
+OBJECT_COLUMNS_INFO = {
+    "gt_object_id":     "bigint NOT NULL",
+    "gt_object":        "varchar(50) NOT NULL"
+}
+
+ALL_COLUMNS_INFO = [GROUNDTRUTH_COLUMNS_INFO, PRODUCTINFO_COLUMNS_INFO, 
+                    QC_COLUMNS_INFO,USER_COLUMNS_INFO, DATASETINFO_COLUMNS_INFO, 
+                    FEATURES_COLUMNS_INFO, TRANSACTION_COLUMNS_INFO,
+                    OBJECT_COLUMNS_INFO]
