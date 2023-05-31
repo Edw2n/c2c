@@ -88,6 +88,7 @@ function SearchView() {
     formData.append('user_name', e.target[1].value)
     formData.append('pw', e.target[2].value)
     formData.append('title', e.target[3].value)
+    formData.append('descriptions', e.target[4].value)
 
     const Upload = async () => {
 
