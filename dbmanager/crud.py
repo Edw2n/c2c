@@ -108,6 +108,7 @@ class CRUD(PostgrestDB):
             self.execute(sql, "INSERT ROW")
             self.db.commit()
             success = True
+            print(f'Inserting data into {schema}.{table} is successfully done')
         except Exception as e :
             print(" insert DB err ",e) 
         
@@ -136,6 +137,36 @@ class CRUD(PostgrestDB):
 
         columns = ", ".join(columns)
         sql = f" SELECT {columns} from {schema}.{table} ;"
+
+        try:
+            result = self.execute(sql)
+        except Exception as e :
+            print(" read DB err",e)
+        
+        return result
+    
+    def readDB_with_filtering(self, schema, table, columns, condition):
+        '''
+        schema.table에 columns 에 해당하는 열들 중 조건에 맞는 열을 읽어옴
+
+        [input]
+        - schema : 스키마 명, string
+        - table : 테이블 명, string
+        - columns : 컬럼명 list , a list of strings
+
+        [output]
+        - result : 읽어온 결과, a list of row(tuple)
+        (read db error => return None)
+        '''
+        
+        assert schema is not None, "schema is not allowed None!"
+        assert table is not None, "table is not allowed None!"
+        assert columns is not None, "column is not allowed None!"
+
+        result = None
+
+        columns = ", ".join(columns)
+        sql = f" SELECT {columns} FROM {schema}.{table} WHERE {condition};"
 
         try:
             result = self.execute(sql)
@@ -254,7 +285,33 @@ class CRUD(PostgrestDB):
             self.execute(sql)
             self.db.commit()
             success = True
+            print(f"Adding FK {table_FK}.{column_FK} is successfully done")
         except Exception as e:
             print( "FK gen DB err", e)
         
         return success
+    
+    def find_last_img_id(self, schema):
+        '''
+        마지막 img_id를 찾는 함수
+        
+        [input]
+        - schema : 스키마 명, string
+ 
+        [output]
+        - 결과: 실형 성공 여부
+        '''
+
+        result = 0
+
+        sql = f"select img_id from {schema}.features order by img_id desc limit 1;"
+        try :
+            result = self.execute(sql)
+            if not result:
+                result = 0
+            else: result = result[0][0]
+        except Exception as e:
+            print( "img_id err", e)
+        
+        return result
+
