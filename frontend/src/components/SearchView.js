@@ -303,6 +303,7 @@ function SearchView() {
           </form>
         </div> 
       {/* end of part 1-2 */}
+      
       </div>
     {/* end of part 1 */}
 
