@@ -18,9 +18,10 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
+        {     
         <p>
           C2C
-        </p>
+        </p>}
       </header>
       <div>
       <CButtonGroup horizontal role="group" aria-label="Vertical button group" style={{marginBottom:'10px'}}>

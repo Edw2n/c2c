@@ -4,29 +4,66 @@ import { CInputGroup, CFormSelect, CButton } from '@coreui/react'
 import { Form, Button } from 'react-bootstrap'
 import { useEffect, useState } from 'react';
 import DatasetListView from './DatasetListView';
+import { GridCellCheckboxRenderer } from '@mui/x-data-grid';
+import { SpeedDialAction } from '@mui/material';
+import React from 'react';
+import styled from '@emotion/styled';
 
 function SearchView() {
-  const [listInfo,setListInfo] = useState([])
+  
+  // 지금은 dummy data -> listinfo 받아오도록 수정 필요
+  // dummy data
+  const dummyData = [
+    {id: 1, Uploader:'ksofg', Title: 'abc.zip', Description: 'such is life...', 
+    QCstate: 'Done', QCscore: 'High', Objects: '3 Objects (Car: 1, Truck: 2)', UploadDate: '2022-03-01',
+    SalesCount: 22, MatchedData: 10, Price: 30, PricePerImage: 0.3
+    },
+    {id: 2, Uploader:'henry', Title: 'afaf.zip',  
+    QCstate: 'In Progress', QCscore: '', Objects: 'Car', UploadDate: '2022-03-02',
+    SalesCount: 23, MatchedData: 5, Price: 40, PricePerImage: 0.4
+    },
+    {id: 3, Uploader:'son', Title: 'sdfsdf.zip', 
+    QCstate: 'Done', QCscore: 'Low', Objects: 'Car', UploadDate: '2022-03-03',
+    SalesCount: 24, MatchedData: 10, Price: 60, PricePerImage: 0.6
+    },
+    {id: 4, Uploader:'bale', Title: 'wrq.zip', 
+    QCstate: 'Done', QCscore: 'High', Objects: 'Car', UploadDate: '2022-03-04',
+    SalesCount: 55, MatchedData: 20, Price: 70, PricePerImage: 0.7
+    },
+    {id: 5, Uploader:'rooney', Title: 'zzz.zip', 
+    QCstate: 'Pending', QCscore: 'Low', Objects: 'Car', UploadDate: '2022-03-05',
+    SalesCount: 6, MatchedData: 25, Price: 10, PricePerImage: 0.1
+    },
+    {id: 6, Uploader:'asdasd', Title: 'xxx.zip', 
+    QCstate: 'In Progress', QCscore: '', Objects: 'Car', UploadDate: '2022-03-06',
+    SalesCount: 2, MatchedData: 9, Price: 90, PricePerImage: 0.9
+    },
+    {id: 7, Uploader:'nine', Title: 'yyyy.zip', 
+    QCstate: 'Done', QCscore: 'High', Objects: 'Car', UploadDate: '2022-04-01',
+    SalesCount: 12, MatchedData: 3, Price: 26, PricePerImage: 0.26
+    },
+    {id: 8, Uploader:'zoo', Title: 'asdfg.zip', 
+    QCstate: 'Done', QCscore: 'Medium', Objects: 'Car', UploadDate: '2022-05-01',
+    SalesCount: 14, MatchedData: 1, Price: 11, PricePerImage: 0.11
+    },
+    {id: 9, Uploader:'barn', Title: 'qwer.zip', 
+    QCstate: 'Done', QCscore: 'Medium', Objects: 'Car', UploadDate: '2022-06-01',
+    SalesCount: 1, MatchedData: 4, Price: 41, PricePerImage: 0.41
+    },
+    {id: 10, Uploader:'kookoo', Title: 'tqt.zip', 
+    QCstate: 'Done', QCscore: 'High', Objects: 'Car', UploadDate: '2022-07-01',
+    SalesCount: 3, MatchedData: 5, Price: 51, PricePerImage: 0.51
+    }
+  ]
+  // end of dummy data
+  
+  const [listInfo,setListInfo] = useState(dummyData)
 
-  const animalTypes = ['all','cat','dog']
-  const breedTypesDict = {
-    'all' : ['all'],
-    'cat' : ['all', 'Korean cat', 'Norwegian mix', 'Persian', 'Russian Blue', 'Turkish Angora'],
-    'dog' : ['all', 'Afghan Hound', 'American Bully', 'beagle', 'Chihuahua', 'Chow Chow', 'french bulldog', 'German Wirehaired Pointer',
-    'golden retriever', 'greyhound', 'Jindo dog', 'labrador retriever', 'Maltese', 'Mixed dog', 'Pomeranian', 'poodle',
-    'Samoyed', 'Sapsalgae', 'Shetland Sheepdog', 'Shih Tzu', 'Siberian Husky', 'spitz', 'Toy Poodle', 'Welsh Corgi Pembroke', 'yorkshire terrier']
-  }
-  const [breedDetailTypes,setBreedTypes] = useState(breedTypesDict['all'])
-  const colorTypes = ['all','gray','black','brown','white']
-  const neuteringTypes = ['all','Y','N','U']
-  const genderTypes = ['all','M','F']
-  const cityTypes = ['all','Gwacheon','Paju','Hanam']
-
-
-  useEffect(()=>{
+  /* useEffect(()=>{
     search()
   },[])
 
+  
   const search = async () => {
     const formData = new FormData();
 
@@ -39,6 +76,7 @@ function SearchView() {
         setListInfo(prev=>([...data.data]))
       })
     })}
+  */
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -67,29 +105,32 @@ function SearchView() {
     Upload();
   }
 
+  /*
   const handleSearch = (e) => {
     e.preventDefault()
 
     const formData = new FormData();
     console.log(e.target);
 
-    var animal = document.getElementById("animal-type").value;
-    var breed = document.getElementById("breed-detail").value;
-    var color = document.getElementById("color").value;
-    var gender = document.getElementById("gender").value;
-    var neutering = document.getElementById("neutering").value;
-    var city = document.getElementById("city").value;
-
+    var qcState = document.getElementById("qc-state").value;
+    var qcScore = document.getElementById("qc-score").value;
+    var qcObject = document.getElementById("qc-object").value;
+    var angle = document.getElementById("angle").value;
+    var angularRate = document.getElementById("angRate").value;
+    var velocity = document.getElementById("velocity").value;
+    var acceleration = document.getElementById("acceleration").value;
+  
     // console.log(selectedValue)
     // var customScript = document.getElementById('form-custom-script-file').value ? true : false;
     // TODO: customSCript form에 붙이기
-
-    formData.append('Breed',animal)
-    formData.append('Gender',gender)
-    formData.append('Breed_detail',breed)
-    formData.append('Color',color)
-    formData.append('Neutering',neutering)
-    formData.append('City',city)
+    
+    formData.append('QC_state',qcState)
+    formData.append('QC_score',qcScore)
+    formData.append('QC_object',qcObject)
+    formData.append('Angle',angle)
+    formData.append('Angular_rate',angularRate)
+    formData.append('Velocity',velocity)
+    formData.append('Acceleration',acceleration)
 
     console.log(formData)
     const search = async () => {
@@ -109,85 +150,252 @@ function SearchView() {
     search();
     console.log('search')
   }
-
+  
   const handleOptions = (e)=> {
     console.log(e.currentTarget.id)
-
-    if(e.currentTarget.id=='animal-type'){
-      setBreedTypes(breedTypesDict[e.target.value])
-
-    }
   }
+  */
+
+  // 필터1: 퀵서치(검색창)
+  const f1_titles = (
+    <div className='LowLevelGroup' style={{gridRow: '1', borderBottom: '1px solid lightgray'}}>
+      <text style={{marginLeft: '5px', fontSize: '0.7rem'}}>
+        Quick Search
+      </text>
+    </div>
+  )
+  const f1_list = []
+  f1_list.push(
+    <div className='filters'>
+      <input 
+        type="text" id="search" placeholder="Search"
+        style={{width: '40%', height: '80%', fontSize: '0.7rem'}}>
+      </input>
+    </div>
+  )
+
+  // 필터2: 체크박스
+  const f2category = [
+    {id: 1, title:"QC State", sub:['All','Pending','In Progress','Done']},
+    {id: 2, title:"QC Score", sub:['All','Low','Medium','High']},
+    {id: 3, title:"QC Object", sub:['All', 'Car', 'Van', 'Truck', 'Pedestrian', 'Sitter', 'Cyclist', 'Tram', 'Misc']},
+  ]
+  const f2category_titles = (
+    <div className='LowLevelGroup' style={{gridRow: '2',  gridTemplateRows: '25% 25% 25% 25%', borderBottom: '1px solid lightgray'}}>
+    {f2category.map((catdata, index) => (
+      <text
+        key={catdata.id} 
+        style={{height: '80%', marginLeft: '5px', textAlign: 'left', fontSize: '0.7rem'}}>
+        {catdata.title}
+      </text>))}
+      <div>
+      </div>
+    </div>
+  )
+  const f2category_filters = (
+    <div className='filters_qc'>
+      {f2category.map((catdata, rowindex) => (
+        catdata.sub.map((subItem, colIndex) => (
+          <React.Fragment key={subItem}>
+            <label
+              key={subItem}
+              htmlFor={subItem}
+              style={{
+                gridColumn: `${rowindex > 1 && colIndex > 4 ? 2 * (colIndex - 5) + 1 : 2 * colIndex + 1}`,
+                gridRow: `${rowindex > 1 && colIndex > 4 ? rowindex + 2 : rowindex + 1}`,
+                textAlign: 'left',
+                width: '100%',
+                height: '80%',
+                fontSize: '0.7rem',
+                verticalAlign: 'middle'
+              }}>
+              {subItem}
+            </label>
+            <label
+              style={{
+                gridColumn: `${rowindex > 1 && colIndex > 4 ? 2 * (colIndex - 5) + 2: 2 * colIndex + 2}`,
+                gridRow: `${rowindex > 1 && colIndex > 4 ? rowindex + 2 : rowindex + 1}`,
+                textAlign: 'left',
+                width: '100%',
+                height: '100%',
+              }}
+            >
+              <input id={subItem} type="checkbox" style={{alignSelf: 'center', height: '100%'}}/>
+            </label>
+          </React.Fragment>
+        ))
+      ))}
+    </div>
+  );
+
+  // 필터3: 항목 별 범위 설정
+  const f3category = [
+    {id: 1, title:"Angle(rad)", sub:['Roll', 'Pitch', 'Yaw']},
+    {id: 2, title:"Angular Rate(rad/s)", sub:['Wx','Wy','Wz']},
+    {id: 3, title:"Velocity(m/s)", sub:['Vf','Vl','Vu']},
+    {id: 4, title:"Accel(m/s^2)", sub:['Ax','Ay','Az']}
+  ]
+  const f3category_titles = (
+    <div className='LowLevelGroup' style={{gridRow: '3', borderBottom: '1px solid lightgray'}}>
+    {f3category.map((catdata, index) => (
+      <text 
+        key={catdata.id} 
+        style={{marginLeft: '5px', textAlign: 'left', fontSize: '0.7rem'}}>
+        {catdata.title}
+      </text>))}
+    </div>
+  )
+  const f3category_filters = (
+    <div className='filters_sensor'>
+      {f3category.map((catdata, rowindex) => (
+        catdata.sub.map((subItem, colIndex) => (
+          <React.Fragment key={subItem}>
+            <label 
+              key={subItem} htmlFor={subItem} 
+              style={{gridColumn: `${2 * colIndex + 1}`, gridRow: `${rowindex + 1}`, textAlign: 'left', fontSize: '0.7rem', width: '100%', height: '65%'}}>
+              {subItem}
+            </label>
+            <label style={{textAlign: 'left', width: '100%', height: '100%'}}>
+              <input style={{ width: '33%' , height: '75%', fontSize: '0.7rem'}} type="number" id={`${subItem}-start`} placeholder='Start' />
+              <span>  -  </span>
+              <input style={{ width: '33%' , height: '75%', fontSize: '0.7rem'}} type="number" id={`${subItem}-end`} placeholder='End' />
+            </label>
+          </React.Fragment>
+        ))
+      ))}
+    </div>
+  );
+
+  // Display
   return (
-    <div>
-        <div>
-        <form onSubmit={handleSubmit} className="mb-3 Uploader" enctype="multipart/form-data" >
-          <Form.Group controlId="formFile" >
-            <Form.Control type="file" controlId="file" name="file" style={{marginBottom:'0px'}}/>
-          </Form.Group>
-          <div class="input-group">
-            <span class="input-group-text">Information</span>
-            <input type="text" aria-label="ID" placeholder="ID" class="form-control"/>
-            <input type="password" aria-label="PW" placeholder="pw"  class="form-control"/>
-            <input type="text" aria-label="Title" placeholder="title"  class="form-control"/>
-          </div>
-          <div className="input-group">
-            <Button type="submit" variant="outline-secondary" >Upload</Button>
-          </div>
-        </form>
-        </div>
-        <div className='Searcher'>
-          <text className='leftAlignedText'>Custom Filtering Script Upload</text>
-          <text className='leftAlignedText'>Filter 1</text>
-          <text className='leftAlignedText'>Filter 2</text>
-          <text className='leftAlignedText'>Filter 3</text>
-          <text className='leftAlignedText'>Filter 4</text>
-          <text className='leftAlignedText'>Filter 5</text>
-          <text className='leftAlignedText'>Filter 6</text>
-          <text></text>
+    // 전체 화면: 각 Part들이 가로로 쌓이도록 구성
+    <div style={{height: '100%', display: 'grid', gridTemplateRows: '7% 30% 63%'}}> 
+    
+    {/* Part 1: 업로드 */}
+      <div className='UploadContainer'>
+        
+      {/* Part 1-1: 제목 */}
+        <h5 className='ContainerTitle'>
+          데이터셋 업로드하기
+        </h5>
+      {/* end of part 1-2 */}
 
-
-        </div>
-        <CInputGroup className="mb-3">
-        <form className='Searcher'>
-            <Form.Group controlId="form-custom-script-file" >
-              <Form.Control type="file" controlId="file" name="file" style={{marginBottom:'0px'}}/>
+      {/* Part 1-2: 업로드 창 */}
+        <div className='ContainerDetail'>
+          <form onSubmit={handleSubmit} className="Uploaderbar" enctype="multipart/form-data" >
+            <Form.Group controlId="formFile" style={{width: '98%', height: '100%', gridColumn: '1'}}>
+              <Form.Control type="file" controlId="file" name="file" style={{width: '99%', height: '70%', fontSize: '0.7rem'}}/>
             </Form.Group>
-            <CFormSelect id='animal-type' size="sm" className="mb-3" aria-label="Small select example" style={{'marginRight':'20px'}} onChange={handleOptions}>
-            {animalTypes.map((item,idx)=>(
-            <option value={item}>{item}</option>
-            ))}
-            </CFormSelect>
-            <CFormSelect id='breed-detail' size="sm" className="mb-3" aria-label="Small select example" style={{'marginRight':'20px'}} onChange={handleOptions}>
-            {breedDetailTypes.map((item,idx)=>(
-            <option value={item}>{item}</option>
-            ))}
-            </CFormSelect>
-            <CFormSelect id='color' size="sm" className="mb-3" aria-label="Small select example" style={{'marginRight':'20px'}} onChange={handleOptions}>
-            {colorTypes.map((item,idx)=>(
-            <option value={item}>{item}</option>
-            ))}
-            </CFormSelect>
-            <CFormSelect id='gender' size="sm" className="mb-3" aria-label="Small select example" onChange={handleOptions}>
-                {genderTypes.map((item,idx)=>(
-                <option value={item}>{item}</option>
-                ))}
-            </CFormSelect>
-            <CFormSelect id='neutering' size="sm" className="mb-3" aria-label="Small select example" onChange={handleOptions}>
-                {neuteringTypes.map((item,idx)=>(
-                <option value={item}>{item}</option>
-                ))}
-            </CFormSelect>
-            <CFormSelect id='city' size="sm" className="mb-3" aria-label="Small select example" onChange={handleOptions}>
-                {cityTypes.map((item,idx)=>(
-                <option value={item}>{item}</option>
-                ))}
-            </CFormSelect>
-            <CButton type="button" color="secondary" className="mb-3" variant="outline" id="button-addon2" onClick={handleSearch}>Search</CButton>
-        </form>
-        </CInputGroup>
+            <div class="input-group" style={{width: '99%', height: '100%', gridColumn: '2'}}>
+              <span class="input-group-text" style={{fontSize: '0.7rem', width: '12%', height: '70%', textAlign: 'center'}}>
+                Information
+              </span>
+              <input type="text" aria-label="ID" placeholder="ID" class="form-control" style={{fontSize: '0.7rem', width: '10%', height: '70%'}}/>
+              <input type="password" aria-label="PW" placeholder="pw"  class="form-control" style={{fontSize: '0.7rem', width: '10%', height: '70%'}}/>
+              <input type="text" aria-label="Title" placeholder="title"  class="form-control" style={{fontSize: '0.7rem', width: '13%', height: '70%'}}/>
+              <input type="text" aria-label="Description" placeholder="description"  class="form-control" style={{fontSize: '0.7rem', width: '32%', height: '70%' }}/>
+            </div>
+            <div className="input-group" style={{width: '100%', height: '100%', gridColumn: '3'}}>
+              <Button type="submit" variant="outline-secondary" style={{fontSize: '0.7rem', width: '100%', height: '70%'}} >
+                Upload
+              </Button>
+            </div>
+          </form>
+        </div> 
+      {/* end of part 1-2 */}
+      </div>
+    {/* end of part 1 */}
+
+    {/* Part 2: 필터 */}
+      <div className='SearchContainer'>
+      
+      {/* Part 2-1: 제목 */}
+        <h5 className='ContainerTitle' style={{marginTop: '5px'}}>
+          데이터셋 검색하기
+        </h5>
+      {/* end of part 2-1 */}
+
+      {/* Part 2-2: 필터 창 */}
+        <div className='SearchContainerDetail'>
+        
+        {/* Part 2-2-1: Basic Info */}
+          <div className='HighLevelGroup' 
+            style={{gridRow: '1', borderBottom: '2px solid white'}}>
+            <text style={{marginLeft: '5px', fontSize: '0.8rem'}}>
+              Basic Info
+            </text>
+          </div>
+          {f1_titles}
+          {f1_list}
+          
+          {/* Part 2-2-2: QC Info */}
+          <div className='HighLevelGroup' 
+            style={{gridRow: '2', borderBottom: '2px solid white'}}>  
+            <text style={{marginLeft: '5px', fontSize: '0.8rem'}}>
+              Quality Info
+            </text>
+          </div>
+          {f2category_titles}
+          {f2category_filters}
+
+
+          {/* Part 2-2-3: Sensor Info */}
+          <div className='HighLevelGroup' 
+            style={{gridRow: '3', borderBottom: '2px solid white'}}>  
+            <text style={{marginLeft: '5px', fontSize: '0.8rem'}}>
+              Sensor Info
+            </text>
+          </div>
+          {f3category_titles}
+          {f3category_filters}
+          
+          {/* Part 2-2-4: Custom Filter Upload - 여기 뭔가 고쳐야 할 듯 */}
+          <div className='HighLevelGroup' 
+            style={{gridRow: '4'}}>
+            <text style={{marginLeft: '5px', fontSize: '0.8rem'}}>
+              Custom Filtering
+            </text>
+          </div>
+          <div className='LowLevelGroup' 
+            style={{marginLeft: '5px', gridRow: '4', gridColumn: '2  / span 2'}}>
+            <CInputGroup 
+              style={{alignSelf: 'center', width: '100%', height: '100%'}}>
+              <form className='Searcher'>
+                  <Form.Group controlId="form-custom-script-file" style={{height: '80%', width: '90%'}}>
+                    <Form.Control type="file" controlId="file" name="file" style={{marginBottom:'0px' , fontSize: '0.7rem', height: '80%'}}/>
+                  </Form.Group>
+              </form>
+            </CInputGroup>
+          </div>
+        
+        {/* 검색 버튼 
+        <div>
+          <CButton type="button" color="secondary" className="mb-3" variant="outline" id="button-addon2" onClick={handleSearch}>Search</CButton>
+        </div> */}
+        
+        </div>
+        {/* end of part 2-2 */}
+          
+      </div>
+      {/* end of part 2 */}
+          
+      {/* Part 3: 리스트뷰 */}
+      <div className='ListviewContainer'>
+          
+        {/* Part 3-1: 제목 */}
+        <h5 className='ContainerTitle' style={{marginTop: '15px'}}>
+          데이터셋 살펴보기
+        </h5>
+        {/* end of part 3-1 */}
+        
+        {/* Part 3-2: 리스트뷰 창 */}
         {listInfo.length>0 ? <DatasetListView listInfo={listInfo}/> : 'No results'}
-   </div>
+        {/*end of part 3-2 */}
+
+      </div>
+      {/* end of Part 3 */}
+
+    </div> // end of all
   );
 }
 
