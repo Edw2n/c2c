@@ -97,8 +97,19 @@ function SearchView() {
         body: formData
       }).then(resp => {
         resp.json().then(data => {
-          console.log(data)
-          alert('upload complete')
+          // if you want values of response, check!!
+          // console.log("data", data.data)
+          // console.log("user identification", data.valid)
+          // console.log("upload complete", data.success)
+          
+          if (!data.valid) {
+            alert('pw is not valid!!!!')  
+          } else if (!data.success) {
+            alert('upload failed!!!')  
+          } else {
+            alert('upload complete!!!')  
+          }
+
           setListInfo(prev=>([...data.data]))
         })
       })
