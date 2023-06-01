@@ -24,7 +24,7 @@ frontend/yarn-error.log*
 
 .DS_Store
 
-*/__pycache__/
+**/__pycache__/
 
 uploads/*
 temporal-datasets/*
@@ -35,7 +35,6 @@ data/
 upload_manager copy.py
 yolov3-kitti.weights
 
-qcmanager/utils/*
 qcmanager/data/*
 qcmanager/ckpt_koniq10k.pt
 qcmanager/yolov3-kitti.weights
