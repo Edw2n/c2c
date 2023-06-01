@@ -36,7 +36,7 @@ def upload_data():
         title = request.form["title"]
         descriptions = request.form["descriptions"]
 
-        #TODO: user validation check (+ create user info)
+        #user validation check (+ create user info)
         if identify_user(db, user_name, pw, case = "upload"):
             valid = True
 
