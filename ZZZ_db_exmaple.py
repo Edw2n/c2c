@@ -19,21 +19,21 @@ if __name__ == "__main__":
     num_table = len(table_name)
 
     # Just check 
-    tmp_info = {"PATH": '../../04_sampledata/',
-                "USER_NAME": 'jeongsik',
-                "PW": '123',
-                "TITLE": 'test'}
-    insert_user(db = db, unzipped_dataset_info=tmp_info)
+    testers = [["jeongsik", "123"],
+               ["tester", "123"],
+               ["SeongGu", "123"]]
+    for tester in testers:
+        insert_user(db = db, user_idname=tester[0], user_password=tester[1])
     ###########
 
-    unzipped_dataset_info = {"PATH": '../04_sampledata/',
+    unzipped_dataset_info = {"PATH": '../../04_sampledata/',
                              "USER_NAME": 'tester',
                              "PW": '123',
                              "TITLE": 'kitti_1'}
     
     inserted_info1 = insert_draft_dataset(db=db, unzipped_dataset_info=unzipped_dataset_info)
 
-    unzipped_dataset_info = {"PATH": '../04_sampledata/',
+    unzipped_dataset_info = {"PATH": '../../04_sampledata/',
                              "USER_NAME": 'SeongGu',
                              "PW": '123',
                              "TITLE": 'kitti_2'}
