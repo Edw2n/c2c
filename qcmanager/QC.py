@@ -241,7 +241,7 @@ def main():
    duplicate_ = duplicates(image_path)
    
    print(iqa_)
-   print(object_count_)
+   # print(object_count_)
    print(duplicate_)
 
 

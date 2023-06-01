@@ -30,6 +30,17 @@ uploads/*
 temporal-datasets/*
 images/*
 
+ckpt_koniq10k.pt
+data/
+upload_manager copy.py
+yolov3-kitti.weights
+
+qcmanager/utils/*
+qcmanager/data/*
+qcmanager/ckpt_koniq10k.pt
+qcmanager/yolov3-kitti.weights
+
 !uploads/.gitkeep
 !temporal-datasets/.gitkeep
 !images/.gitkeep
+!qcmanager/data/samples/.gitkeep
