@@ -6,9 +6,9 @@ from werkzeug.utils import secure_filename
 
 from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG
-from dbmanager.utils import initialize_db_structures
+from dbmanager.utils import initialize_db_structures, identify_user
 from dbmanager.examples import crud_basic_ex
-from utils.upload_manager import unzip_dataset
+from utils.upload_manager import unzip_dataset, upload_dataset
 
 imgfile_path_list = []
 UPLOAD_ROOTDIR = "./uploads/"
@@ -23,7 +23,11 @@ list_data_num = 10
 def upload_data():
     print("uploaded")
     global list_data_num
+    
     if request.method =="POST":
+
+        valid = False
+        success = False
 
         f = request.files["file"]
         file_path = UPLOAD_ROOTDIR + secure_filename(f.filename)
@@ -33,36 +37,31 @@ def upload_data():
         descriptions = request.form["descriptions"]
 
         #TODO: user validation check (+ create user info)
+        if identify_user(db, user_name, pw, case = "upload"):
+            valid = True
 
-        f.save(file_path)
+            target_temp_dataset_info = {
+                "PATH": file_path,
+                "USER_NAME": user_name,
+                "PW": pw,
+                "TITLE": title,
+                "DESCRIPTIONS": descriptions,
+            } 
 
-        target_temp_dataset_info = {
-            "PATH": file_path,
-            "USER_NAME": user_name,
-            "PW": pw,
-            "TITLE": title,
-            "DESCRIPTIONS": descriptions,
-        } 
+            if upload_dataset(db, f, target_temp_dataset_info):
+                success = True
 
-        # path에 있는 거 압축 풀기
-        unzipped_dataset_info = unzip_dataset(target_temp_dataset_info)
-        print(unzipped_dataset_info)
+    print("*******     upload info     ********")
+    print(f"file path :{file_path}")
+    print(f"user name :{user_name}")
+    print(f"pw :{pw}")
+    print(f"title :{title}")
+    print(f"descriptions :{descriptions}")
 
-        # 읽어와서 처리
+    # file name 한글 들어가면 현재 처리 안됨.
+    list_data_num = len(f.filename)
 
-        print("*******     upload info     ********")
-        print(f"file path :{file_path}")
-        print(f"user name :{user_name}")
-        print(f"pw :{pw}")
-        print(f"title :{title}")
-        print(f"descriptions :{descriptions}")
-
-        # file name 한글 들어가면 현재 처리 안됨.
-        list_data_num = len(f.filename)
-    # request qc (not wait until qc finished)
-    
-    # qc(data)
-
+    # read every data
     query = {}
     data = read_data(query)
     
@@ -70,6 +69,8 @@ def upload_data():
 
     result = {
         "data": data,
+        "valid": valid,
+        "success": success,
     }
 
     return json.dumps(result)

@@ -4,6 +4,23 @@ from shutil import copyfile
 import glob
 from PIL import Image
 
+def upload_dataset(db, f, dataset_info):
+
+  success = False
+  
+  # save temporal dataset
+  f.save(dataset_info["PATH"])
+
+  # path에 있는 거 압축 풀기
+  unzipped_dataset_info = unzip_dataset(dataset_info)
+  print(unzipped_dataset_info)
+  success = True
+
+  # request qc (not wait until qc finished)
+  
+  # qc(data)
+  return success
+
 def unzip_dataset(zip_info, unzip_dir="./temporal-datasets/"):
 
   zip_path = zip_info["PATH"]
