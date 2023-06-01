@@ -6,36 +6,56 @@ from werkzeug.utils import secure_filename
 
 from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG
-from dbmanager.utils import initialize_db_strucutres
+from dbmanager.utils import initialize_db_structures
 from dbmanager.examples import crud_basic_ex
+from utils.upload_manager import unzip_dataset
 
 imgfile_path_list = []
+UPLOAD_ROOTDIR = "./uploads/"
 app = Flask(__name__)
 CORS(app)
 db = None
-print('service is created')
+print("service is created")
 
 list_data_num = 10
 
-@app.route('/upload',methods=['POST'])
+@app.route("/upload",methods=["POST"])
 def upload_data():
-    print('uploaded')
+    print("uploaded")
     global list_data_num
-    if request.method =='POST':
+    if request.method =="POST":
 
-        f = request.files['file']
-        file_path = './uploads/'+secure_filename(f.filename)
-        user_name = request.form['user_name']
-        pw = request.form['pw']
-        title = request.form['title']
+        f = request.files["file"]
+        file_path = UPLOAD_ROOTDIR + secure_filename(f.filename)
+        user_name = request.form["user_name"]
+        pw = request.form["pw"]
+        title = request.form["title"]
+        descriptions = request.form["descriptions"]
+
+        #TODO: user validation check (+ create user info)
 
         f.save(file_path)
 
-        print('*******     upload info     ********')
-        print(f'file path :{file_path}')
-        print(f'user name :{user_name}')
-        print(f'pw :{pw}')
-        print(f'title :{title}')
+        target_temp_dataset_info = {
+            "PATH": file_path,
+            "USER_NAME": user_name,
+            "PW": pw,
+            "TITLE": title,
+            "DESCRIPTIONS": descriptions,
+        } 
+
+        # path에 있는 거 압축 풀기
+        unzipped_dataset_info = unzip_dataset(target_temp_dataset_info)
+        print(unzipped_dataset_info)
+
+        # 읽어와서 처리
+
+        print("*******     upload info     ********")
+        print(f"file path :{file_path}")
+        print(f"user name :{user_name}")
+        print(f"pw :{pw}")
+        print(f"title :{title}")
+        print(f"descriptions :{descriptions}")
 
         # file name 한글 들어가면 현재 처리 안됨.
         list_data_num = len(f.filename)
@@ -49,31 +69,31 @@ def upload_data():
     # blablabla
 
     result = {
-        'data': data,
+        "data": data,
     }
 
     return json.dumps(result)
 
-@app.route('/read',methods=['POST'])
+@app.route("/read",methods=["POST"])
 def service_data():
 
-    if request.method =='POST':
-        print('*******     read info     ********')
-        breed = request.form['Breed']
-        gender = request.form['Gender']
-        breed_detail = request.form['Breed_detail']
-        color = request.form['Color']
-        neutering = request.form['Neutering']
-        city = request.form['City']
+    if request.method =="POST":
+        print("*******     read info     ********")
+        breed = request.form["Breed"]
+        gender = request.form["Gender"]
+        breed_detail = request.form["Breed_detail"]
+        color = request.form["Color"]
+        neutering = request.form["Neutering"]
+        city = request.form["City"]
 
         #TODO script file 처리 추가
 
-        print(f'breed :{breed}')
-        print(f'gender :{gender}')
-        print(f'breed_detail :{breed_detail}')
-        print(f'color :{color}')
-        print(f'neutering :{neutering}')
-        print(f'city :{city}')
+        print(f"breed :{breed}")
+        print(f"gender :{gender}")
+        print(f"breed_detail :{breed_detail}")
+        print(f"color :{color}")
+        print(f"neutering :{neutering}")
+        print(f"city :{city}")
 
         # read data from db
         query = None # TODO : request information => query 
@@ -81,7 +101,7 @@ def service_data():
         # something process
 
     result = {
-        'data': data,
+        "data": data,
     }
 
     return json.dumps(result)
@@ -118,7 +138,7 @@ def connect_db(initialize=False):
 
     # if needed, init db
     if initialize:
-        if(initialize_db_strucutres(db)):
+        if(initialize_db_structures(db)):
             success = True
             print("DB Structure is initailized")
         else:
@@ -137,7 +157,7 @@ if __name__ == "__main__":
 
         # run crud examples (for Austin)
         if success:
-            crud_basic_ex(db)
+            pass
 
         # run flask server
         app.run(host="0.0.0.0", port=3000)
