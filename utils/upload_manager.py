@@ -15,16 +15,17 @@ def upload_dataset(db, f, dataset_info):
 
   # path에 있는 거 압축 풀기
   unzipped_dataset_info = unzip_dataset(dataset_info)
-  print(unzipped_dataset_info)
+  # print(unzipped_dataset_info)
 
   #insert draft
   inserted_info = insert_draft_dataset(db=db,
    unzipped_dataset_info=unzipped_dataset_info)
-  print(inserted_info)
+  # print(inserted_info)
 
   #store dataet
   stored_info = store_images(inserted_info, unzipped_dataset_info["PATH"] + "Images/")
-  print('stored info', stored_info)
+  # print('stored info')
+  # print(stored_info)
   success = True
 
   #insert file path update
@@ -53,6 +54,7 @@ def unzip_dataset(zip_info, unzip_dir="./temporal-datasets/"):
     "USER_NAME": zip_info["USER_NAME"],
     "PW": zip_info["PW"],
     "TITLE": zip_info["TITLE"],
+    "DESCRIPTIONS": zip_info["DESCRIPTIONS"],
   }
 
   #print extraxtion info

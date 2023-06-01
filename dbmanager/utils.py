@@ -245,7 +245,7 @@ def insert_draft_dataset(db, unzipped_dataset_info):
 
     [inputs]
     - target db object (CRUD)
-    - unzipped_dataset_info: user가 업로드한 zip file을 풀어놓은 rootdir와 관련 정보, dictionary {"PATH", "USER_NAME", "PW", "TITLE"}
+    - unzipped_dataset_info: user가 업로드한 zip file을 풀어놓은 rootdir와 관련 정보, dictionary {"PATH", "USER_NAME", "PW", "TITLE", "DESCRIPTIONS"}
     
     [output]
     - inserted_info: insertion information of upload dataset, pd.DataFrame 
@@ -272,7 +272,7 @@ def insert_draft_dataset(db, unzipped_dataset_info):
     # 2. DatasetInfo
     print('-----datset------')
     dataset_name = unzipped_dataset_info["TITLE"]
-    dataset_description = "abcdef" ### front와 이야기 해야하는 부분
+    dataset_description = unzipped_dataset_info["DESCRIPTIONS"] ### front와 이야기 해야하는 부분
     db.insertDB(schema=schema_name, 
                 table=table_name[4],
                 columns = column_list[4][1:],
