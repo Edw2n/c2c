@@ -15,6 +15,11 @@ function DatasetListView({listInfo}) {
 
   const [items, setItems] = useState(listInfo);
 
+  const handleViewButtonClick = (row) => {
+    console.log('View button clicked for row:', row);
+    // 여기에 추가
+  };
+
   // column, row 정의
   const columns = [
     { field: 'Uploader', headerName: 'Uploader', width: 65},

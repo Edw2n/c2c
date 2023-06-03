@@ -28,7 +28,7 @@ function App() {
         <CFormCheck
           type="radio"
           onClick={handleMode}
-          button={{ color: 'danger', variant: 'outline' }}
+          button={{ color: 'danger', variant: 'outline', size: 'sm' }}
           name="vbtnradio"
           id="search"
           autoComplete="off"
@@ -38,7 +38,7 @@ function App() {
         <CFormCheck
           type="radio"
           onClick={handleMode}
-          button={{ color: 'danger', variant: 'outline' }}
+          button={{ color: 'danger', variant: 'outline', size: 'sm' }}
           name="vbtnradio"
           id="manage"
           autoComplete="off"
