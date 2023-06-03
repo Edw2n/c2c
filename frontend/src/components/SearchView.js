@@ -153,8 +153,6 @@ function SearchView() {
       })
     })}
   */
-<<<<<<< HEAD
-=======
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -196,7 +194,6 @@ function SearchView() {
   }
 
   /*
->>>>>>> 5f7959343651587aed6fcd41fb9929c8dd37739b
   const handleSearch = (e) => {
     e.preventDefault()
 
