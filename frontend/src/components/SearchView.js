@@ -153,6 +153,50 @@ function SearchView() {
       })
     })}
   */
+<<<<<<< HEAD
+=======
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    const formData = new FormData(e.target);
+    console.log(formData)
+    console.log(e.target)
+    console.log(e.currentTarget)
+
+    formData.append('user_name', e.target[1].value)
+    formData.append('pw', e.target[2].value)
+    formData.append('title', e.target[3].value)
+    formData.append('descriptions', e.target[4].value)
+
+    const Upload = async () => {
+
+      await fetch('http://0.0.0.0:3000/upload', {
+        method: 'POST',
+        body: formData
+      }).then(resp => {
+        resp.json().then(data => {
+          // if you want values of response, check!!
+          // console.log("data", data.data)
+          // console.log("user identification", data.valid)
+          // console.log("upload complete", data.success)
+          
+          if (!data.valid) {
+            alert('pw is not valid!!!!')  
+          } else if (!data.success) {
+            alert('upload failed!!!')  
+          } else {
+            alert('upload complete!!!')  
+          }
+
+          setListInfo(prev=>([...data.data]))
+        })
+      })
+    }
+    Upload();
+  }
+
+  /*
+>>>>>>> 5f7959343651587aed6fcd41fb9929c8dd37739b
   const handleSearch = (e) => {
     e.preventDefault()
 

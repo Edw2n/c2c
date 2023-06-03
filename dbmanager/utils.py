@@ -51,13 +51,124 @@ def initialize_db_structures(db):
         
     return success
 
-def insert_user(db, unzipped_dataset_info):
+
+####################################################
+########## USER IDENTIFICATION FUNCTIONS ###########
+####################################################
+def identify_user(db, user_idname, user_password, case = "upload"):
+    '''
+    check user's info and return its validity 
+
+    [Inputs]
+    - db            : target db object (CRUD)
+    - user_id       : string, user's id
+    - user_password : string, user's passward 
+    - case          : string, scenario flag
+        > "upload"  : when uploading dataset
+        > "login"   : when a user just does login
+
+    [output]
+    - valid: boolean based on scenario 
+
+    '''
+    if case == "upload":
+        valid = _identify_user_upload_scenario(db, user_idname, user_password)
+    elif case == "login":
+        valid = _identify_user_login_scenario(db, user_idname, user_password)
+    else:
+        print("  identification error occurred")
+
+    return valid
+
+def _identify_user_login_scenario (db, user_idname, user_password):
+    '''
+    check user's info and return its validity for login scenario
+
+    [Inputs]
+    - db: target db object (CRUD)
+    - user_id: user's id, from server
+    - user_password: user's passward, from server 
+
+    [output]
+    - valid: 
+        > True  : boolean | id and pw is valid
+        > False : boolean | 1) id is existing but pw is not valid
+                            2) id is not existing in DB
+    '''
+    # 1. Setting initial value
+    valid = False
+
+    # 2. Search by user_idname
+    ##### assuming user_idname is unique
+
+    schema_name = SCHEMA_NAME
+    table_name = TABLE_NAME[3]
+    column_name = ALL_COLUMNS[3]
+    condition = f"user_idName='{user_idname}'"
+
+    result = db.readDB_with_filtering(schema = schema_name, table = table_name, columns = column_name, condition = condition)
+    ##### result = [(user_id, user_idName, user_password)]
+
+    # 3. valid: find only True case, which is id and pw is valid
+    if len(result[0])>0 and result[0][2]==user_password: # result is not empty and user_password is valid
+        valid=True
+
+    return valid
+
+def _identify_user_upload_scenario (db, user_idname, user_password, case="upload"):
+    '''
+    insert user info into User table in DB for upload scenario
+
+    [Inputs]
+    - db: target db object (CRUD)
+    - user_id: user's id, from server
+    - user_password: user's passward, from server 
+
+    [output]
+    - valid: 
+        > True  : boolean | 1) id and pw is valid
+                            2) id is not existing in DB -> insert user in User Table
+        > False : boolean | id is existing but pw is not valid
+    '''
+
+    # 1. Setting initial value
+    valid = False
+
+    # 2. Search by user_idname
+    ##### assuming user_idname is unique
+
+    schema_name = SCHEMA_NAME
+    table_name = TABLE_NAME[3]
+    column_name = ALL_COLUMNS[3]
+    condition = f"user_idName='{user_idname}'"
+
+    result = db.readDB_with_filtering(schema = schema_name,
+                                      table = table_name,
+                                      columns = column_name,
+                                      condition = condition
+                                      )
+    ##### result = [(user_id, user_idName, user_password)]
+
+    # 3. valid:
+    # 3-1. "Not existing": id is not existing (result is empty list)
+    if not result:
+        valid = insert_user(db, user_idname, user_password) # True
+    # 3-2. True:  id and pw is right (result is not empty list)
+    elif result[0][2]==user_password:
+        valid=True
+
+    return valid
+
+######################################################################################################
+
+
+def insert_user_unzipped(db, unzipped_dataset_info): ## LEGACY
     '''
     insert user info into User table in DB
 
     [Inputs]
     - db: target db object (CRUD)
-    - user_info: [user_id, user_password]
+    - unzipped_dataset_info: user가 업로드한 zip file을 풀어놓은 rootdir와 관련 정보, dictionary {"PATH", "USER_NAME", "PW", "TITLE"}
 
     [output]
     - success: checking "insert" is done or not 
@@ -74,6 +185,29 @@ def insert_user(db, unzipped_dataset_info):
 
     return success, user_info_after_insert
 
+def insert_user(db, user_idname, user_password):
+    '''
+    insert user info into User table in DB
+
+    [Inputs]
+    - db            : target db object (CRUD)
+    - user_idname   : user's id to insert  
+    - user_password : user's id to insert
+
+    [output]
+    - success: checking "insert" is done or not 
+    '''
+
+    schema_name = SCHEMA_NAME
+    table_name = TABLE_NAME[3]
+    column_name = ALL_COLUMNS[3][1:]
+    user_info = [user_idname, user_password]
+
+    success = False
+    success = db.insertDB(schema = schema_name, table = table_name,columns = column_name,data = user_info)
+
+    return success
+
 def check_user(db, unzipped_dataset_info):
     '''
     Check whether the user is already registered in DB or not
@@ -85,7 +219,7 @@ def check_user(db, unzipped_dataset_info):
     
     [output]
     - result: if user is new, then output is True, 
-              else returns [user_id, user_idName, user_password]
+              else returns [(user_id, user_idName, user_password)]
     '''
     schema_name = SCHEMA_NAME
     table_name = TABLE_NAME[3]
@@ -102,7 +236,7 @@ def check_user(db, unzipped_dataset_info):
                                       )
     if not result:
         result = True
-
+    print(result)
     return result
 
 def insert_draft_dataset(db, unzipped_dataset_info):
@@ -111,7 +245,7 @@ def insert_draft_dataset(db, unzipped_dataset_info):
 
     [inputs]
     - target db object (CRUD)
-    - unzipped_dataset_info: user가 업로드한 zip file을 풀어놓은 rootdir와 관련 정보, dictionary {"PATH", "USER_NAME", "PW", "TITLE"}
+    - unzipped_dataset_info: user가 업로드한 zip file을 풀어놓은 rootdir와 관련 정보, dictionary {"PATH", "USER_NAME", "PW", "TITLE", "DESCRIPTIONS"}
     
     [output]
     - inserted_info: insertion information of upload dataset, pd.DataFrame 
@@ -125,14 +259,10 @@ def insert_draft_dataset(db, unzipped_dataset_info):
     last_img_id = db.find_last_img_id(schema_name)
     upload_time = datetime.now(timezone('UTC')).strftime('%Y-%m-%d %H:%M:%S')
 
-
     # 1. User
     ## checking whether the user is new, if new -> insert into User table
     print('-----user------')
     user_info = check_user(db=db, unzipped_dataset_info=unzipped_dataset_info)
-    if user_info==True:
-        print("    Adding new user's ID and password")
-        _, user_info = insert_user(db = db, unzipped_dataset_info=unzipped_dataset_info)
     user_info = user_info[0]
     user_id = user_info[0]
     # print(user_info)
@@ -142,7 +272,7 @@ def insert_draft_dataset(db, unzipped_dataset_info):
     # 2. DatasetInfo
     print('-----datset------')
     dataset_name = unzipped_dataset_info["TITLE"]
-    dataset_description = "abcdef" ### front와 이야기 해야하는 부분
+    dataset_description = unzipped_dataset_info["DESCRIPTIONS"] ### front와 이야기 해야하는 부분
     db.insertDB(schema=schema_name, 
                 table=table_name[4],
                 columns = column_list[4][1:],
