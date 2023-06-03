@@ -37,13 +37,23 @@ class Image(torch.utils.data.Dataset):
         print(self.img.shape)
         new_h = 224
         new_w = 224
+        
+        #fix bug
+        h = new_h if h<=new_h else h
+        w = new_w if w<=new_w else w
+        self.img = np.resize(self.img, (c,h,w))
 
         self.img_patches = []
 
         for i in range(num_crops):
-            
-            top = np.random.randint(0, h - new_h)
-            left = np.random.randint(0, w - new_w)
+            try: # exeption for randint(0,0)
+               top = np.random.randint(0, h - new_h)
+               left = np.random.randint(0, w - new_w)
+            except Exception as e:
+               print("randint error", e)
+               top = 0
+               left = 0
+
             patch = self.img[:, top: top + new_h, left: left + new_w]
             self.img_patches.append(patch)
         
