@@ -6,19 +6,20 @@ import argparse
 import hashlib
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
-from utils.inference_process import ToTensor, Normalize
+from .utils.inference_process import ToTensor, Normalize
 from tqdm import tqdm
 from torchvision.transforms.functional import pil_to_tensor 
 from torch.autograd import Variable
 
-from utils.models.maniqa import MANIQA
-from utils.models.models import Darknet
+from .utils.models.maniqa import MANIQA
+from .utils.models.models import Darknet
 
-from utils.utils import *
-from utils.datasets import *
-from utils.parse_config import *
+from .utils.utils import *
+from .utils.datasets import *
+from .utils.parse_config import *
 
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
+FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 #Class for processing images
 class Image(torch.utils.data.Dataset):
@@ -38,9 +39,13 @@ class Image(torch.utils.data.Dataset):
         new_w = 224
 
         self.img_patches = []
+
         for i in range(num_crops):
+
             top = np.random.randint(0, h - new_h)
             left = np.random.randint(0, w - new_w)
+
+
             patch = self.img[:, top: top + new_h, left: left + new_w]
             self.img_patches.append(patch)
         
@@ -79,7 +84,7 @@ def load_model_iqa():
     'scale': 0.8,
 
     # checkpoint path
-    "ckpt_path": "./ckpt_koniq10k.pt",
+    "ckpt_path": FILE_DIR + "/ckpt_koniq10k.pt",
    }
    
    #Model Definition
@@ -131,12 +136,12 @@ def load_model_object_count():
    #config file
    config = {
    # model
-   'model_config_path': "utils/yolov3-kitti.cfg",
-   'data_config_path': "utils/kitti.data",
-   'class_path': "utils/kitti.names",
+   'model_config_path': FILE_DIR + "/utils/yolov3-kitti.cfg",
+   'data_config_path': FILE_DIR + "/utils/kitti.data",
+   'class_path': FILE_DIR + "/utils/kitti.names",
    'img_size': 416,
     # checkpoint path
-    "ckpt_path": "./yolov3-kitti.weights",
+    "ckpt_path": FILE_DIR + "/yolov3-kitti.weights",
    }
    
    #Model Definition
@@ -193,5 +198,4 @@ def object_count_help(model, imgfie_path: str) -> list:
             num_objects_dict[img_paths[0]] = detections[0].shape[0]
             num_objects.append(detections[0].shape[0])
    return num_objects_dict
-
 
