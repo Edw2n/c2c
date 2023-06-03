@@ -270,13 +270,13 @@ def insert_draft_dataset(db, unzipped_dataset_info):
     print()
 
     # 2. DatasetInfo
-    print('-----datset------')
+    print('-----dataset------')
     dataset_name = unzipped_dataset_info["TITLE"]
-    dataset_description = unzipped_dataset_info["DESCRIPTIONS"] ### front와 이야기 해야하는 부분
+    dataset_description = unzipped_dataset_info["DESCRIPTIONS"]
     db.insertDB(schema=schema_name, 
                 table=table_name[4],
                 columns = column_list[4][1:],
-                data = [dataset_name, dataset_description]
+                data = [dataset_name, dataset_description, 0]
                 )
     dataset_res = db.readDB_with_filtering(schema=schema_name, 
                                            table=table_name[4],
@@ -342,10 +342,6 @@ def insert_draft_dataset(db, unzipped_dataset_info):
     # df_features['image_width'] = [10000 for _ in range(num_row)]
     # df_features['image_height'] = [10000 for _ in range(num_row)]
     # df_features['upload_date'] = ["1993-08-27 00:00:01" for _ in range(num_row)] ##### need to fix
-    # df_features['contrast'] = [10000 for _ in range(num_row)] ##### need to fix
-    # df_features['brightness'] = [10000 for _ in range(num_row)] ##### need to fix
-    # df_features['sharpness'] = [10000 for _ in range(num_row)] ##### need to fix
-    # df_features['saturation'] = [10000 for _ in range(num_row)] ##### need to fix
     # df_features['like_cnt'] = [0 for _ in range(num_row)] ##### need to fix
 
     ## 6-1. column setting
@@ -428,7 +424,6 @@ def load_list_view_default(db):
             (e.g., {'Cyclist': 1, 'Pedestrian': 1, 'Van': 2})
     '''
 
-
     result = None
 
     # dataset information
@@ -436,7 +431,7 @@ def load_list_view_default(db):
                 sum(res.price) as price_total,\
                 count(res.dataset_id) as total_image_count,\
                 sum(res.price) / count(res.dataset_id) as avg_price_per_image, \
-                sum(res.sold_count) as sales_count,\
+                max(res.dataset_selection_cnt) as sales_count,\
                 sum(res.like_cnt) as like_count, \
                 res.qc_status as qc_state, \
                 AVG(res.qc_score) as qc_score, \
@@ -514,8 +509,77 @@ def load_list_view_default(db):
 
     return df_result
 
+
 def read_user_query(db, filter_info):
     # user query spec 보고 interface 업뎃할 예정
     pass
 
+
+def update_multiple_columns(db, df, mode):
+    '''
+    update multiple columns 
+    [inputs]
+    - target db object (CRUD)
+    - df: pd.DataFrame
+    - mode: string, the mode should be one of ["img_path", "img_WH", "start_QC", "QC_score", "object_count", "end_QC"]
+    
+    [output]
+    - success: 
+
+    '''
+    # 0. Initial Setting
+    success = False 
+    schema_name = SCHEMA_NAME
+    target_list = [
+        ['Features', ['img_id', 'image_path'],], 
+        ['Features', ['img_id', 'image_width', 'image_height']],
+        ['QC', ['qc_id', 'qc_start_date']],
+        ['QC', ['qc_id', 'qc_score']],
+        ['QC', ['qc_id', 'object_count']],
+        ['QC', ['qc_id', 'qc_end_date']]
+        ]
+
+    # 1. Setting mode
+    if mode == 'img_path':
+        idx = 0
+    elif mode == 'img_WH':
+        idx = 1
+    elif mode == 'start_QC':
+        idx = 2
+        status = 'QC_start'
+    elif mode == 'QC_score':
+        idx = 3
+        status = "QC_end"
+    elif mode == 'object_count':
+        idx = 4
+        status = "QC_end+obj_cnt"
+    elif mode == 'end_QC':
+        idx = 5
+        status = "QC_end+obj_cnt+duplicate"
+    else: 
+        print("Invalid mode is selected")
+        print('The mode should be one of ["img_path", "img_WH", "start_QC", "QC_score", "object_count", "end_QC"]')
+    
+    # 2. Select target column to update data 
+    target_table = target_list[idx][0]
+    target_df = df[target_list[idx][1]]
+
+    columns = target_df.columns
+    
+    # 3. update data in DB
+    for i in range(len(columns[1:])):
+        for j in range(len(target_df)):
+            condition = f"{columns[0]}='{df[columns[0]][j]}'"
+            success = db.updateDB(schema=schema_name, table=target_table, column=columns[i+1], value=df[columns[i+1]][j],condition=condition)
+    
+    # 4. (optional) udpated QC_status
+    if idx in (2,3,4,5):
+        for j in range(len(target_df)):
+            condition = f"{columns[0]}='{df[columns[0]][j]}'"
+            success = db.updateDB(schema=schema_name, table=target_table, column='qc_status', value=status,condition=condition)
+
+    return success 
+
+# duplicate 스키마를 바꿔서 체크를 한다. 
+# qc에 obj_type 다 빼고, cnt만 
 # 더 추가하면 됨
