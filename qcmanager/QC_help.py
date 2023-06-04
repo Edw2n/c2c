@@ -8,6 +8,7 @@ from torchvision import transforms
 from .utils.inference_process import ToTensor, Normalize
 from tqdm import tqdm
 from torch.autograd import Variable
+from PIL import Image as P_Image
 
 from .utils.models.maniqa import MANIQA
 from .utils.models.models import Darknet
@@ -133,81 +134,6 @@ def iqa_help(model, num_crop, img: Image) -> float:
    mos_score = avg_score / num_crops
    return mos_score
 
-   
-#for loading a model for object count with appropriate checkpoint
-def load_model_object_count():
-   '''
-   This function generates a model for counting number of objects in the image
-   
-   [output]
-    - model: model for object count
-   '''
-   #config file
-   config = {
-   # model
-   'model_config_path': FILE_DIR + "/utils/yolov3-kitti.cfg",
-   'data_config_path': FILE_DIR + "/utils/kitti.data",
-   'class_path': FILE_DIR + "/utils/kitti.names",
-   'img_size': 416,
-    # checkpoint path
-    "ckpt_path": FILE_DIR + "/yolov3-kitti.weights",
-   }
-   
-   #Model Definition
-   DEVICE = torch.device("cpu") 
-   model = Darknet(config['model_config_path'], img_size=config['img_size'])
-   
-   #Load checkpoint
-   model.load_weights(config['ckpt_path'])
-   
-   return model
-
-#for a single image
-def object_count_help(model, imgfie_path: str) -> list:
-   '''
-   This function returns the number of objects in a single image
-   
-   [input]
-    - model: a model for processing object count
-    - img: a image that needs to be processed for object count
-   
-   [output]
-    - num_objects: number of objects in a single image
-   '''
-   #config file
-   config = {
-   # model
-   'batch_size': 1,
-   'iou_thres': 0.5,
-   'conf_thres': 0.8,
-   'nms_thres': 0.4,
-   'n_cpu': 0,
-   'img_size': 416,
-   'use_cuda': False,
-   }
-
-   folder = ImageFolder(imgfie_path, img_size=config['img_size'])
-   dataloader = DataLoader(folder,
-                           batch_size=config['batch_size'], shuffle=False, num_workers=config['n_cpu'])
-   
-   num_objects = []
-   num_objects_dict = {}
-   for batch_i, (img_paths, input_imgs) in enumerate(dataloader):
-      # Configure input
-      input_imgs = Variable(input_imgs.type(torch.FloatTensor))
-
-      # Get detections
-      with torch.no_grad():
-         detections = model(input_imgs)
-         detections = non_max_suppression(detections, 80, config['conf_thres'], config['nms_thres']) #80: num_classes
-         if detections[0] is None:
-            num_objects_dict[img_paths[0]] = 0
-            num_objects.append(0)
-         else:
-            num_objects_dict[img_paths[0]] = detections[0].shape[0]
-            num_objects.append(detections[0].shape[0])
-   return num_objects_dict
-
 def get_iqa(img_path: str, num_crops: int, model: object) -> list:
    '''
    get num_crops iqa results of img_path
@@ -239,10 +165,10 @@ def iqa(img_path_list: list) -> dict:
    and an item of the list of mos scores of images in the path.
    
    [input]
-    - img_path_list: a list of paths that contains user's images (each item can be a image path or directory)
+   - img_path_list: a list of paths that contains user's images (each item can be a image path or directory)
    
    [output]
-    - mos_dict: a dictionary with key value as a path of images and item as a list of mos scores of images in the path
+   - mos_dict: a dictionary with key value as a path of images and item as a list of mos scores of images in the path
    '''
    model = load_model_iqa()
    num_crops = 10
@@ -258,27 +184,154 @@ def iqa(img_path_list: list) -> dict:
          mos_dict[target_path] = get_iqa(target_path, num_crops, model)
 
    return mos_dict
-   
-#for a list of images paths
-def object_count(img_path_list: list) -> dict:
-   '''
-   By getting a list of path of images,
-   this function returns a dictionary with a key of one of the path of images
-   and an item of the list of count of object of the images in the path.
-   
-   [input]
-    - img_path_list: a list of paths that contains user's images
-   
-   [output]
-    - object_dict: a dictionary with key value as a path of images and item as a list of count of of images in the path
-   '''
-   model = load_model_object_count()
-   
-   for images_path in img_path_list:
-      print('----Object_counting----')
-      return object_count_help(model, images_path)
 
-   
+class ObjectCounter():
+   configs = {
+      # model
+      'batch_size': 1,
+      'iou_thres': 0.5,
+      'conf_thres': 0.8,
+      'nms_thres': 0.4,
+      'n_cpu': 0,
+      'img_size': 416,
+      'use_cuda': False,
+      'model_config_path': FILE_DIR + "/utils/yolov3-kitti.cfg",
+      'data_config_path': FILE_DIR + "/utils/kitti.data",
+      'class_path': FILE_DIR + "/utils/kitti.names",
+      'img_size': 416,
+      # checkpoint path
+      "ckpt_path": FILE_DIR + "/yolov3-kitti.weights",
+   }
+
+   def __init__(self, configs=None) -> None:
+      if configs:
+         self.configs = configs
+      self.load_model_object_count()
+
+   #for loading a model for object count with appropriate checkpoint
+   def load_model_object_count(self):
+      '''
+      This function generates a model for counting number of objects in the image
+      
+      [output]
+      - model: model for object count
+      '''
+      #Model Definition
+      DEVICE = torch.device("cpu") 
+      self.model = Darknet(self.configs['model_config_path'], img_size=self.configs['img_size'])
+      
+      #Load checkpoint
+      self.model.load_weights(self.configs['ckpt_path'])
+
+   # for an image
+   def object_count_one(self, img_path: str) -> int:
+      '''
+      load img tesor from the img_path and returns the count of objects in the image
+
+      [input]
+      - img_path: img_path, string
+      
+      [output]
+      - object_count: the number of objects in the image of img_path, dictionary {IMG_PATH(str): OBJECT_COUNT(int)}
+      '''
+      # Extract image
+      img = np.array(P_Image.open(img_path))
+      if img.ndim !=3:
+         img = img[:,:,np.newaxis]
+      h, w, _ = img.shape
+      dim_diff = np.abs(h - w)
+      # Upper (left) and lower (right) padding
+      pad1, pad2 = dim_diff // 2, dim_diff - dim_diff // 2
+      # Determine padding
+      pad = ((pad1, pad2), (0, 0), (0, 0)) if h <= w else ((0, 0), (pad1, pad2), (0, 0))
+      # Add padding
+      input_img = np.pad(img, pad, 'constant', constant_values=127.5) / 255.
+      # Resize and normalize
+      input_img = resize(input_img, (self.configs['img_size'], self.configs['img_size'], 3), mode='reflect')
+      # Channels-first
+      input_img = np.transpose(input_img, (2, 0, 1))
+      # As pytorch tensor
+      input_img = torch.from_numpy(input_img).float().unsqueeze(0)  
+
+      # Configure input
+      input_img = Variable(input_img.type(torch.FloatTensor))
+
+      num_objects_dict = {}
+      num_objects = [] # 이건 뭐임?
+
+      # Get detections
+      with torch.no_grad():
+         detections = self.model(input_img)
+         detections = non_max_suppression(detections, 80, self.configs['conf_thres'], self.configs['nms_thres']) #80: num_classes
+         if detections[0] is None:
+            num_objects_dict[img_path] = 0
+            # num_objects.append(0)
+         else:
+            num_objects_dict[img_path] = detections[0].shape[0]
+            # num_objects.append(detections[0].shape[0])
+      return num_objects_dict
+
+   #for image directory
+   def object_count_help(self, dir_path: str) -> list:
+      '''
+      This function returns the dictionary {"IMAGE_PATH(str)": count of obejcts(int)}
+      
+      [input]
+      - dir_path: a directory that contains images which need to be processed for object count
+      
+      [output]
+      - num_objects_dict: object count information for target directory, {"IMAGE_PATH(str)": count of obejcts(int)}
+      '''
+      
+
+      folder = ImageFolder(dir_path, img_size=self.configs['img_size'])
+      dataloader = DataLoader(folder,
+                              batch_size=self.configs['batch_size'], shuffle=False, num_workers=self.configs['n_cpu'])
+      
+      num_objects = []
+      num_objects_dict = {}
+      for batch_i, (img_paths, input_imgs) in enumerate(dataloader):
+         # Configure input
+         input_imgs = Variable(input_imgs.type(torch.FloatTensor))
+
+         # Get detections
+         with torch.no_grad():
+            detections = self.model(input_imgs)
+            detections = non_max_suppression(detections, 80, self.configs['conf_thres'], self.configs['nms_thres']) #80: num_classes
+            if detections[0] is None:
+               num_objects_dict[img_paths[0]] = 0
+               num_objects.append(0)
+            else:
+               num_objects_dict[img_paths[0]] = detections[0].shape[0]
+               num_objects.append(detections[0].shape[0])
+      return num_objects_dict
+
+   #for a list of images paths or dirs
+   def object_count(self, img_path_list: list) -> dict:
+      '''
+      By getting a list of path of images,
+      this function returns a dictionary with a key of one of the path of images
+      and an item of the list of count of object of the images in the path.
+      
+      [input]
+      - img_path_list: a list of paths(or dirs) that contains user's images
+      
+      [output]
+      - object_dict: a dictionary with key value as a path of images and item as a list of count of of images in the path
+      '''
+      
+      object_dict = {}
+      
+      for path in img_path_list:
+         print('----Object_counting----')
+         if os.path.isdir(path):
+            object_dict.update(self.object_count_help(path))
+         else:
+            object_dict.update(self.object_count_one(path))
+
+      return object_dict
+
+
 #for showing the list of images that are duplicates and to be removed
 def duplicates(img_path_list: list) -> list:
    '''

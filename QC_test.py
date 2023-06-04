@@ -1,4 +1,4 @@
-from qcmanager.QC_help import iqa, object_count, duplicates
+from qcmanager.QC_help import iqa, ObjectCounter, duplicates
 
 image_path_folder = ["images"] #[args.path]
 image_path_list = ["images/1.png", "images/2.png", "images/3.png", "images/4.png", "images/8.png", "images/4 copy.png", "images/8 copy.png"] #[args.path]
@@ -11,28 +11,34 @@ if __name__ == "__main__":
    # iqa_l = iqa(image_path_list)
 
    #Object count
-   # object_count_f = object_count(image_path_folder)
+   oc = ObjectCounter()
+   object_count_f = oc.object_count(image_path_folder)
+   object_count_l = oc.object_count(image_path_list)
    
    #Remove Duplicates
-   duplicate_f = duplicates(image_path_folder)
-   duplicate_l = duplicates(image_path_list)
+   # duplicate_f = duplicates(image_path_folder)
+   # duplicate_l = duplicates(image_path_list)
    
    print("***********iqa folder results***********")
-   # print(iqa_f)
+   print(iqa_f)
    print("*********************************")
 
    print("***********iqa list results***********")
-   # print(iqa_l)
+   print(iqa_l)
    print("*********************************")
 
    print("***********oc folder results***********")
-   # print(object_count_f)
+   print(object_count_f)
+   print("*********************************")
+
+   print("***********oc list results***********")
+   print(object_count_l)
    print("*********************************")
 
    print("********duplicate folder results********")
-   print(duplicate_f)
+   # print(duplicate_f)
    print("*********************************")
    
    print("********duplicate list results********")
-   print(duplicate_l)
+   # print(duplicate_l)
    print("*********************************")
