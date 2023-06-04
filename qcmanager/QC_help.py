@@ -205,6 +205,29 @@ def object_count_help(model, imgfie_path: str) -> list:
             num_objects.append(detections[0].shape[0])
    return num_objects_dict
 
+def get_iqa(img_path: str, num_crops: int, model: object) -> list:
+   '''
+   get num_crops iqa results of img_path
+
+   [input]
+   - img_path: target img_path, string
+   - num_crops: number of crops for iqa, int
+   - model: iqa model, torch model
+
+   [output]
+   - mos_scores: a list of iqa results (length: num_crops)
+   '''
+   
+   mos_scores = []
+   # data load
+   Img = Image(image_path=img_path,
+      transform=transforms.Compose([Normalize(0.5, 0.5), ToTensor()]),
+      num_crops=num_crops)
+   print('----IQAing----')
+   mos = iqa_help(model, num_crops, Img)
+   mos_scores.append(mos)
+   return mos_scores
+   
 #for a list of image paths
 def iqa(img_path_list: list) -> dict:
    '''
@@ -213,7 +236,7 @@ def iqa(img_path_list: list) -> dict:
    and an item of the list of mos scores of images in the path.
    
    [input]
-    - img_path_list: a list of paths that contains user's images
+    - img_path_list: a list of paths that contains user's images (each item can be a image path or directory)
    
    [output]
     - mos_dict: a dictionary with key value as a path of images and item as a list of mos scores of images in the path
@@ -222,19 +245,15 @@ def iqa(img_path_list: list) -> dict:
    num_crops = 10
    
    # Multiple paths
-   mos_scores = []
    mos_dict = {}
-   for images_path in img_path_list:
-      for index, img in enumerate(os.listdir(images_path)):
-         img_path = images_path + '/' + img
-         # data load
-         Img = Image(image_path=img_path,
-            transform=transforms.Compose([Normalize(0.5, 0.5), ToTensor()]),
-            num_crops=num_crops)
-         print('----IQAing----')
-         mos = iqa_help(model, num_crops, Img)
-         mos_scores.append(mos)
-         mos_dict[img_path] = mos_scores
+   for target_path in img_path_list:
+      if os.path.isdir(target_path):
+         for index, img in enumerate(os.listdir(target_path)):
+            img_path = target_path + '/' + img
+            mos_dict[img_path] = get_iqa(img_path, num_crops, model)
+      else:
+         mos_dict[target_path] = get_iqa(target_path, num_crops, model)
+
    return mos_dict
    
 #for a list of images paths
