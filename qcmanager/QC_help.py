@@ -190,6 +190,7 @@ class IQA():
       return mos_dict
 
 class ObjectCounter():
+   model = None
    configs = {
       # model
       'batch_size': 1,

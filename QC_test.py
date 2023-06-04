@@ -12,13 +12,13 @@ if __name__ == "__main__":
    iqa_l = iqa.get_scores(image_path_list)
 
    #Object count
-   # oc = ObjectCounter()
-   # object_count_f = oc.object_count(image_path_folder)
-   # object_count_l = oc.object_count(image_path_list)
+   oc = ObjectCounter()
+   object_count_f = oc.object_count(image_path_folder)
+   object_count_l = oc.object_count(image_path_list)
    
-   #Remove Duplicates
-   # duplicate_f = duplicates(image_path_folder)
-   # duplicate_l = duplicates(image_path_list)
+   # Remove Duplicates
+   duplicate_f = duplicates(image_path_folder)
+   duplicate_l = duplicates(image_path_list)
    
    print("***********iqa folder results***********")
    print(iqa_f)
@@ -28,18 +28,18 @@ if __name__ == "__main__":
    print(iqa_l)
    print("*********************************")
 
-   # print("***********oc folder results***********")
-   # print(object_count_f)
-   # print("*********************************")
+   print("***********oc folder results***********")
+   print(object_count_f)
+   print("*********************************")
 
-   # print("***********oc list results***********")
-   # print(object_count_l)
-   # print("*********************************")
+   print("***********oc list results***********")
+   print(object_count_l)
+   print("*********************************")
 
-   # print("********duplicate folder results********")
-   # print(duplicate_f)
-   # print("*********************************")
+   print("********duplicate folder results********")
+   print(duplicate_f)
+   print("*********************************")
    
-   # print("********duplicate list results********")
-   # print(duplicate_l)
-   # print("*********************************")
+   print("********duplicate list results********")
+   print(duplicate_l)
+   print("*********************************")
