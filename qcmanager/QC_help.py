@@ -2,13 +2,11 @@ import os
 import cv2
 import numpy as np
 import torch
-import argparse
 import hashlib
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 from torchvision import transforms
 from .utils.inference_process import ToTensor, Normalize
 from tqdm import tqdm
-from torchvision.transforms.functional import pil_to_tensor 
 from torch.autograd import Variable
 
 from .utils.models.maniqa import MANIQA
