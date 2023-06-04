@@ -3,6 +3,7 @@ from dbmanager.configs import SCHEMA_NAME, TABLE_NAME, POSTGRES_CONFIG, ALL_COLU
 import pandas as pd
 from datetime import datetime
 from pytz import timezone
+import random
 # for Austin
 
 def initialize_db_structures(db):
@@ -303,7 +304,7 @@ def insert_draft_dataset(db, unzipped_dataset_info):
                     columns = ['sold_count'],
                     data = [0]
                     )
-    pi_res = db.readDB(schema=schema_name, table=table_name[1], columns=column_list[1])
+    #pi_res = db.readDB(schema=schema_name, table=table_name[1], columns=column_list[1])
     #pi_id = [i[0] + last_img_id for i in pi_res]
     pi_id = [i + 1 + last_img_id for i in range(num_row)]
   
@@ -324,11 +325,11 @@ def insert_draft_dataset(db, unzipped_dataset_info):
         # data = list(df_qc.iloc[i])
         db.insertDB(schema=schema_name, 
                     table=table_name[2],
-                    columns=['qc_status'],
-                    data=['uploaded']
+                    columns=['qc_status', 'qc_duplicate'],
+                    data=['uploaded', 0]
                     )
         
-    qc_res = db.readDB(schema=schema_name, table=table_name[2], columns=column_list[2])
+    #qc_res = db.readDB(schema=schema_name, table=table_name[2], columns=column_list[2])
     #qc_id = [i[0] + last_img_id for i in qc_res]
     qc_id = [i + 1 + last_img_id for i in range(num_row)]
 
@@ -509,6 +510,62 @@ def load_list_view_default(db):
 
     return df_result
 
+def chain(*iterables):
+    # chain('ABC', 'DEF') --> ['A', 'B', 'C', 'D', 'E', 'F']
+    for it in iterables:
+        for element in it:
+            yield element
+
+def _sampling_image(db, df, K = 10):
+    '''
+    sampling image
+    The default value of qc_duplicate column is 0 and if the image is overlapping, the value becomes 1
+
+    [inputs]
+    - db    : target db object (CRUD)
+    - df    : list, list of the ids that overlaps
+    - k     : int, number of sampled images, default: 10
+
+    [output]
+    - success: 성공 여부
+    '''
+
+    # 0. Initial Setting
+    success = False
+    schema_name = SCHEMA_NAME
+
+    # 1. make dataset_id list 
+    dataset_id_list = list(df['dataset_id'])
+    print(dataset_id_list)
+    dataset_id_and_img_id_list = []
+    # 2. Create img_ids list and randomly select K images 
+    for id in dataset_id_list:
+        # 2-1. Create img_ids list
+        condition = f"dataset_id = '{id}'"
+        print(condition)
+        img_ids = db.readDB_with_filtering(schema = schema_name, table = 'Features', columns = ['img_id'], condition = condition)
+        img_ids = list(sum(img_ids, ()))
+        # 2-2. When K is bigger than len(img_ids), then sampling should be len(img_ids)
+        if K > len(img_ids):
+            K_to_apply = len(img_ids)
+        else:
+            K_to_apply = K
+        # 2-3. Randomly select K_to_apply images
+        random_img_ids = random.sample(img_ids, K_to_apply)
+        # 2-4. make dataset_id_and_img_id_list
+        dataset_id_and_img_id_list.append([id, img_ids, random_img_ids])
+
+    # 4. read DB with filtering
+    result = []
+    for dataset in dataset_id_and_img_id_list:
+        for img_id in dataset[2]:
+            condition = f"img_id = '{img_id}'"
+            res_tmp = db.readDB_with_filtering(schema=schema_name, table = 'Features', columns = '*', condition=condition)
+            result.append(res_tmp)
+    print(result)
+    
+    return None
+
 
 def read_user_query(db, filter_info):
     # user query spec 보고 interface 업뎃할 예정
@@ -518,15 +575,20 @@ def read_user_query(db, filter_info):
 def update_multiple_columns(db, df, mode):
     '''
     update multiple columns 
+
     [inputs]
     - target db object (CRUD)
     - df: pd.DataFrame
     - mode: string, the mode should be one of ["img_path", "img_WH", "start_QC", "QC_score", "object_count", "end_QC"]
-    
-    [output]
-    - success: 
+            if mode is start_QC     : qd_status in DB becomes "QC_start"
+            if mode is QC_score     : qd_status in DB becomes "QC_end"
+            if mode is object_count : qd_status in DB becomes "QC_end+obj_cnt"
+            if mode is end_QC       : qd_status in DB becomes "QC_end+obj_cnt+duplicate"
 
+    [output]
+    - success: 성공여부
     '''
+
     # 0. Initial Setting
     success = False 
     schema_name = SCHEMA_NAME
@@ -580,6 +642,32 @@ def update_multiple_columns(db, df, mode):
 
     return success 
 
-# duplicate 스키마를 바꿔서 체크를 한다. 
-# qc에 obj_type 다 빼고, cnt만 
+def update_columns_af_duplicate(db, qc_ids):
+    '''
+    update columns after duplicate function,
+    The default value of qc_duplicate column is 0 and if the image is overlapping, the value becomes 1
+
+    [inputs]
+    - db        : target db object (CRUD)
+    - qc_ids    : list, list of the ids that overlaps 
+
+    [output]
+    - success: 성공 여부
+    '''
+    
+    # 0. Initial Setting
+    success = False 
+
+    # 1. defining target columns
+    schema_name = SCHEMA_NAME
+    table_name = "QC"
+    target_column = "qc_duplicate"
+
+    # 3. update data in DB
+    for id in qc_ids:
+        condition = f"qc_id='{id}'"
+        success = db.updateDB(schema=schema_name, table=table_name, column=target_column, value=1,condition=condition)
+
+    return success 
+
 # 더 추가하면 됨

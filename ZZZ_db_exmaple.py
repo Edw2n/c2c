@@ -1,6 +1,6 @@
 from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG, SCHEMA_NAME, TABLE_NAME, ALL_COLUMNS
-from dbmanager.utils import initialize_db_structures, insert_user, insert_draft_dataset, load_list_view_default, update_multiple_columns
+from dbmanager.utils import initialize_db_structures, insert_user, insert_draft_dataset, load_list_view_default, update_multiple_columns, update_columns_af_duplicate, _sampling_image
 import pandas as pd
 import numpy as np
 
@@ -49,6 +49,8 @@ if __name__ == "__main__":
     list_view_default_result = load_list_view_default(db=db)
     print(list_view_default_result)
 
+    _sampling_image(db, list_view_default_result)
+
     #### FOR TEST ONLY #### 
     cols = ['img_id', 'image_path', 'image_width', 'image_height',
         'qc_id', 'qc_start_date', 'qc_score', 'object_count', 'qc_end_date']
@@ -65,5 +67,12 @@ if __name__ == "__main__":
 
     list_view_default_result = load_list_view_default(db=db)
     print(list_view_default_result)
+
+    #### FOR TEST ONLY #### 
+    overlapping_ids = [i+32 for i in range(31)]
+    #### FOR TEST ONLY ####
+
+    update_columns_af_duplicate(db, qc_ids = overlapping_ids)
+
 
     
