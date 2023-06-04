@@ -3,6 +3,7 @@ from dbmanager.configs import SCHEMA_NAME, TABLE_NAME, POSTGRES_CONFIG, ALL_COLU
 import pandas as pd
 from datetime import datetime
 from pytz import timezone
+import random
 # for Austin
 
 def initialize_db_structures(db):
@@ -270,13 +271,13 @@ def insert_draft_dataset(db, unzipped_dataset_info):
     print()
 
     # 2. DatasetInfo
-    print('-----datset------')
+    print('-----dataset------')
     dataset_name = unzipped_dataset_info["TITLE"]
-    dataset_description = unzipped_dataset_info["DESCRIPTIONS"] ### front와 이야기 해야하는 부분
+    dataset_description = unzipped_dataset_info["DESCRIPTIONS"]
     db.insertDB(schema=schema_name, 
                 table=table_name[4],
                 columns = column_list[4][1:],
-                data = [dataset_name, dataset_description]
+                data = [dataset_name, dataset_description, 0]
                 )
     dataset_res = db.readDB_with_filtering(schema=schema_name, 
                                            table=table_name[4],
@@ -303,7 +304,7 @@ def insert_draft_dataset(db, unzipped_dataset_info):
                     columns = ['sold_count'],
                     data = [0]
                     )
-    pi_res = db.readDB(schema=schema_name, table=table_name[1], columns=column_list[1])
+    #pi_res = db.readDB(schema=schema_name, table=table_name[1], columns=column_list[1])
     #pi_id = [i[0] + last_img_id for i in pi_res]
     pi_id = [i + 1 + last_img_id for i in range(num_row)]
   
@@ -324,11 +325,11 @@ def insert_draft_dataset(db, unzipped_dataset_info):
         # data = list(df_qc.iloc[i])
         db.insertDB(schema=schema_name, 
                     table=table_name[2],
-                    columns=['qc_status'],
-                    data=['uploaded']
+                    columns=['qc_status', 'qc_duplicate'],
+                    data=['uploaded', 0]
                     )
         
-    qc_res = db.readDB(schema=schema_name, table=table_name[2], columns=column_list[2])
+    #qc_res = db.readDB(schema=schema_name, table=table_name[2], columns=column_list[2])
     #qc_id = [i[0] + last_img_id for i in qc_res]
     qc_id = [i + 1 + last_img_id for i in range(num_row)]
 
@@ -342,10 +343,6 @@ def insert_draft_dataset(db, unzipped_dataset_info):
     # df_features['image_width'] = [10000 for _ in range(num_row)]
     # df_features['image_height'] = [10000 for _ in range(num_row)]
     # df_features['upload_date'] = ["1993-08-27 00:00:01" for _ in range(num_row)] ##### need to fix
-    # df_features['contrast'] = [10000 for _ in range(num_row)] ##### need to fix
-    # df_features['brightness'] = [10000 for _ in range(num_row)] ##### need to fix
-    # df_features['sharpness'] = [10000 for _ in range(num_row)] ##### need to fix
-    # df_features['saturation'] = [10000 for _ in range(num_row)] ##### need to fix
     # df_features['like_cnt'] = [0 for _ in range(num_row)] ##### need to fix
 
     ## 6-1. column setting
@@ -428,7 +425,6 @@ def load_list_view_default(db):
             (e.g., {'Cyclist': 1, 'Pedestrian': 1, 'Van': 2})
     '''
 
-
     result = None
 
     # dataset information
@@ -436,7 +432,7 @@ def load_list_view_default(db):
                 sum(res.price) as price_total,\
                 count(res.dataset_id) as total_image_count,\
                 sum(res.price) / count(res.dataset_id) as avg_price_per_image, \
-                sum(res.sold_count) as sales_count,\
+                max(res.dataset_selection_cnt) as sales_count,\
                 sum(res.like_cnt) as like_count, \
                 res.qc_status as qc_state, \
                 AVG(res.qc_score) as qc_score, \
@@ -514,8 +510,164 @@ def load_list_view_default(db):
 
     return df_result
 
+def chain(*iterables):
+    # chain('ABC', 'DEF') --> ['A', 'B', 'C', 'D', 'E', 'F']
+    for it in iterables:
+        for element in it:
+            yield element
+
+def _sampling_image(db, df, K = 10):
+    '''
+    sampling image
+    The default value of qc_duplicate column is 0 and if the image is overlapping, the value becomes 1
+
+    [inputs]
+    - db    : target db object (CRUD)
+    - df    : list, list of the ids that overlaps
+    - k     : int, number of sampled images, default: 10
+
+    [output]
+    - success: 성공 여부
+    '''
+
+    # 0. Initial Setting
+    success = False
+    schema_name = SCHEMA_NAME
+
+    # 1. make dataset_id list 
+    dataset_id_list = list(df['dataset_id'])
+    print(dataset_id_list)
+    dataset_id_and_img_id_list = []
+    # 2. Create img_ids list and randomly select K images 
+    for id in dataset_id_list:
+        # 2-1. Create img_ids list
+        condition = f"dataset_id = '{id}'"
+        print(condition)
+        img_ids = db.readDB_with_filtering(schema = schema_name, table = 'Features', columns = ['img_id'], condition = condition)
+        img_ids = list(sum(img_ids, ()))
+        # 2-2. When K is bigger than len(img_ids), then sampling should be len(img_ids)
+        if K > len(img_ids):
+            K_to_apply = len(img_ids)
+        else:
+            K_to_apply = K
+        # 2-3. Randomly select K_to_apply images
+        random_img_ids = random.sample(img_ids, K_to_apply)
+        # 2-4. make dataset_id_and_img_id_list
+        dataset_id_and_img_id_list.append([id, img_ids, random_img_ids])
+
+    # 4. read DB with filtering
+    result = []
+    for dataset in dataset_id_and_img_id_list:
+        for img_id in dataset[2]:
+            condition = f"img_id = '{img_id}'"
+            res_tmp = db.readDB_with_filtering(schema=schema_name, table = 'Features', columns = '*', condition=condition)
+            result.append(res_tmp)
+    print(result)
+    
+    return None
+
+
 def read_user_query(db, filter_info):
     # user query spec 보고 interface 업뎃할 예정
     pass
+
+
+def update_multiple_columns(db, df, mode):
+    '''
+    update multiple columns 
+
+    [inputs]
+    - target db object (CRUD)
+    - df: pd.DataFrame
+    - mode: string, the mode should be one of ["img_path", "img_WH", "start_QC", "QC_score", "object_count", "end_QC"]
+            if mode is start_QC     : qd_status in DB becomes "QC_start"
+            if mode is QC_score     : qd_status in DB becomes "QC_end"
+            if mode is object_count : qd_status in DB becomes "QC_end+obj_cnt"
+            if mode is end_QC       : qd_status in DB becomes "QC_end+obj_cnt+duplicate"
+
+    [output]
+    - success: 성공여부
+    '''
+
+    # 0. Initial Setting
+    success = False 
+    schema_name = SCHEMA_NAME
+    target_list = [
+        ['Features', ['img_id', 'image_path'],], 
+        ['Features', ['img_id', 'image_width', 'image_height']],
+        ['QC', ['qc_id', 'qc_start_date']],
+        ['QC', ['qc_id', 'qc_score']],
+        ['QC', ['qc_id', 'object_count']],
+        ['QC', ['qc_id', 'qc_end_date']]
+        ]
+
+    # 1. Setting mode
+    if mode == 'img_path':
+        idx = 0
+    elif mode == 'img_WH':
+        idx = 1
+    elif mode == 'start_QC':
+        idx = 2
+        status = 'QC_start'
+    elif mode == 'QC_score':
+        idx = 3
+        status = "QC_end"
+    elif mode == 'object_count':
+        idx = 4
+        status = "QC_end+obj_cnt"
+    elif mode == 'end_QC':
+        idx = 5
+        status = "QC_end+obj_cnt+duplicate"
+    else: 
+        print("Invalid mode is selected")
+        print('The mode should be one of ["img_path", "img_WH", "start_QC", "QC_score", "object_count", "end_QC"]')
+    
+    # 2. Select target column to update data 
+    target_table = target_list[idx][0]
+    target_df = df[target_list[idx][1]]
+
+    columns = target_df.columns
+    
+    # 3. update data in DB
+    for i in range(len(columns[1:])):
+        for j in range(len(target_df)):
+            condition = f"{columns[0]}='{df[columns[0]][j]}'"
+            success = db.updateDB(schema=schema_name, table=target_table, column=columns[i+1], value=df[columns[i+1]][j],condition=condition)
+    
+    # 4. (optional) udpated QC_status
+    if idx in (2,3,4,5):
+        for j in range(len(target_df)):
+            condition = f"{columns[0]}='{df[columns[0]][j]}'"
+            success = db.updateDB(schema=schema_name, table=target_table, column='qc_status', value=status,condition=condition)
+
+    return success 
+
+def update_columns_af_duplicate(db, qc_ids):
+    '''
+    update columns after duplicate function,
+    The default value of qc_duplicate column is 0 and if the image is overlapping, the value becomes 1
+
+    [inputs]
+    - db        : target db object (CRUD)
+    - qc_ids    : list, list of the ids that overlaps 
+
+    [output]
+    - success: 성공 여부
+    '''
+    
+    # 0. Initial Setting
+    success = False 
+
+    # 1. defining target columns
+    schema_name = SCHEMA_NAME
+    table_name = "QC"
+    target_column = "qc_duplicate"
+
+    # 3. update data in DB
+    for id in qc_ids:
+        condition = f"qc_id='{id}'"
+        success = db.updateDB(schema=schema_name, table=table_name, column=target_column, value=1,condition=condition)
+
+    return success 
 
 # 더 추가하면 됨
