@@ -234,7 +234,7 @@ def iqa(img_path_list: list) -> dict:
          print('----IQAing----')
          mos = iqa_help(model, num_crops, Img)
          mos_scores.append(mos)
-      mos_dict[img_path] = mos_scores
+         mos_dict[img_path] = mos_scores
    return mos_dict
    
 #for a list of images paths
