@@ -286,7 +286,7 @@ def duplicates(img_path_list: list) -> list:
    this function returns a list of paths that needed to be removed as it is the duplicates
    
    [input]
-    - img_path_list: a list of paths that contains user's images
+    - img_path_list: a list of paths that contains user's images (each item can be a directory or an image path)
    
    [output]
     - duplicates: a list of duplicate paths that needed to be removed
@@ -296,14 +296,19 @@ def duplicates(img_path_list: list) -> list:
    duplicates = []
 
    for images_path in file_path:
-      img_dir = os.listdir(images_path)
-      # load the input image and compute the hash
-      for index, img in enumerate(img_dir):
-         path = images_path + '/' + img
-         with open(path, 'rb') as f:
+      if os.path.isdir(images_path):
+         img_dir = os.listdir(images_path)
+         # load the input image and compute the hash
+         for index, img in enumerate(img_dir):
+            path = images_path + '/' + img
+            with open(path, 'rb') as f:
+               filehash = hashlib.md5(f.read()).hexdigest()
+               hash_keys[filehash].append(path)
+      else:
+         with open(images_path, 'rb') as f:
             filehash = hashlib.md5(f.read()).hexdigest()
-            hash_keys[filehash].append(path)
-            
+            hash_keys[filehash].append(images_path)
+
    duplicates = reduce(lambda x, y: x + y[1:] if len(y)>1 else x, hash_keys.values(), [])
    print('----Duplicates----')
    return duplicates
