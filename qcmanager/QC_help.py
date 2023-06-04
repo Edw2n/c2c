@@ -68,122 +68,126 @@ class Image(torch.utils.data.Dataset):
             sample = self.transform(sample)
         return sample
 
-#for loading a model for IQA with appropriate checkpoint
-def load_model_iqa():
-   '''
-   This function generates a model for Image Quality Assessment (IQA) 
-   
-   [output]
-    - model: model for IQA
-   '''
+class IQA():
    #config file
-   config = {
-    # valid times
-    'num_crops': 20,
+   configs = {
+   # valid times
+   'num_crops': 20,
 
-    # model
-    'patch_size': 8,
-    'img_size': 224,
-    'embed_dim': 768,
-    'dim_mlp': 768,
-    'num_heads': [4, 4],
-    'window_size': 4,
-    'depths': [2, 2],
-    'num_outputs': 1,
-    'num_tab': 2,
-    'scale': 0.8,
+   # model
+   'patch_size': 8,
+   'img_size': 224,
+   'embed_dim': 768,
+   'dim_mlp': 768,
+   'num_heads': [4, 4],
+   'window_size': 4,
+   'depths': [2, 2],
+   'num_outputs': 1,
+   'num_tab': 2,
+   'scale': 0.8,
 
-    # checkpoint path
-    "ckpt_path": FILE_DIR + "/ckpt_koniq10k.pt",
+   # checkpoint path
+   "ckpt_path": FILE_DIR + "/ckpt_koniq10k.pt",
    }
-   
-   #Model Definition
-   DEVICE = torch.device("cpu") 
-   model = MANIQA(embed_dim=config['embed_dim'], num_outputs=config['num_outputs'], dim_mlp=config['dim_mlp'],
-        patch_size=config['patch_size'], img_size=config['img_size'], window_size=config['window_size'],
-        depths=config['depths'], num_heads=config['num_heads'], num_tab=config['num_tab'], scale=config['scale'])
-   
-   #path = 'ckpt_koniq10k.pt'
-   ckpt = torch.load(config['ckpt_path'], map_location=torch.device("cpu"))
-   model.load_state_dict(ckpt, strict=False)
 
-   return model
+   model = None
 
-def iqa_help(model, num_crop, img: Image) -> float: 
-   '''
-   This function returns the mos score of a single image
-   
-   [input]
-    - model: a model for processing IQA
-    - num_crop: number of crops to enforce on the image
-    - img: a image that needs to be processed for IQA
-   
-   [output]
-    - mos_score: mos_score of the image
-   '''
-   avg_score = 0
-   num_crops = num_crop
-   for i in tqdm(range(num_crops)):
-      with torch.no_grad():
-         model.eval()
-         patch_sample = img.get_patch(i)
-         patch = patch_sample['d_img_org']
-         patch = patch.unsqueeze(0)
-         score = model(patch)
-         avg_score += score
-   mos_score = avg_score / num_crops
-   return mos_score
+   def __init__(self, configs=None) -> None:
+      if configs:
+         self.configs = configs
+      self.load_model_iqa()
 
-def get_iqa(img_path: str, num_crops: int, model: object) -> list:
-   '''
-   get num_crops iqa results of img_path
+   #for loading a model for IQA with appropriate checkpoint
+   def load_model_iqa(self):
+      '''
+      This function generates a model for Image Quality Assessment (IQA) 
+      
+      [output]
+      - model: model for IQA
+      '''
 
-   [input]
-   - img_path: target img_path, string
-   - num_crops: number of crops for iqa, int
-   - model: iqa model, torch model
+      #Model Definition
+      DEVICE = torch.device("cpu") 
+      self.model = MANIQA(embed_dim=self.configs['embed_dim'], num_outputs=self.configs['num_outputs'], dim_mlp=self.configs['dim_mlp'],
+         patch_size=self.configs['patch_size'], img_size=self.configs['img_size'], window_size=self.configs['window_size'],
+         depths=self.configs['depths'], num_heads=self.configs['num_heads'], num_tab=self.configs['num_tab'], scale=self.configs['scale'])
+      
+      #path = 'ckpt_koniq10k.pt'
+      ckpt = torch.load(self.configs['ckpt_path'], map_location=torch.device("cpu"))
+      self.model.load_state_dict(ckpt, strict=False)
 
-   [output]
-   - mos_scores: a list of iqa results (length: num_crops)
-   '''
-   
-   mos_scores = []
-   # data load
-   Img = Image(image_path=img_path,
-      transform=transforms.Compose([Normalize(0.5, 0.5), ToTensor()]),
-      num_crops=num_crops)
-   print('----IQAing----')
-   mos = iqa_help(model, num_crops, Img)
-   mos_scores.append(mos)
-   return mos_scores
-   
-#for a list of image paths
-def iqa(img_path_list: list) -> dict:
-   '''
-   By getting a list of path of images,
-   this function returns a dictionary with a key of one of the path of images
-   and an item of the list of mos scores of images in the path.
-   
-   [input]
-   - img_path_list: a list of paths that contains user's images (each item can be a image path or directory)
-   
-   [output]
-   - mos_dict: a dictionary with key value as a path of images and item as a list of mos scores of images in the path
-   '''
-   model = load_model_iqa()
-   num_crops = 10
-   
-   # Multiple paths
-   mos_dict = {}
-   for target_path in img_path_list:
-      if os.path.isdir(target_path):
-         for index, img in enumerate(os.listdir(target_path)):
-            img_path = target_path + '/' + img
-            mos_dict[img_path] = get_iqa(img_path, num_crops, model)
-      else:
-         mos_dict[target_path] = get_iqa(target_path, num_crops, model)
+   def iqa_help(self, num_crop, img: Image) -> float: 
+      '''
+      This function returns the mos score of a single image
+      
+      [input]
+      - model: a model for processing IQA
+      - num_crop: number of crops to enforce on the image
+      - img: a image that needs to be processed for IQA
+      
+      [output]
+      - mos_score: mos_score of the image
+      '''
+      avg_score = 0
+      num_crops = num_crop
+      for i in tqdm(range(num_crops)):
+         with torch.no_grad():
+            self.model.eval()
+            patch_sample = img.get_patch(i)
+            patch = patch_sample['d_img_org']
+            patch = patch.unsqueeze(0)
+            score = self.model(patch)
+            avg_score += score
+      mos_score = avg_score / num_crops
+      return mos_score
 
-   return mos_dict
+   def get_iqa(self, img_path: str, num_crops: int, model: object) -> list:
+      '''
+      get num_crops iqa results of img_path
+
+      [input]
+      - img_path: target img_path, string
+      - num_crops: number of crops for iqa, int
+      - model: iqa model, torch model
+
+      [output]
+      - mos_score: iqa score of image (for img_path)
+      '''
+      
+      mos_scores = []
+      # data load
+      Img = Image(image_path=img_path,
+         transform=transforms.Compose([Normalize(0.5, 0.5), ToTensor()]),
+         num_crops=num_crops)
+      print('----IQAing----')
+      mos_score = self.iqa_help(num_crops, Img)
+      return mos_score
+      
+   #for a list of image paths
+   def get_scores(self, img_path_list: list) -> dict:
+      '''
+      By getting a list of path of images,
+      this function returns a dictionary with a key of one of the path of images
+      and an item of the list of mos scores of images in the path.
+      
+      [input]
+      - img_path_list: a list of paths that contains user's images (each item can be a image path or directory)
+      
+      [output]
+      - mos_dict: a dictionary with key value as a path of image and item as a mos scores(int) of image that matched to image path
+      '''
+      num_crops = 10
+      
+      # Multiple paths
+      mos_dict = {}
+      for target_path in img_path_list:
+         if os.path.isdir(target_path):
+            for index, img in enumerate(os.listdir(target_path)):
+               img_path = target_path + '/' + img
+               mos_dict[img_path] = self.get_iqa(img_path, num_crops, self.model)
+         else:
+            mos_dict[target_path] = self.get_iqa(target_path, num_crops, self.model)
+      return mos_dict
 
 class ObjectCounter():
    configs = {
