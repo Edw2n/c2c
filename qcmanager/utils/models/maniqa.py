@@ -3,7 +3,7 @@ import torch.nn as nn
 import timm
 
 from timm.models.vision_transformer import Block
-from utils.models.swin import SwinTransformer
+from .swin import SwinTransformer
 from torch import nn
 from einops import rearrange
 
