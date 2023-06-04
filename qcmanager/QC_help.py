@@ -16,6 +16,9 @@ from .utils.utils import *
 from .utils.datasets import *
 from .utils.parse_config import *
 
+from collections import defaultdict
+from functools import reduce
+
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -286,12 +289,12 @@ def duplicates(img_path_list: list) -> list:
     - img_path_list: a list of paths that contains user's images
    
    [output]
-    - paths: a list of duplicate paths that needed to be removed
+    - duplicates: a list of duplicate paths that needed to be removed
    '''
    file_path = img_path_list
+   hash_keys = defaultdict(list)
    duplicates = []
-   hash_keys = {}
-   paths = []
+
    for images_path in file_path:
       img_dir = os.listdir(images_path)
       # load the input image and compute the hash
@@ -299,15 +302,10 @@ def duplicates(img_path_list: list) -> list:
          path = images_path + '/' + img
          with open(path, 'rb') as f:
             filehash = hashlib.md5(f.read()).hexdigest()
-         if filehash not in hash_keys:
-            hash_keys[filehash] = index
-         else:
-            duplicates.append((index, hash_keys[filehash]))
-      for index in duplicates:
-         path = images_path + '/' + img_dir[index[0]]
-         #os.remove(path)
-         paths.append(str(path))
+            hash_keys[filehash].append(path)
+            
+   duplicates = reduce(lambda x, y: x + y[1:] if len(y)>1 else x, hash_keys.values(), [])
    print('----Duplicates----')
-   return paths
+   return duplicates
 
 
