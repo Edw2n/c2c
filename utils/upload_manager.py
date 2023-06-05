@@ -4,7 +4,7 @@ from shutil import copyfile, rmtree
 import glob
 from PIL import Image
 from datetime import datetime
-from dbmanager.utils import insert_draft_dataset, update_multiple_columns
+from dbmanager.utils import insert_draft_dataset, update_multiple_columns, update_columns_af_duplicate
 
 # support for qc
 from qcmanager.QC_help import IQA, ObjectCounter, duplicates
@@ -40,24 +40,17 @@ class UploadManager():
     # update image info 
     success = self.update_image_info(db_info)
     
-    # do qc
+    # update qc
     if not success:
       return success
     success = self.update_qc(db_info)
-    print("updated info:")
-    print(db_info)
 
-    # object count
-    # db count update
-    
-    # filtering
-    # object delte (update)
-
-    # dupulicate filtering
+    # update object count
+    if not success:
+      return success
+    success = self.update_oc(db_info)
 
     # request qc (not wait until qc finished)
-    
-    # qc(data)
     return success
 
   def unzip_dataset(self, zip_info, unzip_dir="./temporal-datasets/"):
@@ -168,12 +161,20 @@ class UploadManager():
         return success
 
       iqa_results = self.iqa.get_scores(list(stored_info['image_path']))
-      print(iqa_results)
       stored_info['qc_score'] = stored_info['image_path'].map(iqa_results)
-      print(stored_info)
       success = update_multiple_columns(self.db, df=stored_info, mode="QC_score")
     except Exception as e:
       print("Update QC error", e)
+    return success
+  
+  def update_oc(self, stored_info):
+    success = False
+    try:
+      oc_results = self.oc.object_count(list(stored_info['image_path']))
+      stored_info['object_count'] = stored_info['image_path'].map(oc_results)
+      success = update_multiple_columns(self.db, df=stored_info, mode="object_count")
+    except Exception as e:
+      print("Update OC error", e)
     return success
 
   def update_production_info(self, stored_info):
