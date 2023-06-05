@@ -1,95 +1,144 @@
 import zipfile
 import os
-from shutil import copyfile
+from shutil import copyfile, rmtree
 import glob
 from PIL import Image
 
 from dbmanager.utils import insert_draft_dataset
 
-def upload_dataset(db, f, dataset_info):
+# support for qc
+from qcmanager.QC_help import IQA, ObjectCounter, duplicates
+class UploadManager():
+  def __init__(self, db):
+    self.iqa = IQA()
+    self.oc = ObjectCounter()
+    self.dupulicates = duplicates
+    self.db = db
+    
+  def upload_dataset(self, f, dataset_info):
 
-  success = False
+    success = False
+    
+    # save temporal dataset
+    f.save(dataset_info["PATH"])
+    print(f)
+
+    # path에 있는 거 압축 풀기
+    unzipped_dataset_info = self.unzip_dataset(dataset_info)
+    print(unzipped_dataset_info)
+
+    #insert draft
+    inserted_info = insert_draft_dataset(db=self.db,
+    unzipped_dataset_info=unzipped_dataset_info)
+    print(inserted_info)
+
+    #store dataet
+    stored_info = self.store_images(inserted_info, unzipped_dataset_info["PATH"] + "Images/")
+    print("stored info")
+    print(stored_info)
+    # delete temporal directory
+    rmtree(unzipped_dataset_info["PATH"])
+    success = True
+    #file path update
+
+    # extract image info
+    stored_info = self.get_image_info(stored_info)
+    print("after extract image info")
+    print(stored_info)
+    # update image info 
+    
+    # do qc
+    # qc start => update
+    # qc
+    # qc_end, qc_score => update
+
+    # object count
+    # db count update
+    
+    # filtering
+    # object delte (update)
+
+    # dupulicate filtering
+
+    # request qc (not wait until qc finished)
+    
+    # qc(data)
+    return success
+
+  def unzip_dataset(self, zip_info, unzip_dir="./temporal-datasets/"):
+
+    zip_path = zip_info["PATH"]
+    
+    target_zip = zipfile.ZipFile(zip_path)
+    # 첫번쨰가 dir name이라 가정하겠음
+    dir_name = target_zip.namelist()[0]
+    zipfile.ZipFile(zip_path).extractall(unzip_dir)
+    extracted_dir = unzip_dir + dir_name
+    filenames = os.listdir(extracted_dir)
+    print("contents:", filenames)
+
+    extracted_dataset_info = {
+      "PATH": extracted_dir,
+      "USER_NAME": zip_info["USER_NAME"],
+      "PW": zip_info["PW"],
+      "TITLE": zip_info["TITLE"],
+      "DESCRIPTIONS": zip_info["DESCRIPTIONS"],
+    }
+
+    #print extraxtion info
+    print(f"extracted in {extracted_dataset_info}")
+
+    #압축 풀고나면 zip 파일 삭제하기
+    os.remove(zip_path)
+
+    return extracted_dataset_info
+
+  def store_images(self, insertion_info, source_dir, target_dir='./images/'):
+    '''
+    mv imgs from source_dir to target_dir , named following inserted_info
+
+    [input]
+    - inserted_info
+    - source_dir
+    - target_dir
+
+    [output]
+    - stroed_info
+    '''
+
+    stored_info = insertion_info
+    stored_info["image_path"] = None
   
-  # save temporal dataset
-  f.save(dataset_info["PATH"])
+    source_file_nums = len(glob.glob(f"{source_dir}/*.png"))
 
-  # path에 있는 거 압축 풀기
-  unzipped_dataset_info = unzip_dataset(dataset_info)
-  # print(unzipped_dataset_info)
+    assert source_file_nums == len(insertion_info), "Number of stored images is not matched to source_dir"
 
-  #insert draft
-  inserted_info = insert_draft_dataset(db=db,
-   unzipped_dataset_info=unzipped_dataset_info)
-  # print(inserted_info)
+    for ind in stored_info.index:
+      src = source_dir + stored_info['filename'][ind]
+      dst = target_dir + str(stored_info['img_id'][ind]) + ".png"
+      copyfile(src, dst)
+      print(f"copy {src} to {dst}")
+      stored_info['image_path'][ind] = dst
 
-  #store dataet
-  stored_info = store_images(inserted_info, unzipped_dataset_info["PATH"] + "Images/")
-  # print('stored info')
-  # print(stored_info)
-  success = True
+    return stored_info
 
-  #insert file path update
+  def get_image_info(self, stored_info):
 
-  #do qc
+    stored_info['width'] = None
+    stored_info['height'] = None
 
-  # request qc (not wait until qc finished)
-  
-  # qc(data)
-  return success
+    for ind in stored_info.index:
+      image = Image.open(stored_info['image_path'][ind])
+      stored_info['width'][ind], stored_info['height'][ind] = image.size
+    
+    return stored_info
 
-def unzip_dataset(zip_info, unzip_dir="./temporal-datasets/"):
+  def get_qc_info(self, stored_info):
+    return stored_info
 
-  zip_path = zip_info["PATH"]
-  
-  target_zip = zipfile.ZipFile(zip_path)
-  # 첫번쨰가 dir name이라 가정하겠음
-  dir_name = target_zip.namelist()[0]
-  zipfile.ZipFile(zip_path).extractall(unzip_dir)
-  extracted_dir = unzip_dir + dir_name
-  filenames = os.listdir(extracted_dir)
-  print("contents:", filenames)
+  def get_product_info(self, stored_info):
+    return stored_info
 
-  extracted_dataset_info = {
-    "PATH": extracted_dir,
-    "USER_NAME": zip_info["USER_NAME"],
-    "PW": zip_info["PW"],
-    "TITLE": zip_info["TITLE"],
-    "DESCRIPTIONS": zip_info["DESCRIPTIONS"],
-  }
-
-  #print extraxtion info
-  print(f"extracted in {extracted_dataset_info}")
-
-  #압축 풀고나면 zip 파일 삭제하기
-  os.remove(zip_path)
-
-  return extracted_dataset_info
-
-def store_images(insertion_info, source_dir, target_dir='./images/'):
-  '''
-  mv imgs from source_dir to target_dir , named following inserted_info
-
-  [input]
-  - inserted_info
-  - source_dir
-  - target_dir
-
-  [output]
-  - stroed_info
-  '''
-
-  stored_info = insertion_info
-  stored_info["image_path"] = None
- 
-  source_file_nums = len(glob.glob(f"{source_dir}/*.png"))
-
-  assert source_file_nums == len(insertion_info), "Number of stored images is not matched to source_dir"
-
-  for ind in stored_info.index:
-    src = source_dir + stored_info['filename'][ind]
-    dst = target_dir + str(stored_info['img_id'][ind]) + ".png"
-    copyfile(src, dst)
-    print(f"copy {src} to {dst}")
-    stored_info['image_path'][ind] = dst
-
-  return stored_info
+  def read_features(self, extracted_dataset_info):
+      feature_df = None
+      return feature_df
