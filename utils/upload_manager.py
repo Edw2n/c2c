@@ -57,6 +57,7 @@ class UploadManager():
     print("updated info:")
     print(db_info)
 
+    # update product info
     # request qc (not wait until qc finished)
     return success
 
@@ -120,8 +121,8 @@ class UploadManager():
       assert source_file_nums == len(insertion_info), "Number of stored images is not matched to source_dir"
 
       for ind in stored_info.index:
-        src = source_dir + stored_info['filename'][ind]
-        dst = target_dir + str(stored_info['img_id'][ind]) + ".png"
+        src = source_dir + stored_info["filename"][ind]
+        dst = target_dir + str(stored_info["img_id"][ind]) + ".png"
         copyfile(src, dst)
         print(f"copy {src} to {dst}")
         stored_info['image_path'][ind] = dst
@@ -144,12 +145,12 @@ class UploadManager():
     '''
     success = False
     try:
-      stored_info['image_width'] = None
-      stored_info['image_height'] = None
+      stored_info["image_width"] = None
+      stored_info["image_height"] = None
 
       for ind in stored_info.index:
-        image = Image.open(stored_info['image_path'][ind])
-        stored_info['image_width'][ind], stored_info['image_height'][ind] = image.size
+        image = Image.open(stored_info["image_path"][ind])
+        stored_info["image_width"][ind], stored_info["image_height"][ind] = image.size
       
       success = update_multiple_columns(self.db, stored_info, "img_WH")
     except Exception as e:
@@ -157,34 +158,61 @@ class UploadManager():
     return success
 
   def update_qc(self, stored_info):
+    '''
+    udpate qc start_date and qc info of target dataset(stored_info) to db
+
+    [input]
+    stored_info: target dataset information (pd.dataframe)
+
+    [output]
+    success: bool
+    '''
     success = False
     try:
       now = datetime.now()
       dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-      stored_info['qc_start_date'] = dt_string
+      stored_info["qc_start_date"] = dt_string
       success = update_multiple_columns(self.db, df=stored_info, mode="start_QC")
 
       if not success:
         return success
 
-      iqa_results = self.iqa.get_scores(list(stored_info['image_path']))
-      stored_info['qc_score'] = stored_info['image_path'].map(iqa_results)
+      iqa_results = self.iqa.get_scores(list(stored_info["image_path"]))
+      stored_info["qc_score"] = stored_info["image_path"].map(iqa_results)
       success = update_multiple_columns(self.db, df=stored_info, mode="QC_score")
     except Exception as e:
       print("Update QC error", e)
     return success
   
   def update_oc(self, stored_info):
+    '''
+    udpate object count info of target dataset(stored_info) to db
+
+    [input]
+    stored_info: target dataset information (pd.dataframe)
+
+    [output]
+    success: bool
+    '''
     success = False
     try:
-      oc_results = self.oc.object_count(list(stored_info['image_path']))
-      stored_info['object_count'] = stored_info['image_path'].map(oc_results)
+      oc_results = self.oc.object_count(list(stored_info["image_path"]))
+      stored_info["object_count"] = stored_info["image_path"].map(oc_results)
       success = update_multiple_columns(self.db, df=stored_info, mode="object_count")
     except Exception as e:
       print("Update OC error", e)
     return success
 
   def update_dp(self, stored_info):
+    '''
+    udpate dupulicate info and qc_end_date of target dataset(stored_info) to db
+
+    [input]
+    stored_info: target dataset information (pd.dataframe)
+
+    [output]
+    success: bool
+    '''
     success = False
     try:
       dp_results = self.dupulicates(list(stored_info["image_path"]))
