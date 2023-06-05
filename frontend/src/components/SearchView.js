@@ -268,9 +268,11 @@ function SearchView() {
               {subItem}
             </label>
             <label style={{textAlign: 'left', width: '100%', height: '100%'}}>
-              <input style={{ width: '33%' , height: '75%', fontSize: '0.7rem'}} type="number" id={`${subItem}-start`} placeholder='Start' />
+              <input style={{ width: '30%' , height: '75%', fontSize: '0.7rem'}} 
+                type="number" id={`${subItem}-start`} placeholder='Start' />
               <span>  -  </span>
-              <input style={{ width: '33%' , height: '75%', fontSize: '0.7rem'}} type="number" id={`${subItem}-end`} placeholder='End' />
+              <input style={{ width: '30%' , height: '75%', fontSize: '0.7rem'}} 
+                type="number" id={`${subItem}-end`} placeholder='End' />
             </label>
           </React.Fragment>
         ))
@@ -281,7 +283,7 @@ function SearchView() {
   // Display
   return (
     // 전체 화면: 각 Part들이 가로로 쌓이도록 구성
-    <div style={{height: '100%', display: 'grid', gridTemplateRows: '7% 30% 63%'}}> 
+    <div style={{height: '100%', display: 'grid', gridTemplateRows: '7% 3% 30% 3% 57%'}}> 
     
     {/* Part 1: 업로드 */}
       <div className='UploadContainer'>
@@ -290,7 +292,6 @@ function SearchView() {
         <h5 className='ContainerTitle'>
           데이터셋 업로드하기
         </h5>
-      {/* end of part 1-2 */}
 
       {/* Part 1-2: 업로드 창 */}
         <div className='ContainerDetail'>
@@ -308,16 +309,14 @@ function SearchView() {
               <input type="text" aria-label="Description" placeholder="description"  class="form-control" style={{fontSize: '0.7rem', width: '32%', height: '70%' }}/>
             </div>
             <div className="input-group" style={{width: '100%', height: '100%', gridColumn: '3'}}>
-              <Button type="submit" variant="outline-secondary" style={{fontSize: '0.7rem', width: '100%', height: '70%'}} >
+              <Button type="submit" variant="outline-secondary" style={{fontSize: '0.7rem', width: '100%', height: '70%', color: 'white', fontWeight: 'bold', background: 'rgb(38, 73, 132)'}} >
                 Upload
               </Button>
             </div>
           </form>
         </div> 
-      {/* end of part 1-2 */}
       
       </div>
-    {/* end of part 1 */}
 
     {/* Part 2: 필터 */}
       <div className='SearchContainer'>
@@ -326,7 +325,6 @@ function SearchView() {
         <h5 className='ContainerTitle' style={{marginTop: '5px'}}>
           데이터셋 검색하기
         </h5>
-      {/* end of part 2-1 */}
 
       {/* Part 2-2: 필터 창 */}
         <div className='SearchContainerDetail'>
@@ -380,18 +378,17 @@ function SearchView() {
               </form>
             </CInputGroup>
           </div>
-        
-        {/* 검색 버튼 
-        <div>
-          <CButton type="button" color="secondary" className="mb-3" variant="outline" id="button-addon2" onClick={handleSearch}>Search</CButton>
-        </div> */}
-        
         </div>
-        {/* end of part 2-2 */}
-          
       </div>
-      {/* end of part 2 */}
           
+      {/* ############## 검색 버튼 ############## */}
+      <div style={{gridRow: '4', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', justifyItems: 'end', marginTop: '5px'}}>
+          <CButton type="button" color="secondary" className="mb-3" variant="outline" id="button-addon2" 
+            style={{width: '20%', height: '60%', gridColumn: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgb(38, 73, 132)'}}>
+              <span style={{fontSize: '0.7rem', color: 'white', fontWeight: 'bold'}}>Search</span>
+          </CButton>
+      </div> 
+
       {/* Part 3: 리스트뷰 */}
       <div className='ListviewContainer'>
           
@@ -399,14 +396,11 @@ function SearchView() {
         <h5 className='ContainerTitle' style={{marginTop: '15px'}}>
           데이터셋 살펴보기
         </h5>
-        {/* end of part 3-1 */}
         
         {/* Part 3-2: 리스트뷰 창 */}
         {listInfo.length>0 ? <DatasetListView listInfo={listInfo}/> : 'No results'}
-        {/*end of part 3-2 */}
 
       </div>
-      {/* end of Part 3 */}
 
     </div> // end of all
   );
