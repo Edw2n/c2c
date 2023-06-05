@@ -3,8 +3,8 @@ import os
 from shutil import copyfile, rmtree
 import glob
 from PIL import Image
-
-from dbmanager.utils import insert_draft_dataset
+from datetime import datetime
+from dbmanager.utils import insert_draft_dataset, update_multiple_columns
 
 # support for qc
 from qcmanager.QC_help import IQA, ObjectCounter, duplicates
@@ -21,36 +21,28 @@ class UploadManager():
     
     # save temporal dataset
     f.save(dataset_info["PATH"])
-    print(f)
 
     # path에 있는 거 압축 풀기
     unzipped_dataset_info = self.unzip_dataset(dataset_info)
-    print(unzipped_dataset_info)
 
     #insert draft
-    inserted_info = insert_draft_dataset(db=self.db,
+    db_info = insert_draft_dataset(db=self.db,
     unzipped_dataset_info=unzipped_dataset_info)
-    print(inserted_info)
 
-    #store dataet
-    stored_info = self.store_images(inserted_info, unzipped_dataset_info["PATH"] + "Images/")
-    print("stored info")
-    print(stored_info)
-    # delete temporal directory
-    rmtree(unzipped_dataset_info["PATH"])
-    success = True
-    #file path update
+    #store image dataset and update image paths
+    success = self.update_image_paths(db_info, unzipped_dataset_info["PATH"] + "Images/")
+    if success:
+      # delete temporal directory
+      rmtree(unzipped_dataset_info["PATH"])
+    else:
+      return success
 
-    # extract image info
-    stored_info = self.get_image_info(stored_info)
-    print("after extract image info")
-    print(stored_info)
     # update image info 
+    success = self.update_image_info(db_info)
+    print("updated info:")
+    print(db_info)
     
     # do qc
-    # qc start => update
-    # qc
-    # qc_end, qc_score => update
 
     # object count
     # db count update
@@ -66,6 +58,16 @@ class UploadManager():
     return success
 
   def unzip_dataset(self, zip_info, unzip_dir="./temporal-datasets/"):
+    '''
+    unzip uploaded dataset which is located in zip_info["PATH"] to unzip_dir(destination folder)
+
+    [input]
+    - zip_info: dataset information with dictionary
+    - unzip_dir: destination directory which unzipped folder will be located temporal
+
+    [output]
+    - extracted_dataset_info: extracted dataset information with dictionary
+    '''
 
     zip_path = zip_info["PATH"]
     
@@ -93,50 +95,69 @@ class UploadManager():
 
     return extracted_dataset_info
 
-  def store_images(self, insertion_info, source_dir, target_dir='./images/'):
+  def update_image_paths(self, insertion_info, source_dir, target_dir='./images/'):
     '''
-    mv imgs from source_dir to target_dir , named following inserted_info
+    mv imgs from source_dir to target_dir , named following inserted_info and db update("image_path")
 
     [input]
-    - inserted_info
-    - source_dir
-    - target_dir
+    - stored_info: target dataset information (pd.dataframe)
+    - source_dir(str)
+    - target_dir(str)
 
     [output]
-    - stroed_info
+    - success(bool)
     '''
-
-    stored_info = insertion_info
-    stored_info["image_path"] = None
-  
-    source_file_nums = len(glob.glob(f"{source_dir}/*.png"))
-
-    assert source_file_nums == len(insertion_info), "Number of stored images is not matched to source_dir"
-
-    for ind in stored_info.index:
-      src = source_dir + stored_info['filename'][ind]
-      dst = target_dir + str(stored_info['img_id'][ind]) + ".png"
-      copyfile(src, dst)
-      print(f"copy {src} to {dst}")
-      stored_info['image_path'][ind] = dst
-
-    return stored_info
-
-  def get_image_info(self, stored_info):
-
-    stored_info['width'] = None
-    stored_info['height'] = None
-
-    for ind in stored_info.index:
-      image = Image.open(stored_info['image_path'][ind])
-      stored_info['width'][ind], stored_info['height'][ind] = image.size
+    success = False
+    try:
+      stored_info = insertion_info
+      stored_info["image_path"] = None
     
-    return stored_info
+      source_file_nums = len(glob.glob(f"{source_dir}/*.png"))
 
-  def get_qc_info(self, stored_info):
-    return stored_info
+      assert source_file_nums == len(insertion_info), "Number of stored images is not matched to source_dir"
 
-  def get_product_info(self, stored_info):
+      for ind in stored_info.index:
+        src = source_dir + stored_info['filename'][ind]
+        dst = target_dir + str(stored_info['img_id'][ind]) + ".png"
+        copyfile(src, dst)
+        print(f"copy {src} to {dst}")
+        stored_info['image_path'][ind] = dst
+
+      success = update_multiple_columns(self.db, stored_info, "img_path")
+    except Exception as e:
+      print("Image path update error", e)
+
+    return success
+  
+  def update_image_info(self, stored_info):
+    '''
+    udpate image width and height of target dataset(stored_info) to db
+
+    [input]
+    stored_info: target dataset information (pd.dataframe)
+
+    [output]
+    success: bool
+    '''
+    success = False
+    try:
+      stored_info['image_width'] = None
+      stored_info['image_height'] = None
+
+      for ind in stored_info.index:
+        image = Image.open(stored_info['image_path'][ind])
+        stored_info['image_width'][ind], stored_info['image_height'][ind] = image.size
+      
+      success = update_multiple_columns(self.db, stored_info, "img_WH")
+    except Exception as e:
+      print("Update image info error", e)
+    return success
+
+  def update_qc(self, stored_info):
+    success = False
+    pass
+
+  def update_production_info(self, stored_info):
     return stored_info
 
   def read_features(self, extracted_dataset_info):
