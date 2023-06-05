@@ -50,6 +50,13 @@ class UploadManager():
       return success
     success = self.update_oc(db_info)
 
+    # dupulicate filtering
+    if not success:
+      return success
+    success = self.update_dp(db_info)
+    print("updated info:")
+    print(db_info)
+
     # request qc (not wait until qc finished)
     return success
 
@@ -175,6 +182,26 @@ class UploadManager():
       success = update_multiple_columns(self.db, df=stored_info, mode="object_count")
     except Exception as e:
       print("Update OC error", e)
+    return success
+
+  def update_dp(self, stored_info):
+    success = False
+    try:
+      dp_results = self.dupulicates(list(stored_info["image_path"]))
+      print("duplicated paths:", dp_results)
+      if dp_results:
+        # update qc_duplicate
+        dp_ids = list(stored_info[stored_info["image_path"].isin(dp_results)]["qc_id"])
+        print("duplicated qc_ids:", dp_ids)
+        success = update_columns_af_duplicate(self.db, dp_ids)
+        if success:
+          now = datetime.now()
+          dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+          stored_info["qc_end_date"] = dt_string
+          success = update_multiple_columns(self.db, df=stored_info, mode="end_QC")
+    except Exception as e:
+      print("Update DP error", e)
+    #TODO: remove dupulicate data in images folder
     return success
 
   def update_production_info(self, stored_info):
