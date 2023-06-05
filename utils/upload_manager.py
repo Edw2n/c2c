@@ -39,10 +39,13 @@ class UploadManager():
 
     # update image info 
     success = self.update_image_info(db_info)
-    print("updated info:")
-    print(db_info)
     
     # do qc
+    if not success:
+      return success
+    success = self.update_qc(db_info)
+    print("updated info:")
+    print(db_info)
 
     # object count
     # db count update
@@ -155,7 +158,23 @@ class UploadManager():
 
   def update_qc(self, stored_info):
     success = False
-    pass
+    try:
+      now = datetime.now()
+      dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+      stored_info['qc_start_date'] = dt_string
+      success = update_multiple_columns(self.db, df=stored_info, mode="start_QC")
+
+      if not success:
+        return success
+
+      iqa_results = self.iqa.get_scores(list(stored_info['image_path']))
+      print(iqa_results)
+      stored_info['qc_score'] = stored_info['image_path'].map(iqa_results)
+      print(stored_info)
+      success = update_multiple_columns(self.db, df=stored_info, mode="QC_score")
+    except Exception as e:
+      print("Update QC error", e)
+    return success
 
   def update_production_info(self, stored_info):
     return stored_info
