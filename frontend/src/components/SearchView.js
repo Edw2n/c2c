@@ -59,25 +59,6 @@ function SearchView() {
   
   const [listInfo,setListInfo] = useState(dummyData)
 
-  /* useEffect(()=>{
-    search()
-  },[])
-
-  
-  const search = async () => {
-    const formData = new FormData();
-
-    await fetch('http://0.0.0.0:3000/read', {
-      method: 'POST',
-      body: formData
-    }).then(resp => {
-      resp.json().then(data => {
-        console.log(data)
-        setListInfo(prev=>([...data.data]))
-      })
-    })}
-  */
-
   const handleSubmit = (e) => {
     e.preventDefault()
     const formData = new FormData(e.target);
@@ -130,35 +111,43 @@ function SearchView() {
   }
 
   /*
+  useEffect(()=>{
+    search()
+  },[])
+
+  
+  const search = async () => {
+    const formData = new FormData();
+
+    await fetch('http://127.0.0.1:3000/read', {
+      method: 'POST',
+      body: formData
+    }).then(resp => {
+      resp.json().then(data => {
+        console.log(data)
+        setListInfo(prev=>([...data.data]))
+      })
+    })}
+  */
+
+  
   const handleSearch = (e) => {
     e.preventDefault()
 
     const formData = new FormData();
     console.log(e.target);
 
-    var qcState = document.getElementById("qc-state").value;
-    var qcScore = document.getElementById("qc-score").value;
-    var qcObject = document.getElementById("qc-object").value;
-    var angle = document.getElementById("angle").value;
-    var angularRate = document.getElementById("angRate").value;
-    var velocity = document.getElementById("velocity").value;
-    var acceleration = document.getElementById("acceleration").value;
-  
+    var keyword = document.getElementById("keyword").value ? `${document.getElementById("keyword").value}` : 'none';
+
     // console.log(selectedValue)
     // var customScript = document.getElementById('form-custom-script-file').value ? true : false;
     // TODO: customSCript form에 붙이기
     
-    formData.append('QC_state',qcState)
-    formData.append('QC_score',qcScore)
-    formData.append('QC_object',qcObject)
-    formData.append('Angle',angle)
-    formData.append('Angular_rate',angularRate)
-    formData.append('Velocity',velocity)
-    formData.append('Acceleration',acceleration)
+    formData.append('keyword', keyword)
 
     console.log(formData)
     const search = async () => {
-      await fetch('http://0.0.0.0:3000/read', {
+      await fetch('http://127.0.0.1:3000/read', {
         method: 'POST',
         body: formData
       }).then(resp => {
@@ -173,12 +162,17 @@ function SearchView() {
     }
     search();
     console.log('search')
+    console.log('FormData Key-value pairs:')
+    for (let pair of formData.entries()) {
+      console.log(pair[0], pair[1]);
+    }
+
   }
   
   const handleOptions = (e)=> {
     console.log(e.currentTarget.id)
   }
-  */
+  
 
   // 필터1: 퀵서치(검색창)
   const f1_titles = (
@@ -192,7 +186,7 @@ function SearchView() {
   f1_list.push(
     <div className='filters'>
       <input 
-        type="text" id="search" placeholder="Search"
+        type="text" id="keyword" placeholder="Search"
         style={{width: '40%', height: '80%', fontSize: '0.7rem'}}>
       </input>
     </div>
@@ -200,9 +194,9 @@ function SearchView() {
 
   // 필터2: 체크박스
   const f2category = [
-    {id: 1, title:"QC State", sub:['All','Pending','In Progress','Done']},
-    {id: 2, title:"QC Score", sub:['All','Low','Medium','High']},
-    {id: 3, title:"QC Object", sub:['All', 'Car', 'Van', 'Truck', 'Pedestrian', 'Sitter', 'Cyclist', 'Tram', 'Misc']},
+    {id: "qc_state", title:"QC State", sub:['All','Pending','In Progress','Done']},
+    {id: "qc_score", title:"QC Score", sub:['All','Low','Medium','High']},
+    {id: "qc_object", title:"QC Object", sub:['All', 'Car', 'Van', 'Truck', 'Pedestrian', 'Sitter', 'Cyclist', 'Tram', 'Misc']},
   ]
   const f2category_titles = (
     <div className='LowLevelGroup' style={{gridRow: '2',  gridTemplateRows: '25% 25% 25% 25%', borderBottom: '1px solid lightgray'}}>
@@ -231,7 +225,7 @@ function SearchView() {
                 width: '100%',
                 height: '80%',
                 fontSize: '0.7rem',
-                verticalAlign: 'middle'
+                verticalAlign: 'middle',
               }}>
               {subItem}
             </label>
@@ -254,10 +248,10 @@ function SearchView() {
 
   // 필터3: 항목 별 범위 설정
   const f3category = [
-    {id: 1, title:"Angle(rad)", sub:['Roll', 'Pitch', 'Yaw']},
-    {id: 2, title:"Angular Rate(rad/s)", sub:['Wx','Wy','Wz']},
-    {id: 3, title:"Velocity(m/s)", sub:['Vf','Vl','Vu']},
-    {id: 4, title:"Accel(m/s^2)", sub:['Ax','Ay','Az']}
+    {id: 'angle', title:"Angle(rad)", sub:['Roll', 'Pitch', 'Yaw']},
+    {id: 'angular_rate', title:"Angular Rate(rad/s)", sub:['Wx','Wy','Wz']},
+    {id: 'velocity', title:"Velocity(m/s)", sub:['Vf','Vl','Vu']},
+    {id: 'acceleration', title:"Accel(m/s^2)", sub:['Ax','Ay','Az']}
   ]
   const f3category_titles = (
     <div className='LowLevelGroup' style={{gridRow: '3', borderBottom: '1px solid lightgray'}}>
@@ -269,6 +263,7 @@ function SearchView() {
       </text>))}
     </div>
   )
+
   const f3category_filters = (
     <div className='filters_sensor'>
       {f3category.map((catdata, rowindex) => (
@@ -281,10 +276,10 @@ function SearchView() {
             </label>
             <label style={{textAlign: 'left', width: '100%', height: '100%'}}>
               <input style={{ width: '30%' , height: '75%', fontSize: '0.7rem'}} 
-                type="number" id={`${subItem}-start`} placeholder='Start' />
+                type="number" id={`${subItem}-start`} placeholder='Start'/>
               <span>  -  </span>
               <input style={{ width: '30%' , height: '75%', fontSize: '0.7rem'}} 
-                type="number" id={`${subItem}-end`} placeholder='End' />
+                type="number" id={`${subItem}-end`} placeholder='End'/>
             </label>
           </React.Fragment>
         ))
@@ -396,7 +391,7 @@ function SearchView() {
       {/* ############## 검색 버튼 ############## */}
       <div style={{gridRow: '4', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', justifyItems: 'end', marginTop: '5px'}}>
           <CButton type="button" color="secondary" className="mb-3" variant="outline" id="button-addon2" 
-            style={{width: '20%', height: '60%', gridColumn: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgb(38, 73, 132)'}}>
+            style={{width: '20%', height: '60%', gridColumn: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgb(38, 73, 132)'}} onClick={handleSearch}>
               <span style={{fontSize: '0.7rem', color: 'white', fontWeight: 'bold'}}>Search</span>
           </CButton>
       </div> 
