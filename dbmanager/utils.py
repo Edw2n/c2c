@@ -3,6 +3,7 @@ from dbmanager.configs import SCHEMA_NAME, TABLE_NAME, POSTGRES_CONFIG, ALL_COLU
 import pandas as pd
 from datetime import datetime
 from pytz import timezone
+import math 
 import random
 # for Austin
 
@@ -40,7 +41,7 @@ def initialize_db_structures(db):
                            )
     #지금은 스키마만 있는상태에서 만드는건데, 아예 스키마 존재하면 삭제하고 스키마 생성후 주루룩 하는거도 괜찮아 보임
     # 0. Object
-    print('----Object table')
+    # print('----Object table')
     objects= ['Car', 'Van', 'Truck', 'Pedestrian', 'Person (sitting)', 'Cyclist', 'Tram', 'Misc']
 
     for i in range(len(objects)):
@@ -237,7 +238,6 @@ def check_user(db, unzipped_dataset_info):
                                       )
     if not result:
         result = True
-    print(result)
     return result
 
 def insert_draft_dataset(db, unzipped_dataset_info):
@@ -262,16 +262,13 @@ def insert_draft_dataset(db, unzipped_dataset_info):
 
     # 1. User
     ## checking whether the user is new, if new -> insert into User table
-    print('-----user------')
     user_info = check_user(db=db, unzipped_dataset_info=unzipped_dataset_info)
     user_info = user_info[0]
     user_id = user_info[0]
-    # print(user_info)
-    # print(user_id)
     print()
+    print(f"Uploading {user_info[1]}(user_id : {user_id})'s file")
 
     # 2. DatasetInfo
-    print('-----dataset------')
     dataset_name = unzipped_dataset_info["TITLE"]
     dataset_description = unzipped_dataset_info["DESCRIPTIONS"]
     db.insertDB(schema=schema_name, 
@@ -286,10 +283,7 @@ def insert_draft_dataset(db, unzipped_dataset_info):
                                            )
 
     dataset_id = dataset_res[0][0]
-    # print(dataset_res)
-    # print(dataset_res[0][0])
-    print()
-
+    print('DatasetInfo table is updated')
 
     # 3. read Feature.csv
     features = unzipped_dataset_info["PATH"] + 'Features.csv'
@@ -297,57 +291,31 @@ def insert_draft_dataset(db, unzipped_dataset_info):
     num_row = len(df_features)
 
     # 4. ProductInfo
-    print('----ProductInfo----')
     for i in range(num_row):
         db.insertDB(schema=schema_name, 
                     table=table_name[1],
                     columns = ['sold_count'],
                     data = [0]
                     )
-    #pi_res = db.readDB(schema=schema_name, table=table_name[1], columns=column_list[1])
-    #pi_id = [i[0] + last_img_id for i in pi_res]
     pi_id = [i + 1 + last_img_id for i in range(num_row)]
   
-    print()
+    print('ProductInfo table is updated')
 
     # 5. QC
-    print('----QC-----')
-    # df_qc = pd.DataFrame(columns=ALL_COLUMNS[2][1:])
-    # df_qc['qc_status'] = ["uploaded" for _ in range(num_row)]
-    # df_qc['qc_start_date'] = ["1993-08-27 00:00:01" for _ in range(num_row)] ##### need to fix
-    # df_qc['qc_end_date'] = ["1993-08-27 00:00:01" for _ in range(num_row)] ##### need to fix
-    # df_qc['qc_score'] = [0 for _ in range(num_row)] ##### need to fix
-    # df_qc['object_type'] = ['' for _ in range(num_row)]
-    # df_qc['object_count'] = [0 for _ in range(num_row)]
-    # df_qc['tag'] = ['' for _ in range(num_row)]
-
     for i in range(num_row):
-        # data = list(df_qc.iloc[i])
         db.insertDB(schema=schema_name, 
                     table=table_name[2],
                     columns=['qc_status', 'qc_duplicate'],
                     data=['uploaded', 0]
                     )
         
-    #qc_res = db.readDB(schema=schema_name, table=table_name[2], columns=column_list[2])
-    #qc_id = [i[0] + last_img_id for i in qc_res]
     qc_id = [i + 1 + last_img_id for i in range(num_row)]
-
-    # print(qc_id)
-    print()
+    print('QC table is updated')
 
     # 6. Features
-    print('-----Features-----')
-    # df_features['product_id'] = [1 for _ in range(num_row)]
-    # df_features['image_path'] = ["fixfix" for _ in range(num_row)]
-    # df_features['image_width'] = [10000 for _ in range(num_row)]
-    # df_features['image_height'] = [10000 for _ in range(num_row)]
-    # df_features['upload_date'] = ["1993-08-27 00:00:01" for _ in range(num_row)] ##### need to fix
-    # df_features['like_cnt'] = [0 for _ in range(num_row)] ##### need to fix
-
     ## 6-1. column setting
     col_tmp_features = ['qc_id', 'user_id', 'dataset_id', 'product_id', 'upload_date'] ## image_width, image_height 등 넣어야함
-    column_for_features = [*column_list[5][1:31], *col_tmp_features]
+    column_for_features = [*column_list[5][5:35], *col_tmp_features]
 
     ## 6-2. Insert data
     for i in range(num_row):
@@ -360,21 +328,18 @@ def insert_draft_dataset(db, unzipped_dataset_info):
                     data=data)
     
     img_id = qc_id.copy()
-    print()
+    print('Features table is updated')
     
     # 7. Insert GT 
-    print('-----GT-----')
     GroundTruth = unzipped_dataset_info["PATH"] + 'GT.csv'
     df_GT = pd.read_csv(GroundTruth)
     num_row_GT = len(df_GT)
     df_img_id_filename = pd.DataFrame(columns = ['filename', 'img_id'])
     df_img_id_filename['filename'] = df_features['filename']
     df_img_id_filename['img_id'] = img_id
-    # print(df_img_id_filename.head())
 
     object_list = db.readDB(schema=schema_name, table=table_name[7], columns=column_list[7])
     df_object_list = pd.DataFrame(data = object_list, columns = ['gt_object_id', 'object'])
-    # print(df_object_list.head())
 
     df_GT = pd.merge(df_GT, df_img_id_filename, on = 'filename', how='left')
     df_GT = pd.merge(df_GT, df_object_list, on = 'object', how='left')
@@ -390,7 +355,7 @@ def insert_draft_dataset(db, unzipped_dataset_info):
                     table=table_name[0],
                     columns=column_list[0][1:],
                     data=data_from_GT_csv)
-    print()
+    print('GT table is updated')
 
     # 8. output
     images = df_features["filename"]
@@ -402,22 +367,29 @@ def insert_draft_dataset(db, unzipped_dataset_info):
 
     return inserted_info
 
-def load_list_view_default(db):
+########################################
+########## LISTVIEW FUNCTIONS ##########
+########################################
+
+def load_list_view(db, page=1, item_per_page=10, user_idName = None):
     '''
-    load_list view for main page
+    load_list view
 
     [inputs]
-    - target db object (CRUD)
-    
+    - db            : target db object (CRUD)
+    - page: int, page number, default: 1,  if you want load 3rd page, then 3
+    - item_per_page: int, default:10, the number of items per page
+    - user_idName   : string, default: None, 
+
     [output]
-    - df_result: output from query, pd.DataFrame
+    - total_count: int, the number of rows
+    - df_result: output from query, pd.DataFrame, if df_result is empty pd.DataFrame, returns None
       cols = ['dataset_id', 'dataset_name',
               'price_total', 'iamge_count', 'avg_price_per_image',
               'sales_count', 'like_count',
               'qc_state', 'qc_score', 
               'uploader', 'upload_date', 
               'object_list', 'object_count','object_info_in_detail']
-
       also,
         the value of colmnn "object_list" is *list* of object 
             (e.g., ['Van','Cyclist', 'Pedestrian'])
@@ -425,10 +397,76 @@ def load_list_view_default(db):
             (e.g., {'Cyclist': 1, 'Pedestrian': 1, 'Van': 2})
     '''
 
-    result = None
+    total_count, result_df = _load_list_view_default(db=db, page=page, item_per_page=item_per_page, user_idName=user_idName)
+    if total_count == 0:
+        return total_count, None
+    
+    max_page = int(math.ceil(total_count/item_per_page))
 
-    # dataset information
-    sql =  "select res.dataset_id, res.dataset_name,\
+    if user_idName is not None:
+        print(f"-----Loading {user_idName}'s dataset-----")
+        result_df = result_df[result_df['uploader']==str(user_idName)]
+        
+    return max_page, result_df 
+
+
+def _load_list_view_tx (db, page=1, item_per_page=10, user_id_Name = None):
+    '''
+    '''
+    pass
+
+
+def _load_list_view_default(db, page=1, item_per_page=10, user_idName = None):
+    '''
+    load_list view 
+    if user_idName is not None -> then returns listview for the user's uploaded dataset
+
+    [inputs]
+    - db: target db object (CRUD)
+    - page: int, page number, default: 1,  if you want load 3rd page, then 3
+    - item_per_page: int, default:10, the number of items per page
+    - user_idName   : string, default: None, 
+
+    [output]
+    - total_count: int, the number of rows
+    - df_result: pd.DataFrame, output from query, if df_result is empty pd.DataFrame, returns None
+      cols = ['dataset_id', 'dataset_name',
+              'price_total', 'iamge_count', 'avg_price_per_image',
+              'sales_count', 'like_count',
+              'qc_state', 'qc_score', 
+              'uploader', 'upload_date', 
+              'object_list', 'object_count','object_info_in_detail']
+      also,
+        the value of colmnn "object_list" is *list* of object 
+            (e.g., ['Van','Cyclist', 'Pedestrian'])
+        the value of column "object_info_in_detail" is dictinary that keys are object's name and value is its count
+            (e.g., {'Cyclist': 1, 'Pedestrian': 1, 'Van': 2})
+    '''
+    # 1. initial setting and total rows cnt
+    result = None
+    item_start = 0 + item_per_page * (page - 1)
+    if user_idName is not None:
+        condition_id = f"where u.user_idName = '{user_idName}'"
+    else: condition_id = ""
+
+    sql = f"select res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date \
+            from( \
+                select f.img_id, f.upload_date, f.like_cnt, d.*, p.*, q.qc_status, q.qc_score, u.* \
+                from features f \
+                left join productinfo p on f.product_id =p.product_id \
+                left join datasetinfo d on d.dataset_id =f.dataset_id \
+                left join qc q on q.qc_id =f.qc_id \
+                left join public.user u on u.user_id =f.user_id \
+                {condition_id} \
+                ) res \
+            group by res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date;"
+    total_cnt = db.execute(sql)
+    total_cnt = len(total_cnt)
+    if total_cnt == 0:
+        return total_cnt, None
+
+    # 2. dataset information
+    sql = f"select res.dataset_id, res.dataset_name,\
                 sum(res.price) as price_total,\
                 count(res.dataset_id) as total_image_count,\
                 sum(res.price) / count(res.dataset_id) as avg_price_per_image, \
@@ -444,19 +482,31 @@ def load_list_view_default(db):
                 left join productinfo p on f.product_id =p.product_id \
                 left join datasetinfo d on d.dataset_id =f.dataset_id \
                 left join qc q on q.qc_id =f.qc_id \
-                left join public.user u on u.user_id =f.user_id\
+                left join public.user u on u.user_id =f.user_id \
+                {condition_id} \
                 ) res \
-            group by res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date;"
+            group by res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date \
+            order by res.dataset_id limit {item_per_page} offset {item_start};"
 
     result = db.execute(sql)
-    columns = ['dataset_id', 'dataset_name', 'price_total', 'iamge_count', 'avg_price_per_image', 'sales_count', 'like_count' ,'qc_state' ,'qc_score', 'uploader' ,'upload_date']
+    columns = ['dataset_id', 'dataset_name', 'price_total', 'image_count', 'avg_price_per_image', 'sales_count', 'like_count' ,'qc_state' ,'qc_score', 'uploader' ,'upload_date']
     df_result = pd.DataFrame(data = result, columns=columns)
 
-    # object information
-    ## a. df for final result
+    target_dataset_id = tuple(df_result['dataset_id'])
+    
+    # 3. object information
+    ## a. df for final result and condition settting 
     df_obj_list_split_by_dataset = pd.DataFrame(columns = ['dataset_id', 'object_list', 'object_count', 'object_info_in_detail'])
+
+    if len(target_dataset_id) == 0:
+        return df_result
+    elif len(target_dataset_id) == 1:
+        condition = f"where dataset.dataset_id = '{target_dataset_id[0]}'"
+    else:
+        condition = f"where dataset.dataset_id in {target_dataset_id}" 
+    
     ## b. excute query
-    sql =  "select  res.dataset_id, res.gt_object, count(res.gt_object) \
+    sql = f"select  res.dataset_id, res.gt_object, count(res.gt_object) \
             from ( \
                 select o.gt_object, g.gt_height, g.gt_width, dataset.dataset_id \
                 from groundtruth g  \
@@ -466,6 +516,7 @@ def load_list_view_default(db):
                     left join datasetinfo d on d.dataset_id = f.dataset_id \
                 ) dataset on dataset.img_id = g.img_id \
                 left join public.object o on o.gt_object_id = g.gt_object_id \
+                {condition} \
                 group by o.gt_object, g.gt_height, g.gt_width, dataset.dataset_id \
             ) res \
             group by res.dataset_id, res.gt_object \
@@ -508,15 +559,13 @@ def load_list_view_default(db):
                          )
     print()
 
-    return df_result
+    return total_cnt, df_result
 
-def chain(*iterables):
-    # chain('ABC', 'DEF') --> ['A', 'B', 'C', 'D', 'E', 'F']
-    for it in iterables:
-        for element in it:
-            yield element
+##############################################################################
+##############################################################################
+##############################################################################
 
-def _sampling_image(db, df, K = 10):
+def _sampling_image(db, df, K = 10): #### need to FiX
     '''
     sampling image
     The default value of qc_duplicate column is 0 and if the image is overlapping, the value becomes 1
@@ -535,14 +584,12 @@ def _sampling_image(db, df, K = 10):
     schema_name = SCHEMA_NAME
 
     # 1. make dataset_id list 
-    dataset_id_list = list(df['dataset_id'])
-    print(dataset_id_list)
+    dataset_id_list = list(df['dataset_id'].unique())
     dataset_id_and_img_id_list = []
     # 2. Create img_ids list and randomly select K images 
     for id in dataset_id_list:
-        # 2-1. Create img_ids list
+        # 2-1. Create img_ids list of the dataset_id
         condition = f"dataset_id = '{id}'"
-        print(condition)
         img_ids = db.readDB_with_filtering(schema = schema_name, table = 'Features', columns = ['img_id'], condition = condition)
         img_ids = list(sum(img_ids, ()))
         # 2-2. When K is bigger than len(img_ids), then sampling should be len(img_ids)
@@ -556,21 +603,43 @@ def _sampling_image(db, df, K = 10):
         dataset_id_and_img_id_list.append([id, img_ids, random_img_ids])
 
     # 4. read DB with filtering
-    result = []
+    result_ft = []
+    result_qc = []
+    result_gt = []
+
     for dataset in dataset_id_and_img_id_list:
         for img_id in dataset[2]:
-            condition = f"img_id = '{img_id}'"
-            res_tmp = db.readDB_with_filtering(schema=schema_name, table = 'Features', columns = '*', condition=condition)
-            result.append(res_tmp)
-    print(result)
-    
-    return None
+            condition_ft = f"img_id = '{img_id}'"
+            condition_qc = f"qc_id = '{img_id}'"
+            condition_gt = f"img_id = '{img_id}'"
+            
+            res_tmp_ft = db.readDB_with_filtering(schema=schema_name, table = 'Features', columns = '*', condition=condition_ft)
+            res_tmp_qc = db.readDB_with_filtering(schema=schema_name, table = 'QC', columns = '*', condition=condition_qc)
+            res_tmp_gt = db.readDB_with_filtering(schema=schema_name, table = 'GroundTruth', columns = '*', condition=condition_gt)
+            result_ft.append(res_tmp_ft[0])
+            result_qc.append(res_tmp_qc[0])
+            for gt in res_tmp_gt:
+                result_gt.append(gt)
+                print()
+            # print(res_tmp_gt)
+            # print(result_gt)
+
+#    print(result)
+    result_df = pd.DataFrame(data=result_ft, columns=ALL_COLUMNS[5])
+    result_df_qc = pd.DataFrame(data=result_qc, columns=ALL_COLUMNS[2])
+    result_df = pd.merge(result_df, result_df_qc, how='left', on='qc_id')
+    result_df_gt = pd.DataFrame(data=result_gt, columns= ALL_COLUMNS[0])
+    # print(result_df_gt)
+    return result_df
 
 
-def read_user_query(db, filter_info):
-    # user query spec 보고 interface 업뎃할 예정
-    pass
 
+
+
+
+######################################
+########## UPDATE FUNCTIONS ##########
+######################################
 
 def update_multiple_columns(db, df, mode):
     '''
@@ -669,5 +738,10 @@ def update_columns_af_duplicate(db, qc_ids):
         success = db.updateDB(schema=schema_name, table=table_name, column=target_column, value=1,condition=condition)
 
     return success 
+
+def read_user_query(db, filter_info):
+    # user query spec 보고 interface 업뎃할 예정
+    pass
+
 
 # 더 추가하면 됨

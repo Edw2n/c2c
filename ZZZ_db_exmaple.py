@@ -1,6 +1,7 @@
 from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG, SCHEMA_NAME, TABLE_NAME, ALL_COLUMNS
-from dbmanager.utils import initialize_db_structures, insert_user, insert_draft_dataset, load_list_view_default, update_multiple_columns, update_columns_af_duplicate, _sampling_image
+from dbmanager.utils import initialize_db_structures, insert_user, insert_draft_dataset, \
+    load_list_view, update_multiple_columns, update_columns_af_duplicate, _sampling_image
 import pandas as pd
 import numpy as np
 
@@ -26,6 +27,12 @@ if __name__ == "__main__":
         insert_user(db = db, user_idname=tester[0], user_password=tester[1])
     #### FOR TEST ONLY ####
 
+    max_page, list_view = load_list_view(db=db, page=1, item_per_page=2)
+    print("# of max page: ", max_page)
+    print(list_view)
+    print()
+
+
     unzipped_dataset_info = {"PATH": '../../04_sampledata/',
                              "USER_NAME": 'tester',
                              "PW": '123',
@@ -46,10 +53,14 @@ if __name__ == "__main__":
     db.updateDB(schema=schema_name, table='DatasetInfo', column='dataset_selection_cnt', value=10, condition="dataset_id=1")
     #### FOR TEST ONLY ####
 
-    list_view_default_result = load_list_view_default(db=db)
+    max_page, list_view_default_result = load_list_view(db=db, page=1, item_per_page=2)
+    print("# of max page: ", max_page)
     print(list_view_default_result)
+    print()
 
-    _sampling_image(db, list_view_default_result)
+    ########################################
+    #### Testing load_list_view_default ####
+    ########################################
 
     #### FOR TEST ONLY #### 
     cols = ['img_id', 'image_path', 'image_width', 'image_height',
@@ -60,19 +71,53 @@ if __name__ == "__main__":
            ]
     df = pd.DataFrame(data=data, columns=cols)    
     #### FOR TEST ONLY ####
-
     mode_list= ["img_path", "img_WH", "start_QC", "QC_score", "object_count", "end_QC"]
     for i in range(6):
         update_multiple_columns(db, df, mode = mode_list[i])
 
-    list_view_default_result = load_list_view_default(db=db)
+    max_page, list_view = load_list_view(db=db, page=1, item_per_page=2)
+    print("# of max page: ", max_page)
+    print(list_view)
+    print()
+
+
+    max_page, list_view = load_list_view(db=db, page=2, item_per_page=2)
+    print("# of max page: ", max_page)
+    print(list_view)
+    print()
+
+    max_page, list_view_default_result = load_list_view(db=db, page=1, item_per_page=1, user_idName = 'SeongGu')
+    print("# of max page: ", max_page)
     print(list_view_default_result)
+    print()
+
+
+    #############################################
+    #### Testing update_columns_af_duplicate ####
+    #############################################
 
     #### FOR TEST ONLY #### 
     overlapping_ids = [i+32 for i in range(31)]
     #### FOR TEST ONLY ####
-
     update_columns_af_duplicate(db, qc_ids = overlapping_ids)
 
+    #### FOR TEST ONLY #### 
+    sampled = _sampling_image(db, list_view_default_result, K=2)
+#    print(sampled)
+    #### FOR TEST ONLY #### 
 
-    
+
+
+
+    ##########################################
+    #### Testing db.readDB_join_filtering ####
+    ##########################################
+
+    #### FOR TEST ONLY #### 
+    join = [["LEFT JOIN", table_name[5], table_name[2], "qc_id", "qc_id"]]
+    condition = "dataset_id='1'"
+
+    result = db.readDB_join_filtering(schema = schema_name, table = table_name[5], columns = "*", join = join, condition = condition)
+    #print(result)
+    # print(result[0])
+    #### FOR TEST ONLY #### 
