@@ -91,28 +91,40 @@ function SearchView() {
     formData.append('description', e.target[4].value)
 
     const Upload = async () => {
+      
+      if (!e.target[1].value) {
+        alert('Please enter your ID')
+      }
+      else if (!e.target[2].value){
+        alert('Please enter your PW')
+      }
+      else if (!e.target[3].value){
+        alert('Please enter the title')
+      }
 
-      await fetch('http://0.0.0.0:3000/upload', {
-        method: 'POST',
-        body: formData
-      }).then(resp => {
-        resp.json().then(data => {
-          // if you want values of response, check!!
-          // console.log("data", data.data)
-          // console.log("user identification", data.valid)
-          // console.log("upload complete", data.success)
-          
-          if (!data.valid) {
-            alert('pw is not valid!!!!')  
-          } else if (!data.success) {
-            alert('upload failed!!!')  
-          } else {
-            alert('upload complete!!!')  
-          }
+      else {
+        await fetch('http://127.0.0.1:3000/upload', {
+          method: 'POST',
+          body: formData
+        }).then(resp => {
+          resp.json().then(data => {
+            // if you want values of response, check!!
+            // console.log("data", data.data)
+            // console.log("user identification", data.valid)
+            // console.log("upload complete", data.success)
+            
+            if (!data.valid) {
+              alert('pw is not valid!!!!')  
+            } else if (!data.success) {
+              alert('upload failed!!!')  
+            } else {
+              alert('upload complete!!!')  
+            }
 
-          setListInfo(prev=>([...data.data]))
+            setListInfo(prev=>([...data.data]))
+          })
         })
-      })
+      }
     }
     Upload();
   }
