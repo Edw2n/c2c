@@ -108,7 +108,7 @@ class CRUD(PostgrestDB):
             self.execute(sql, "INSERT ROW")
             self.db.commit()
             success = True
-            print(f'Inserting data into {schema}.{table} is successfully done')
+            # print(f'Inserting data into {schema}.{table} is successfully done')
         except Exception as e :
             print(" insert DB err ",e) 
         
@@ -153,6 +153,7 @@ class CRUD(PostgrestDB):
         - schema : 스키마 명, string
         - table : 테이블 명, string
         - columns : 컬럼명 list , a list of strings
+        - condition: string, where 에 들어갈 조건
 
         [output]
         - result : 읽어온 결과, a list of row(tuple)
@@ -167,6 +168,50 @@ class CRUD(PostgrestDB):
 
         columns = ", ".join(columns)
         sql = f" SELECT {columns} FROM {schema}.{table} WHERE {condition};"
+
+        try:
+            result = self.execute(sql)
+        except Exception as e :
+            print(" read DB err",e)
+        
+        return result
+    
+    def readDB_join_filtering(self, schema, table, columns, join, condition):
+        '''
+        schema.table을 join하여 columns 에 해당하는 열들 중 조건에 맞는 열을 읽어옴
+
+        [input]
+        - schema : 스키마 명, string
+        - table : 테이블 명, string
+        - columns : 컬럼명 list , a list of strings
+        - join: join할 list, (2D list)
+            e.g., join = [["LEFT JOIN", "table1", "table2", "id_1", "id_2"], 
+                          ["INNER JOIN", "table2", "table3", "id_2", "id_3"], 
+                          ["RIGHT JOIN", "table3", "table4", "id_3", "id_4"], 
+                          ["OUTER JOIN", "table4", "table5", "id_4", "id_5"]
+                         ]
+
+        - condition: string, where 에 들어갈 조건
+
+        [output]
+        - result : 읽어온 결과, a list of row(tuple)
+        (read db error => return None)
+        '''
+        
+        assert schema is not None, "schema is not allowed None!"
+        assert table is not None, "table is not allowed None!"
+        assert columns is not None, "column is not allowed None!"
+        assert join is not None, "join option is not allowed None!"
+
+        result = None
+        
+        join_string = ""
+        for target in join:
+            join_tmp = f"{target[0]} {target[2]} ON {target[1]}.{target[3]}={target[2]}.{target[4]}"
+            join_string = join_string + " " + join_tmp
+
+        columns = ", ".join(columns)
+        sql = f" SELECT {columns} FROM {schema}.{table} {join_string} WHERE {condition};"
 
         try:
             result = self.execute(sql)

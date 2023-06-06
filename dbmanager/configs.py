@@ -6,6 +6,12 @@ POSTGRES_CONFIG = { # 보안상 문제로 이렇게 하면 안되긴 하는데 �
     "C2C_PORT": "5432",
     "C2C_DB": "c2c"
 }
+"img_id", "image_path", "image_width", "image_height", "upload_date", 
+"lat", "lon", "alt", "roll", "pitch", "yaw", "velo_north", "velo_east",
+"velo_forward", "velo_leftward", "velo_upward",
+"accel_x", "accel_y", "accel_z", "accel_forward", "accel_leftward", "accel_upward", 
+"ang_x", "ang_y", "ang_z", "ang_forward","ang_leftward", "ang_upward", "like_cnt", 
+"pos_accuracy", "vel_accuracy", "navstat", "numsats", "posmode", "velmode", "orimode", "qc_id", "user_id", "product_id", "dataset_id"
 
 SCHEMA_NAME = "public"
 TABLE_NAME = ["GroundTruth", "ProductInfo", "QC", "User", "DatasetInfo", "Features", "Transaction", "Object"]
@@ -30,15 +36,14 @@ ALL_COLUMNS = [[
                     'dataset_id', 'dataset_name', 'dataset_description', 'dataset_selection_cnt'
                 ],
                 [
-                    'img_id','lat', 'lon', 'alt', 'roll', 'pitch', 'yaw',
-                    'velo_north', 'velo_east', 'velo_forward', 'velo_leftward', 'velo_upward',
-                    'accel_x', 'accel_y', 'accel_z', 'accel_forward', 'accel_leftward', 'accel_upward',
-                    'ang_x', 'ang_y', 'ang_z', 'ang_forward', 'ang_leftward', 'ang_upward',
-                    'pos_accuracy', 'vel_accuracy',
-                    'navstat', 'numsats', 'posmode', 'velmode', 'orimode',
-                    'qc_id', 'user_id', 'product_id', 'dataset_id', 
-                    'image_path', 'image_width', 'image_height',
-                    'upload_date', 'like_cnt'
+                    "img_id", "image_path", "image_width", "image_height", "upload_date", 
+                    "lat", "lon", "alt", "roll", "pitch", "yaw", "velo_north", "velo_east",
+                    "velo_forward", "velo_leftward", "velo_upward",
+                    "accel_x", "accel_y", "accel_z", "accel_forward", "accel_leftward", "accel_upward", 
+                    "ang_x", "ang_y", "ang_z", "ang_forward","ang_leftward", "ang_upward", 
+                    "pos_accuracy", "vel_accuracy", "navstat", "numsats", "posmode", "velmode", "orimode",
+                    "like_cnt", "qc_id", "user_id", "product_id", "dataset_id"
+
                 ],
                 [
                     'tx_id', 'tx_date', 'img_id', 'buyer_id', 'seller_id'
@@ -149,7 +154,6 @@ FEATURES_COLUMNS_INFO = {
     "ang_forward":    "numeric NULL",
     "ang_leftward":   "numeric NULL",
     "ang_upward":     "numeric NULL",
-    "like_cnt":       "bigint NULL",
     "pos_accuracy":   "numeric NULL",
     "vel_accuracy":   "numeric NULL",
     "navstat":        "bigint NULL",
@@ -157,6 +161,7 @@ FEATURES_COLUMNS_INFO = {
     "posmode":        "bigint NULL",
     "velmode":        "bigint NULL",
     "orimode":        "bigint NULL",
+    "like_cnt":       "bigint NULL",
     "qc_id":          "bigint NULL",
     "user_id":        "bigint NULL",
     "product_id":     "bigint NULL",
