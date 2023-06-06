@@ -8,7 +8,7 @@ from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG
 from dbmanager.utils import initialize_db_structures, identify_user
 from utils.upload_manager import UploadManager
-from utils.read_maanger import ReadManager
+from utils.read_manager import ReadManager
 
 imgfile_path_list = []
 UPLOAD_ROOTDIR = "./uploads/"
