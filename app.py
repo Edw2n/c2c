@@ -8,6 +8,7 @@ from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG
 from dbmanager.utils import initialize_db_structures, identify_user, load_list_view_default
 from utils.upload_manager import UploadManager
+from utils.read_maanger import ReadManager
 
 imgfile_path_list = []
 UPLOAD_ROOTDIR = "./uploads/"
@@ -15,6 +16,7 @@ app = Flask(__name__)
 CORS(app)
 db = None
 upload_manager = None
+read_manager = None
 print("service is created")
 
 list_data_num = 10
@@ -23,6 +25,7 @@ list_data_num = 10
 def upload_data():
     print("uploaded")
     global list_data_num
+    data = []
     
     if request.method =="POST":
 
@@ -63,11 +66,15 @@ def upload_data():
             list_data_num = len(f.filename)
         except Exception as e:
             print("read formdata error", e)
-    # read every data
-    query = {}
-    data = read_data(query)
     
-    # blablabla
+    # read entire data
+    query = None
+    try:
+        _, data = read_manager.read_searched_data(query)
+        print('after upload, data:', data)
+        print('after upload, success:', success)
+    except Exception as e:
+        print("read data error in upload pipeline:", e)
 
     result = {
         "data": data,
@@ -79,34 +86,23 @@ def upload_data():
 
 @app.route("/read",methods=["POST"])
 def service_data():
-
+    data = []
+    query = None
+    success = False
     if request.method =="POST":
         print("*******     read info     ********")
-        keyword = request.form["keyword"]
-        # gender = request.form["Gender"]
-        # breed_detail = request.form["Breed_detail"]
-        # color = request.form["Color"]
-        # neutering = request.form["Neutering"]
-        # city = request.form["City"]
-
-        #TODO script file 처리 추가
-
-        print(f"keyword :{keyword}")
-        # print(f"gender :{gender}")
-        # print(f"breed_detail :{breed_detail}")
-        # print(f"color :{color}")
-        # print(f"neutering :{neutering}")
-        # print(f"city :{city}")
-
-        # read data from db (read all data)
-        df_result = load_list_view_default(db)
-
-        query = None # TODO : request information => query 
-        data = read_data(query)
-        # something process
+        try:
+            # qeury = get_query_info(request.form~~~~)
+            # read data from db (read all data)
+            success, data = read_manager.read_searched_data(query)
+            print('after read, data:', data)
+            print('after read, success:', success)
+        except Exception as e:
+            print("read data service error:", e)
 
     result = {
         "data": data,
+        "success" : success
     }
 
     return json.dumps(result)
@@ -158,12 +154,12 @@ if __name__ == "__main__":
     
     try:
         # connect db (연결, 필요시 db 초기 structure 구성)
-        db, success = connect_db(initialize=True)
+        db, success = connect_db(initialize=False)
 
         # initialize helpers for service pipeline
         if success:
             upload_manager = UploadManager(db)
-            print(upload_manager)
+            read_manager = ReadManager(db)
 
         # run flask server
         app.run(host="0.0.0.0", port=3000)
