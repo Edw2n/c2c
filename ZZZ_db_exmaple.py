@@ -1,7 +1,7 @@
 from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG, SCHEMA_NAME, TABLE_NAME, ALL_COLUMNS
 from dbmanager.utils import initialize_db_structures, insert_user, insert_draft_dataset, \
-    load_list_view, update_multiple_columns, update_columns_af_duplicate, _sampling_image
+    load_list_view, update_multiple_columns, update_columns_af_duplicate, load_detailed_view
 import pandas as pd
 import numpy as np
 
@@ -86,14 +86,14 @@ if __name__ == "__main__":
     print(list_view)
     print()
 
-    max_page, list_view_default_result = load_list_view(db=db, page=1, item_per_page=1, user_idName = 'SeongGu')
+    max_page, list_view = load_list_view(db=db, page=1, item_per_page=1, user_idName = 'SeongGu')
     print("# of max page: ", max_page)
-    print(list_view_default_result)
+    print(list_view)
     print()
 
 
     #############################################
-    #### Testing update_columns_af_duplicate ####
+    #### Testing detailed list view ####
     #############################################
 
     #### FOR TEST ONLY #### 
@@ -101,9 +101,14 @@ if __name__ == "__main__":
     #### FOR TEST ONLY ####
     update_columns_af_duplicate(db, qc_ids = overlapping_ids)
 
+    max_page, list_view_test = load_list_view(db=db, page=1, item_per_page=10)
+    print("# of max page: ", max_page)
+    print(list_view_test)
+    print()
+
     #### FOR TEST ONLY #### 
-    sampled = _sampling_image(db, list_view_default_result, K=2)
-#    print(sampled)
+    detailed_view = load_detailed_view(db, list_view_test, K=10)
+    print(detailed_view)
     #### FOR TEST ONLY #### 
 
 
