@@ -141,6 +141,18 @@ function SearchView() {
     var qcState = StateCheckbox.qc_state ? `${StateCheckbox.qc_state}` : 'All';
     var qcScore = StateCheckbox.qc_score ? `${StateCheckbox.qc_score}` : 'All';
     var qcObject = StateCheckbox.qc_object ? `${StateCheckbox.qc_object}` : 'All';
+    var roll = StateNumbers.Roll ? `${StateNumbers.Roll.start || -4},${StateNumbers.Roll.end || 4}` : 'none';
+    var pitch = StateNumbers.Pitch ? `${StateNumbers.Pitch.start || -4},${StateNumbers.Pitch.end || 4}` : 'none';
+    var yaw = StateNumbers.Yaw ? `${StateNumbers.Yaw.start || -4},${StateNumbers.Yaw.end || 4}` : 'none';
+    var wx = StateNumbers.Wx ? `${StateNumbers.Wx.start || -99999},${StateNumbers.Wx.end || 99999}` : 'none';
+    var wy = StateNumbers.Wy ? `${StateNumbers.Wy.start || -99999},${StateNumbers.Wy.end || 99999}` : 'none';
+    var wz = StateNumbers.Wz ? `${StateNumbers.Wz.start || -99999},${StateNumbers.Wz.end || 99999}` : 'none';
+    var vf = StateNumbers.Vf ? `${StateNumbers.Vf.start || -99999},${StateNumbers.Vf.end || 99999}` : 'none';
+    var vl = StateNumbers.Vl ? `${StateNumbers.Vl.start || -99999},${StateNumbers.Vl.end || 99999}` : 'none';
+    var vu = StateNumbers.Vu ? `${StateNumbers.Vu.start || -99999},${StateNumbers.Vu.end || 99999}` : 'none';
+    var ax = StateNumbers.Ax ? `${StateNumbers.Ax.start || -99999},${StateNumbers.Ax.end || 99999}` : 'none';
+    var ay = StateNumbers.Ay ? `${StateNumbers.Ay.start || -99999},${StateNumbers.Ay.end || 99999}` : 'none';
+    var az = StateNumbers.Az ? `${StateNumbers.Az.start || -99999},${StateNumbers.Az.end || 99999}` : 'none';
    
     // console.log(selectedValue)
     // var customScript = document.getElementById('form-custom-script-file').value ? true : false;
@@ -150,6 +162,18 @@ function SearchView() {
     formData.append('qc_state',qcState)
     formData.append('qc_score',qcScore)
     formData.append('objects',qcObject)
+    formData.append('roll',roll)
+    formData.append('pitch',pitch)
+    formData.append('yaw',yaw)
+    formData.append('wx',wx)
+    formData.append('wy',wy)
+    formData.append('wz',wz)
+    formData.append('vf',vf)
+    formData.append('vl',vl)
+    formData.append('vu',vu)
+    formData.append('ax',ax)
+    formData.append('ay',ay)
+    formData.append('az',az)
 
     console.log(formData)
     const search = async () => {
@@ -319,6 +343,23 @@ function SearchView() {
     {id: 'velocity', title:"Velocity(m/s)", sub:['Vf','Vl','Vu']},
     {id: 'acceleration', title:"Accel(m/s^2)", sub:['Ax','Ay','Az']}
   ]
+  // 필터3 - 숫자 엔트리 state
+  const [StateNumbers, setStateNumbers] = useState({});
+  // 필터3 - 숫자 엔트리 (event handler)
+  const handleInputChange = (subItem, inputType, value) => {
+    setStateNumbers(prevState => {
+      const newNumbers = { ...prevState[subItem], [inputType]: value };
+      const { start, end } = newNumbers;
+      const hasStart = start !== undefined && start !== '';
+      const hasEnd = end !== undefined && end !== '';
+  
+      if (!hasStart && !hasEnd) {
+        return { ...prevState, [subItem]: undefined };
+      }
+  
+      return { ...prevState, [subItem]: newNumbers };
+    });
+  };
   const f3category_titles = (
     <div className='LowLevelGroup' style={{gridRow: '3', borderBottom: '1px solid lightgray'}}>
     {f3category.map((catdata, index) => (
@@ -342,10 +383,14 @@ function SearchView() {
             </label>
             <label style={{textAlign: 'left', width: '100%', height: '100%'}}>
               <input style={{ width: '30%' , height: '75%', fontSize: '0.7rem'}} 
-                type="number" id={`${subItem}-start`} placeholder='Start'/>
+                type="number" id={`${subItem}-start`} placeholder='Start'
+                value={StateNumbers[subItem]?.start || ''}
+                onChange={(e) => handleInputChange(subItem, 'start', e.target.value)}/>
               <span>  -  </span>
               <input style={{ width: '30%' , height: '75%', fontSize: '0.7rem'}} 
-                type="number" id={`${subItem}-end`} placeholder='End'/>
+                type="number" id={`${subItem}-end`} placeholder='End'
+                value={StateNumbers[subItem]?.end || ''}
+                onChange={(e) => handleInputChange(subItem, 'end', e.target.value)}/>
             </label>
           </React.Fragment>
         ))
