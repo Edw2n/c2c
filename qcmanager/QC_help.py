@@ -139,7 +139,7 @@ class IQA():
             score = self.model(patch)
             avg_score += score
       mos_score = avg_score / num_crops
-      return mos_score
+      return mos_score.item()
 
    def get_iqa(self, img_path: str, num_crops: int, model: object) -> list:
       '''
