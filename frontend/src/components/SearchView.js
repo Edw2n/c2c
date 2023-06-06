@@ -138,12 +138,18 @@ function SearchView() {
     console.log(e.target);
 
     var keyword = document.getElementById("keyword").value ? `${document.getElementById("keyword").value}` : 'none';
-
+    var qcState = StateCheckbox.qc_state ? `${StateCheckbox.qc_state}` : 'All';
+    var qcScore = StateCheckbox.qc_score ? `${StateCheckbox.qc_score}` : 'All';
+    var qcObject = StateCheckbox.qc_object ? `${StateCheckbox.qc_object}` : 'All';
+   
     // console.log(selectedValue)
     // var customScript = document.getElementById('form-custom-script-file').value ? true : false;
     // TODO: customSCript form에 붙이기
     
     formData.append('keyword', keyword)
+    formData.append('qc_state',qcState)
+    formData.append('qc_score',qcScore)
+    formData.append('objects',qcObject)
 
     console.log(formData)
     const search = async () => {
@@ -198,6 +204,66 @@ function SearchView() {
     {id: "qc_score", title:"QC Score", sub:['All','Low','Medium','High']},
     {id: "qc_object", title:"QC Object", sub:['All', 'Car', 'Van', 'Truck', 'Pedestrian', 'Sitter', 'Cyclist', 'Tram', 'Misc']},
   ]
+  // 필터2 - 체크박스 state
+  const [StateCheckbox, setStateCheckbox] = useState({});
+
+  // 필터2 -체크박스 (event handler)
+  const handleCheckboxChange = (category, subItem) => {
+    const isChecked = document.getElementById(`${category}-${subItem}`).checked;
+
+    if (subItem === 'All') {
+      const targetCategory = f2category.find(cat => cat.id === category);
+      const subCheckboxes = targetCategory.sub.filter(sub => sub !== 'All');
+
+      subCheckboxes.forEach(sub => {
+        document.getElementById(`${category}-${sub}`).checked = isChecked;
+      });
+
+      setStateCheckbox(prevState => {
+        const newCheckedItems = { ...prevState };
+        if (isChecked) {
+          newCheckedItems[category] = ['All'];
+        } else {
+          delete newCheckedItems[category];
+        }
+        return newCheckedItems;
+      });
+    } else {
+      const allCheckbox = document.getElementById(`${category}-All`);
+      const targetCategory = f2category.find(cat => cat.id === category);
+      const subCheckboxes = targetCategory.sub.filter(sub => sub !== 'All');
+      const checkedCount = subCheckboxes.reduce((count, sub) => {
+        return document.getElementById(`${category}-${sub}`).checked ? count + 1 : count;
+      }, 0);
+
+      if (isChecked && checkedCount === subCheckboxes.length) {
+        allCheckbox.checked = true;
+      } else if (!isChecked && checkedCount === subCheckboxes.length - 1) {
+        allCheckbox.checked = false;
+      }
+
+      setStateCheckbox(prevState => {
+        const newCheckedItems = { ...prevState };
+        newCheckedItems[category] = newCheckedItems[category] || [];
+        if (isChecked) {
+          if (!newCheckedItems[category].includes('All')) {
+            newCheckedItems[category] = [...newCheckedItems[category], subItem];
+          }
+          if (newCheckedItems[category].length === subCheckboxes.length) {
+            newCheckedItems[category] = ['All'];
+          }
+        } else {
+          newCheckedItems[category] = newCheckedItems[category].filter(item => item !== subItem);
+          if (newCheckedItems[category].length === 0) {
+            delete newCheckedItems[category];
+          } else if (newCheckedItems[category].includes('All')) {
+            newCheckedItems[category] = newCheckedItems[category].filter(item => item !== 'All');
+          }
+        }
+        return newCheckedItems;
+      });
+    }
+  };
   const f2category_titles = (
     <div className='LowLevelGroup' style={{gridRow: '2',  gridTemplateRows: '25% 25% 25% 25%', borderBottom: '1px solid lightgray'}}>
     {f2category.map((catdata, index) => (
@@ -238,7 +304,7 @@ function SearchView() {
                 height: '100%',
               }}
             >
-              <input id={subItem} type="checkbox" style={{alignSelf: 'center', height: '100%'}}/>
+              <input id={`${catdata.id}-${subItem}`} type="checkbox" style={{alignSelf: 'center', height: '100%'}} onChange={() => handleCheckboxChange(catdata.id, subItem)}/>
             </label>
           </React.Fragment>
         ))
