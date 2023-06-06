@@ -1,4 +1,4 @@
-from dbmanager.utils import load_list_view_default
+from dbmanager.utils import load_list_view
 
 class ReadManager():
     '''
@@ -8,7 +8,7 @@ class ReadManager():
             "dataset_id": "d_id", # not required
             "dataset_name": "Title",
             "price_total": "Price",
-            "iamge_count": "MatchedData", 
+            "image_count": "MatchedData", 
             "avg_price_per_image": "PricePerImage",
             "sales_count": "SalesCount",
             "like_count": "Likes",
@@ -37,22 +37,24 @@ class ReadManager():
         [output]
         - success: bool
         - data: searched data (a list of dictionary(row))
+        - max_page_num: max page number of queried data
         '''
         data = []
         success = False
+        max_page_num = 0
         try:
             if query:
                 pass
             else: # read all
-                df_result = load_list_view_default(self.db)
-                if df_result:
+                max_page_num, df_result = load_list_view(self.db)
+                if df_result is not None:
                     df_result.rename(columns=self.db2front, inplace=True)
                     df_result['Objects'] = df_result.apply(lambda x: f"{x.object_count} objects: {x.object_info_in_detail}", axis=1)
                     data = df_result.to_dict("records")
             success = True
         except Exception as e:
             print("read data error:", e)
-        return success, data
+        return success, data, max_page_num
 
             
 

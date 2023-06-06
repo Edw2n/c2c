@@ -6,9 +6,9 @@ from werkzeug.utils import secure_filename
 
 from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG
-from dbmanager.utils import initialize_db_structures, identify_user, load_list_view_default
+from dbmanager.utils import initialize_db_structures, identify_user
 from utils.upload_manager import UploadManager
-from utils.read_maanger import ReadManager
+from utils.read_manager import ReadManager
 
 imgfile_path_list = []
 UPLOAD_ROOTDIR = "./uploads/"
@@ -70,7 +70,7 @@ def upload_data():
     # read entire data
     query = None
     try:
-        _, data = read_manager.read_searched_data(query)
+        _, data, max_page_num = read_manager.read_searched_data(query)
         print('after upload, data:', data)
         print('after upload, success:', success)
     except Exception as e:
@@ -80,6 +80,7 @@ def upload_data():
         "data": data,
         "valid": valid,
         "success": success,
+        "max_page_num": max_page_num,
     }
 
     return json.dumps(result)
@@ -94,7 +95,7 @@ def service_data():
         try:
             # qeury = get_query_info(request.form~~~~)
             # read data from db (read all data)
-            success, data = read_manager.read_searched_data(query)
+            success, data, max_page_num = read_manager.read_searched_data(query)
             print('after read, data:', data)
             print('after read, success:', success)
         except Exception as e:
@@ -102,7 +103,8 @@ def service_data():
 
     result = {
         "data": data,
-        "success" : success
+        "success": success,
+        "max_page_num": max_page_num,
     }
 
     return json.dumps(result)
