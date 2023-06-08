@@ -26,24 +26,23 @@ function ManageView() {
 
     console.log(userName, pw)
 
-    //추후 구현 예정
-    // const getRows = async () => {
-    //   await fetch('http://0.0.0.0:3000/user_post', {
-    //     method: 'POST',
-    //     body: formData
-    //   }).then(resp => {
-    //     resp.json().then(data => {
-    //       let matched = data['matched']
-    //       if (!matched){
-    //         alert('not matched')
-    //       }else{
-    //         setRows(data.data)
-    //       }
-    //       // setAnimalInfo(prev=>([...data.data]))
-    //     })
-    //   })
-    // }
-    // getRows();
+    //우리 시나리오에 맞게 stae 변경하면서 구현하면됨
+    const getRows = async () => {
+      await fetch('http://0.0.0.0:3000/login', {
+        method: 'POST',
+        body: formData
+      }).then(resp => {
+        resp.json().then(data => {
+          let matched = data['valid']
+          if (!matched){
+            alert('not valid!!!')
+          }else{
+            alert('valid')
+          }
+        })
+      })
+    }
+    getRows();
 
   }
   
