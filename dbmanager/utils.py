@@ -163,7 +163,6 @@ def _identify_user_upload_scenario (db, user_idname, user_password, case="upload
 
 ######################################################################################################
 
-
 def insert_user_unzipped(db, unzipped_dataset_info): ## LEGACY
     '''
     insert user info into User table in DB
@@ -415,7 +414,6 @@ def _load_list_view_tx (db, page=1, item_per_page=10, user_id_Name = None):
     '''
     pass
 
-
 def _load_list_view_default(db, page=1, item_per_page=10, user_idName = None):
     '''
     load_list view 
@@ -557,31 +555,34 @@ def _load_list_view_default(db, page=1, item_per_page=10, user_idName = None):
                          on='dataset_id',
                          how='left'
                          )
-    print()
 
     return total_cnt, df_result
 
-##############################################################################
-##############################################################################
-##############################################################################
-
-def _sampling_image(db, df, K = 10): #### need to FiX
+def load_detailed_view(db, df, K = 10): 
     '''
-    sampling image
-    The default value of qc_duplicate column is 0 and if the image is overlapping, the value becomes 1
+    sampling image and load_detailed_view
 
     [inputs]
     - db    : target db object (CRUD)
-    - df    : list, list of the ids that overlaps
+    - df    : pd.DataFrame, 샘플 이미지를 추출할 리스트뷰의 값
     - k     : int, number of sampled images, default: 10
 
     [output]
-    - success: 성공 여부
-    '''
+    - result_df: output from query, pd.DataFrame, if df_result is empty pd.DataFrame, returns None
+      cols = ['img_id', 'image_path', 'qc_score',
+              'object_list', 'object_count','object_info_in_detail']
+      also,
+        the value of colmnn "object_list" is *list* of object 
+            (e.g., ['Van','Cyclist', 'Pedestrian'])
+        the value of column "object_info_in_detail" is dictinary that keys are object's name and value is its count
+            (e.g., {'Cyclist': 1, 'Pedestrian': 1, 'Van': 2})
 
+    '''
     # 0. Initial Setting
     success = False
     schema_name = SCHEMA_NAME
+    columns = [*ALL_COLUMNS[5], *ALL_COLUMNS[2]]
+    result_df = pd.DataFrame(columns=columns)
 
     # 1. make dataset_id list 
     dataset_id_list = list(df['dataset_id'].unique())
@@ -602,40 +603,237 @@ def _sampling_image(db, df, K = 10): #### need to FiX
         # 2-4. make dataset_id_and_img_id_list
         dataset_id_and_img_id_list.append([id, img_ids, random_img_ids])
 
+    # 3. Join option and condition
+    join = [["JOIN", "Features", "QC", "qc_id", "qc_id"]]
+
     # 4. read DB with filtering
-    result_ft = []
-    result_qc = []
-    result_gt = []
+    for dataset in dataset_id_and_img_id_list:
+        img_ids_tuple = tuple(dataset[2])
+        condition_ft = f"features.img_id IN {img_ids_tuple}"
+        columns = ['image_path']
+        result_ft_tmp = db.readDB_join_filtering(schema = schema_name, table = 'Features', columns = '*', join=join, condition=condition_ft )
+        for i in result_ft_tmp:
+            result_df.loc[len(result_df)] = list(i)
+
+    # 5. object information
+    ## a. df for final result and condition settting 
+    df_obj_list_split_by_img = pd.DataFrame(columns = ['img_id', 'object_list', 'object_count', 'object_info_in_detail'])
+    df_obj_list_split_by_img_tmp = pd.DataFrame(columns = ['img_id', 'object_list', 'object_count', 'object_info_in_detail'])
 
     for dataset in dataset_id_and_img_id_list:
-        for img_id in dataset[2]:
-            condition_ft = f"img_id = '{img_id}'"
-            condition_qc = f"qc_id = '{img_id}'"
-            condition_gt = f"img_id = '{img_id}'"
-            
-            res_tmp_ft = db.readDB_with_filtering(schema=schema_name, table = 'Features', columns = '*', condition=condition_ft)
-            res_tmp_qc = db.readDB_with_filtering(schema=schema_name, table = 'QC', columns = '*', condition=condition_qc)
-            res_tmp_gt = db.readDB_with_filtering(schema=schema_name, table = 'GroundTruth', columns = '*', condition=condition_gt)
-            result_ft.append(res_tmp_ft[0])
-            result_qc.append(res_tmp_qc[0])
-            for gt in res_tmp_gt:
-                result_gt.append(gt)
-                print()
-            # print(res_tmp_gt)
-            # print(result_gt)
+        img_ids_tuple = tuple(dataset[2])
+        for id in img_ids_tuple:
+            condition_img_id= f"WHERE dataset.img_id = {id}"
+            ## b. excute query
+            sql = f"select  res.img_id, res.gt_object, count(res.gt_object) \
+                    from ( \
+                        select o.gt_object, g.gt_height, g.gt_width, dataset.img_id \
+                        from groundtruth g  \
+                        left join ( \
+                            select f.img_id, d.dataset_id \
+                            from features f \
+                            left join datasetinfo d on d.dataset_id = f.dataset_id \
+                        ) dataset on dataset.img_id = g.img_id \
+                        left join public.object o on o.gt_object_id = g.gt_object_id \
+                        {condition_img_id} \
+                        group by o.gt_object, g.gt_height, g.gt_width, dataset.img_id \
+                    ) res \
+                    group by res.img_id, res.gt_object \
+                    order by res.img_id; "    
+            result_obj = db.execute(sql)
+            col_obj = ['img_id', 'gt_object', 'count']
+            df_obj = pd.DataFrame(data = result_obj, columns= col_obj)
+    
+            ## c. update column dataset_ids
+            df_obj_unique_img_id = df_obj['img_id'].unique()
+            df_obj_list_split_by_img_tmp['img_id'] = list(df_obj_unique_img_id)
+    
+            ## d. update column object_count
+            df_groupby1=df_obj.groupby('img_id').sum()
+            df_obj_list_split_by_img_tmp['object_count'] = list(df_groupby1['count'])
 
-#    print(result)
-    result_df = pd.DataFrame(data=result_ft, columns=ALL_COLUMNS[5])
-    result_df_qc = pd.DataFrame(data=result_qc, columns=ALL_COLUMNS[2])
-    result_df = pd.merge(result_df, result_df_qc, how='left', on='qc_id')
-    result_df_gt = pd.DataFrame(data=result_gt, columns= ALL_COLUMNS[0])
-    # print(result_df_gt)
+            ## e. update column object_list and object_info_in_detail
+            tmp_list_for_detail = []
+            tmp_list_for_object_list = []
+            for i in df_obj_unique_img_id:
+                df_target = df_obj[df_obj['img_id']==i]
+                tmp_dict = {}
+                df_target_len = len(df_target)
+                sub_tmp_list_for_object_list = []
+                for j in range(df_target_len):
+                    tmp_key = df_target['gt_object'].iloc[j]
+                    tmp_value = df_target['count'].iloc[j]
+                    tmp_dict[tmp_key] = tmp_value
+                    sub_tmp_list_for_object_list.append(tmp_key)
+                tmp_list_for_detail.append(tmp_dict)
+                tmp_list_for_object_list.append(sub_tmp_list_for_object_list)
+                df_obj_list_split_by_img.loc[len(df_obj_list_split_by_img)] = [i, tmp_list_for_object_list[0], list(df_groupby1['count'])[0], tmp_list_for_detail[0]]
+
+    target_cols = ['img_id', 'image_path', 'qc_score']
+    result_df = result_df[target_cols]
+    result_df = pd.merge(result_df,
+                         df_obj_list_split_by_img,
+                         on='img_id',
+                         how='left'
+                         )
     return result_df
 
+################ WORK IN PROGRESS #################
+
+def load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_idName = None):
+    '''
+    load_list view 
+    if user_idName is not None -> then returns listview for the user's uploaded dataset
+
+    [inputs]
+    - db: target db object (CRUD)
+    - condition_filter: dictionary 
+       {"BASIC_INFO": string, 
+        "QUALITY_INFO": {"qc_state", "qc_score", "qc_object"}
+        "SENSOR_INFO": {"roll", "pitch", "yaw", "Wx", "Wy", "Wz", "Vf", "Vl", "Vu","Ax", "Ay", "Az"}
+        "CUSTOM_FILTERING": WIP
+        }
+    - page: int, page number, default: 1,  if you want load 3rd page, then 3
+    - item_per_page: int, default:10, the number of items per page
+    - user_idName   : string, default: None, 
+
+    [output]
+    - total_count: int, the number of rows
+    - df_result: pd.DataFrame, output from query, if df_result is empty pd.DataFrame, returns None
+      cols = ['dataset_id', 'dataset_name',
+              'price_total', 'iamge_count', 'avg_price_per_image',
+              'sales_count', 'like_count',
+              'qc_state', 'qc_score', 
+              'uploader', 'upload_date', 
+              'object_list', 'object_count','object_info_in_detail']
+      also,
+        the value of colmnn "object_list" is *list* of object 
+            (e.g., ['Van','Cyclist', 'Pedestrian'])
+        the value of column "object_info_in_detail" is dictinary that keys are object's name and value is its count
+            (e.g., {'Cyclist': 1, 'Pedestrian': 1, 'Van': 2})
+    '''
 
 
+    # 1. initial setting and total rows cnt
+    result = None
+    item_start = 0 + item_per_page * (page - 1)
+    if user_idName is not None:
+        condition_id = f"where u.user_idName = '{user_idName}'"
+    else: condition_id = ""
+
+    sql = f"select res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date \
+            from( \
+                select f.img_id, f.upload_date, f.like_cnt, d.*, p.*, q.qc_status, q.qc_score, u.* \
+                from features f \
+                left join productinfo p on f.product_id =p.product_id \
+                left join datasetinfo d on d.dataset_id =f.dataset_id \
+                left join qc q on q.qc_id =f.qc_id \
+                left join public.user u on u.user_id =f.user_id \
+                {condition_id} \
+                ) res \
+            group by res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date;"
+    total_cnt = db.execute(sql)
+    total_cnt = len(total_cnt)
+    if total_cnt == 0:
+        return total_cnt, None
+
+    # 2. dataset information
+    sql = f"select res.dataset_id, res.dataset_name,\
+                sum(res.price) as price_total,\
+                count(res.dataset_id) as total_image_count,\
+                sum(res.price) / count(res.dataset_id) as avg_price_per_image, \
+                max(res.dataset_selection_cnt) as sales_count,\
+                sum(res.like_cnt) as like_count, \
+                res.qc_status as qc_state, \
+                AVG(res.qc_score) as qc_score, \
+                res.user_idname as uploader, \
+                res.upload_date as upload_date \
+            from( \
+                select f.img_id, f.upload_date, f.like_cnt, d.*, p.*, q.qc_status, q.qc_score, u.* \
+                from features f \
+                left join productinfo p on f.product_id =p.product_id \
+                left join datasetinfo d on d.dataset_id =f.dataset_id \
+                left join qc q on q.qc_id =f.qc_id \
+                left join public.user u on u.user_id =f.user_id \
+                {condition_id} \
+                ) res \
+            group by res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date \
+            order by res.dataset_id limit {item_per_page} offset {item_start};"
+
+    result = db.execute(sql)
+    columns = ['dataset_id', 'dataset_name', 'price_total', 'image_count', 'avg_price_per_image', 'sales_count', 'like_count' ,'qc_state' ,'qc_score', 'uploader' ,'upload_date']
+    df_result = pd.DataFrame(data = result, columns=columns)
+
+    target_dataset_id = tuple(df_result['dataset_id'])
+    
+    # 3. object information
+    ## a. df for final result and condition settting 
+    df_obj_list_split_by_dataset = pd.DataFrame(columns = ['dataset_id', 'object_list', 'object_count', 'object_info_in_detail'])
+
+    if len(target_dataset_id) == 0:
+        return df_result
+    elif len(target_dataset_id) == 1:
+        condition = f"where dataset.dataset_id = '{target_dataset_id[0]}'"
+    else:
+        condition = f"where dataset.dataset_id in {target_dataset_id}" 
+    
+    ## b. excute query
+    sql = f"select  res.dataset_id, res.gt_object, count(res.gt_object) \
+            from ( \
+                select o.gt_object, g.gt_height, g.gt_width, dataset.dataset_id \
+                from groundtruth g  \
+                left join ( \
+                    select f.img_id, d.dataset_id \
+                    from features f \
+                    left join datasetinfo d on d.dataset_id = f.dataset_id \
+                ) dataset on dataset.img_id = g.img_id \
+                left join public.object o on o.gt_object_id = g.gt_object_id \
+                {condition} \
+                group by o.gt_object, g.gt_height, g.gt_width, dataset.dataset_id \
+            ) res \
+            group by res.dataset_id, res.gt_object \
+            order by res.dataset_id; "    
+    result_obj = db.execute(sql)
+    col_obj = ['dataset_id', 'gt_object', 'count']
+    df_obj = pd.DataFrame(data = result_obj, columns= col_obj)
+    
+    ## c. update column dataset_ids
+    df_obj_unique_dataset_id = df_obj['dataset_id'].unique()
+    df_obj_list_split_by_dataset['dataset_id'] = list(df_obj_unique_dataset_id)
+    
+    ## d. update column object_count
+    df_groupby1=df_obj.groupby('dataset_id').sum()
+    df_obj_list_split_by_dataset['object_count'] = list(df_groupby1['count'])
+
+    ## e. update column object_list and object_info_in_detail
+    tmp_list_for_detail = []
+    tmp_list_for_object_list = []
+    for i in df_obj_unique_dataset_id:
+        df_target = df_obj[df_obj['dataset_id']==i]
+        tmp_dict = {}
+        df_target_len = len(df_target)
+        sub_tmp_list_for_object_list = []
+        for j in range(df_target_len):
+            tmp_key = df_target['gt_object'].iloc[j]
+            tmp_value = df_target['count'].iloc[j]
+            tmp_dict[tmp_key] = tmp_value
+            sub_tmp_list_for_object_list.append(tmp_key)
+        tmp_list_for_detail.append(tmp_dict)
+        tmp_list_for_object_list.append(sub_tmp_list_for_object_list)
+        
+    df_obj_list_split_by_dataset['object_list'] = tmp_list_for_object_list
+    df_obj_list_split_by_dataset['object_info_in_detail'] = tmp_list_for_detail
+
+    df_result = pd.merge(df_result,
+                         df_obj_list_split_by_dataset,
+                         on='dataset_id',
+                         how='left'
+                         )
+
+    return total_cnt, df_result
 
 
+###################################################
 
 ######################################
 ########## UPDATE FUNCTIONS ##########

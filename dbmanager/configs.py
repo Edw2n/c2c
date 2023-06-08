@@ -6,12 +6,6 @@ POSTGRES_CONFIG = { # 보안상 문제로 이렇게 하면 안되긴 하는데 �
     "C2C_PORT": "5432",
     "C2C_DB": "c2c"
 }
-"img_id", "image_path", "image_width", "image_height", "upload_date", 
-"lat", "lon", "alt", "roll", "pitch", "yaw", "velo_north", "velo_east",
-"velo_forward", "velo_leftward", "velo_upward",
-"accel_x", "accel_y", "accel_z", "accel_forward", "accel_leftward", "accel_upward", 
-"ang_x", "ang_y", "ang_z", "ang_forward","ang_leftward", "ang_upward", "like_cnt", 
-"pos_accuracy", "vel_accuracy", "navstat", "numsats", "posmode", "velmode", "orimode", "qc_id", "user_id", "product_id", "dataset_id"
 
 SCHEMA_NAME = "public"
 TABLE_NAME = ["GroundTruth", "ProductInfo", "QC", "User", "DatasetInfo", "Features", "Transaction", "Object"]
