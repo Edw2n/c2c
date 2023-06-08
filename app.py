@@ -92,12 +92,18 @@ def service_data():
     success = False
     if request.method =="POST":
         print("*******     read info     ********")
+
         try:
             # qeury = get_query_info(request.form~~~~)
+            # read_manager.encode_formdata(request.form, "search")
+            
+            #TODO: get custom file
+            
             # read data from db (read all data)
+            
             success, data, max_page_num = read_manager.read_searched_data(query)
-            print('after read, data:', data)
-            print('after read, success:', success)
+            # print('after read, data:', data)
+            # print('after read, success:', success)
         except Exception as e:
             print("read data service error:", e)
 
@@ -108,6 +114,67 @@ def service_data():
     }
 
     return json.dumps(result)
+
+@app.route("/login",methods=["POST"])
+def check_user():
+    '''
+    [request.form 에 받을 데이터(key)]
+        - "user_name", "pw"
+
+    returns: jsonified dictionary with below items
+        - "main_data": list/search view에 뿌릴 리스트 데이터 (홈페이지 처음 받으면 받던 데이터), list of dict
+        - "manage_data": user identify 성공시 각 list 뷰에 뿌릴 manage_data, 실패시 빈 list (will be updated)
+        - "valid": user identification 결과 (bool),
+        - "success_main": main_data 읽어온 결과 성공여부 (bool),
+        - "success_manage": manage_data 읽어온 결과 성공여부 (bool),
+        - "main_max_page_num": main_data 페이지수 (int) (will be updated),
+        - "manage_page_info": manage_data 페이지수 정보, (will be updated)
+    '''
+
+    main_data = []
+    manage_data = []
+    query = None
+    valid = False
+    success_main = False
+    success_manage = False
+    max_page_num_main = 0
+    max_page_num_info = []
+
+    if request.method =="POST":
+        try:
+            user_name = request.form["user_name"]
+            pw = request.form["pw"]
+            if identify_user(db, user_name, pw, case = "login"):
+                valid = True
+        except Exception as e:
+            print("user check error:", e)
+
+    # read entire data
+    query = None
+    try:
+        _, main_data, max_page_num_main = read_manager.read_searched_data(query)
+        success_main = True
+    except Exception as e:
+        print("read data error after check user pipeline:", e)
+
+    if valid:
+        #TODO: get manager data of identified user and set success == True
+            # _, manage_data, max_page_num_info = read_manage_data(user_name)
+            # success == True
+        pass
+
+    result = {
+        "main_data": main_data,
+        "manage_data": manage_data,
+        "valid": valid,
+        "success_main": success_main,
+        "success_manage": success_manage,
+        "main_max_page_num": max_page_num_main,
+        "manage_page_info": max_page_num_info,
+    }
+
+    return json.dumps(result)
+
 
 def read_data(query): #db interaction
     queried_data = list(range(list_data_num))
