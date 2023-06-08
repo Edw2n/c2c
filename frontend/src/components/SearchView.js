@@ -72,8 +72,10 @@ function SearchView() {
     formData.append('description', e.target[4].value)
 
     const Upload = async () => {
-      
-      if (!e.target[1].value) {
+      if (!e.target[0].files[0]) {
+        alert('Please select a file')
+      }
+      else if (!e.target[1].value) {
         alert('Please enter your ID')
       }
       else if (!e.target[2].value){
@@ -82,7 +84,9 @@ function SearchView() {
       else if (!e.target[3].value){
         alert('Please enter the title')
       }
-
+      else if (!e.target[4].value){
+        alert('Please enter the description')
+      }
       else {
         await fetch('http://127.0.0.1:3000/upload', {
           method: 'POST',
@@ -138,26 +142,35 @@ function SearchView() {
     console.log(e.target);
 
     var keyword = document.getElementById("keyword").value ? `${document.getElementById("keyword").value}` : 'none';
-    var qcState = StateCheckbox.qc_state ? `${StateCheckbox.qc_state}` : 'All';
-    var qcScore = StateCheckbox.qc_score ? `${StateCheckbox.qc_score}` : 'All';
-    var qcObject = StateCheckbox.qc_object ? `${StateCheckbox.qc_object}` : 'All';
-    var roll = StateNumbers.Roll ? `${StateNumbers.Roll.start || -4},${StateNumbers.Roll.end || 4}` : 'none';
-    var pitch = StateNumbers.Pitch ? `${StateNumbers.Pitch.start || -4},${StateNumbers.Pitch.end || 4}` : 'none';
-    var yaw = StateNumbers.Yaw ? `${StateNumbers.Yaw.start || -4},${StateNumbers.Yaw.end || 4}` : 'none';
-    var wx = StateNumbers.Wx ? `${StateNumbers.Wx.start || -99999},${StateNumbers.Wx.end || 99999}` : 'none';
-    var wy = StateNumbers.Wy ? `${StateNumbers.Wy.start || -99999},${StateNumbers.Wy.end || 99999}` : 'none';
-    var wz = StateNumbers.Wz ? `${StateNumbers.Wz.start || -99999},${StateNumbers.Wz.end || 99999}` : 'none';
-    var vf = StateNumbers.Vf ? `${StateNumbers.Vf.start || -99999},${StateNumbers.Vf.end || 99999}` : 'none';
-    var vl = StateNumbers.Vl ? `${StateNumbers.Vl.start || -99999},${StateNumbers.Vl.end || 99999}` : 'none';
-    var vu = StateNumbers.Vu ? `${StateNumbers.Vu.start || -99999},${StateNumbers.Vu.end || 99999}` : 'none';
-    var ax = StateNumbers.Ax ? `${StateNumbers.Ax.start || -99999},${StateNumbers.Ax.end || 99999}` : 'none';
-    var ay = StateNumbers.Ay ? `${StateNumbers.Ay.start || -99999},${StateNumbers.Ay.end || 99999}` : 'none';
-    var az = StateNumbers.Az ? `${StateNumbers.Az.start || -99999},${StateNumbers.Az.end || 99999}` : 'none';
+    var qcState = StateCheckbox.qc_state ? [...StateCheckbox.qc_state] : ['Pending','In Progress','Done'];
+    var qcScore = StateCheckbox.qc_score ? [...StateCheckbox.qc_score] : ['Low','Medium','High'];
+    var qcObject = StateCheckbox.qc_object ? [...StateCheckbox.qc_object] : ['Car', 'Van', 'Truck', 'Pedestrian', 'Sitter', 'Cyclist', 'Tram', 'Misc'];
+    var roll = StateNumbers.Roll ? `(${StateNumbers.Roll.start || null},${StateNumbers.Roll.end || null})` : (null,null);
+    var pitch = StateNumbers.Pitch ? `(${StateNumbers.Pitch.start || null},${StateNumbers.Pitch.end || null})` : (null,null);
+    var yaw = StateNumbers.Yaw ? `(${StateNumbers.Yaw.start || null},${StateNumbers.Yaw.end || null})` : (null,null);
+    var wx = StateNumbers.Wx ? `(${StateNumbers.Wx.start || null},${StateNumbers.Wx.end || null})` : (null,null);
+    var wy = StateNumbers.Wy ? `(${StateNumbers.Wy.start || null},${StateNumbers.Wy.end || null})` : (null,null);
+    var wz = StateNumbers.Wz ? `(${StateNumbers.Wz.start || null},${StateNumbers.Wz.end || null})` : (null,null);
+    var vf = StateNumbers.Vf ? `(${StateNumbers.Vf.start || null},${StateNumbers.Vf.end || null})` : (null,null);
+    var vl = StateNumbers.Vl ? `(${StateNumbers.Vl.start || null},${StateNumbers.Vl.end || null})` : (null,null);
+    var vu = StateNumbers.Vu ? `(${StateNumbers.Vu.start || null},${StateNumbers.Vu.end || null})` : (null,null);
+    var ax = StateNumbers.Ax ? `(${StateNumbers.Ax.start || null},${StateNumbers.Ax.end || null})` : (null,null);
+    var ay = StateNumbers.Ay ? `(${StateNumbers.Ay.start || null},${StateNumbers.Ay.end || null})` : (null,null);
+    var az = StateNumbers.Az ? `(${StateNumbers.Az.start || null},${StateNumbers.Az.end || null})` : (null,null);
    
     // console.log(selectedValue)
     // var customScript = document.getElementById('form-custom-script-file').value ? true : false;
     // TODO: customSCript form에 붙이기
-    
+    if (qcState.includes('All')) {
+      qcState = ['Pending','In Progress','Done']
+    }
+    if (qcScore.includes('All')) {
+      qcScore = ['Low','Medium','High']
+    }
+    if (qcObject.includes('All')) {
+      qcObject = ['Car', 'Van', 'Truck', 'Pedestrian', 'Sitter', 'Cyclist', 'Tram', 'Misc']
+    }
+
     formData.append('keyword', keyword)
     formData.append('qc_state',qcState)
     formData.append('qc_score',qcScore)
@@ -174,7 +187,7 @@ function SearchView() {
     formData.append('ax',ax)
     formData.append('ay',ay)
     formData.append('az',az)
-
+    formData.append('custom_script', document.getElementById('form-custom-script-file').files[0] ? document.getElementById('form-custom-script-file').files[0] : false)
     console.log(formData)
     const search = async () => {
       await fetch('http://127.0.0.1:3000/read', {
