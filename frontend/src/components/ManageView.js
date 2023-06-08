@@ -46,6 +46,38 @@ function ManageView() {
 
   }
   
+  const buyDataset = (e) => {
+
+    e.preventDefault()
+    const formData = new FormData();
+    
+    var userName = "whowho"
+    var selectedImgIds = [1, 2, 3]
+    var defiendDatasetname = "bought-123"
+
+    formData.append('user_name',userName)
+    formData.append('items',selectedImgIds)
+    formData.append('dataset-name',defiendDatasetname)
+
+    //우리 시나리오에 맞게 stae 변경하면서 구현하면됨
+    const buy = async () => {
+      await fetch('http://0.0.0.0:3000/buy', {
+        method: 'POST',
+        body: formData
+      }).then(resp => {
+        resp.json().then(data => {
+          let success = data['success_transaction']
+          if (!success){
+            alert('failed!!!')
+          }else{
+            alert('success!!!')
+          }
+        })
+      })
+    }
+    buy();
+  }
+  
   return (
     <div>
         <form onSubmit={getUserPost} className="ids" enctype="multipart/form-data" >
@@ -58,6 +90,9 @@ function ManageView() {
             <Button type="submit" variant="outline-secondary" >Identify</Button>
         </form>
         {rows ? <UserPageView user_name={document.getElementById("manage-user-name").value} rows={rows}/> : 'nothing'}
+        <form onSubmit={buyDataset} className="ids" enctype="multipart/form-data" >
+            <Button type="submit" variant="outline-secondary" >Buy</Button>
+        </form>
 
     </div>  
 
