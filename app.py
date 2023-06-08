@@ -180,6 +180,48 @@ def check_user():
 
     return json.dumps(result)
 
+@app.route("/buy",methods=["POST"])
+def buy_items():
+    '''
+    [request.form 에 받을 데이터(key:value)] // can be updated
+        - "user_name": string
+        - "items": a list of img_id(int) of each item
+        - "dataset-name": user defined name of dataset bought , string
+        
+
+    returns: jsonified dictionary with below items
+        - "manage_data": user identify 성공시 각 list 뷰에 뿌릴 manage_data, 실패시 빈 list (will be updated)
+        - "success_transaction": main_data 읽어온 결과 성공여부 (bool),
+        - "success_manage": manage_data 읽어온 결과 성공여부 (bool),
+        - "manage_page_info": manage_data 페이지수 정보, (will be updated)
+    '''
+
+    manage_data = []
+    success_transaction = False
+    success_manage = False
+    max_page_num_info = []
+
+    if request.method =="POST":
+        try:
+            #TODO: transaction pipeline
+            pass
+        except Exception as e:
+            print("trasaction error:", e)
+
+    if success_transaction:
+        #TODO: get manager data of identified user and set success == True
+            # _, manage_data, max_page_num_info = read_manage_data(user_name)
+            # success_manage == True
+        pass
+
+    result = {
+        "manage_data": manage_data,
+        "success_transaction": success_transaction,
+        "success_manage": success_manage,
+        "manage_page_info": max_page_num_info,
+    }
+
+    return json.dumps(result)
 
 def read_data(query): #db interaction
     queried_data = list(range(list_data_num))
