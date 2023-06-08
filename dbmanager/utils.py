@@ -690,8 +690,6 @@ def load_detailed_view(db, df, K = 10):
 
     return result_df, result_all_df
 
-################ WORK IN PROGRESS #################
-
 def load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_idName = None):
     '''
     load_list view 
@@ -702,8 +700,21 @@ def load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_i
     - condition_filter: dictionary 
        {"BASIC_INFO": string, 
         "QUALITY_INFO": {"qc_state", "qc_score", "qc_object"}
-        "SENSOR_INFO": {"roll", "pitch", "yaw", "Wx", "Wy", "Wz", "Vf", "Vl", "Vu","Ax", "Ay", "Az"}
+        "SENSOR_INFO": {"Roll", "Pitch", "Yaw", "Wx", "Wy", "Wz", "Vf", "Vl", "Vu","Ax", "Ay", "Az"}
         "CUSTOM_FILTERING": WIP
+        }
+        (e.g.) 
+        "BASIC_INFO": 'asdasdasdasd', 
+        "QUALITY_INFO": {"qc_state": ['Done'],
+                        "qc_score": ['Low', 'Medium','High'],
+                        "qc_object": ['Car','Truck','Pedestrian', 'Sitter', 'Cyclist', 'Tram', 'Misc']
+                        },
+        "SENSOR_INFO": {"Roll": (1,1), "Pitch": (3,4), "Yaw": (5,6),
+                        "Wx": (7,8), "Wy": (9,10), "Wz": (11,12),
+                        "Vf": (13,14), "Vl": (15,16), "Vu": (17,18),
+                        "Ax": (19,20), "Ay": (21,22), "Az": (23,24)
+                    },
+        "CUSTOM_FILTERING": "asdasdasd"
         }
     - page: int, page number, default: 1,  if you want load 3rd page, then 3
     - item_per_page: int, default:10, the number of items per page
@@ -972,7 +983,7 @@ def update_multiple_columns(db, df, mode):
     [inputs]
     - target db object (CRUD)
     - df: pd.DataFrame
-    - mode: string, the mode should be one of ["img_path", "img_WH", "start_QC", "QC_score", "object_count", "end_QC"]
+    - mode: string, the mode should be one of ["img_path", "img_WH", "start_QC", "QC_score", "object_count", "end_QC", "price"]
             if mode is start_QC     : qd_status in DB becomes "QC_start"
             if mode is QC_score     : qd_status in DB becomes "QC_end"
             if mode is object_count : qd_status in DB becomes "QC_end+obj_cnt"
@@ -991,7 +1002,8 @@ def update_multiple_columns(db, df, mode):
         ['QC', ['qc_id', 'qc_start_date']],
         ['QC', ['qc_id', 'qc_score']],
         ['QC', ['qc_id', 'object_count']],
-        ['QC', ['qc_id', 'qc_end_date']]
+        ['QC', ['qc_id', 'qc_end_date']],
+        ['ProductInfo', ['product_id', 'price']]
         ]
 
     # 1. Setting mode
@@ -1011,9 +1023,11 @@ def update_multiple_columns(db, df, mode):
     elif mode == 'end_QC':
         idx = 5
         status = "QC_end+obj_cnt+duplicate"
+    elif mode == 'price':
+        idx = 6
     else: 
         print("Invalid mode is selected")
-        print('The mode should be one of ["img_path", "img_WH", "start_QC", "QC_score", "object_count", "end_QC"]')
+        print('The mode should be one of ["img_path", "img_WH", "start_QC", "QC_score", "object_count", "end_QC", "price"]')
     
     # 2. Select target column to update data 
     target_table = target_list[idx][0]
