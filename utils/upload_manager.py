@@ -54,10 +54,12 @@ class UploadManager():
     if not success:
       return success
     success = self.update_dp(db_info)
-    print("updated info:")
-    print(db_info)
 
     # update product info
+    if not success:
+      return success
+    success = self.update_price(db_info)
+
     # request qc (not wait until qc finished)
     return success
 
@@ -232,8 +234,23 @@ class UploadManager():
     #TODO: remove dupulicate data in images folder
     return success
 
-  def update_production_info(self, stored_info):
-    return stored_info
+  def update_price(self, stored_info):
+    '''
+    udpate production info of target dataset(stored_info) to db
+
+    [input]
+    stored_info: target dataset information (pd.dataframe)
+
+    [output]
+    success: bool
+    '''
+    success = False
+    try:
+      stored_info["price"] = stored_info.apply(lambda x: int(x["qc_score"]*x["object_count"]*100), axis=1)
+      success = update_multiple_columns(self.db, df=stored_info, mode="price")
+    except Exception as e:
+      print("Update price error", e)
+    return success
 
   def read_features(self, extracted_dataset_info):
       feature_df = None
