@@ -54,6 +54,10 @@ def upload_data():
 
                 if upload_manager.upload_dataset(f, target_temp_dataset_info):
                     success = True
+                else:
+                    #TODO: upload_dataset에서 디비에 추가했던 내용들 다 rollback해서 취소해야함.
+                    pass
+                    
 
             print("*******     upload info     ********")
             print(f"file path :{file_path}")
@@ -90,6 +94,7 @@ def service_data():
     data = []
     query = None
     success = False
+    max_page_num = None
     if request.method =="POST":
         print("*******     read info     ********")
 
