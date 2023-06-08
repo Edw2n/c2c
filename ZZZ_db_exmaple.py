@@ -1,7 +1,7 @@
 from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG, SCHEMA_NAME, TABLE_NAME, ALL_COLUMNS
 from dbmanager.utils import initialize_db_structures, insert_user, insert_draft_dataset, \
-    load_list_view, update_multiple_columns, update_columns_af_duplicate, load_detailed_view
+    load_list_view, update_multiple_columns, update_columns_af_duplicate, load_detailed_view, load_list_view_search
 import pandas as pd
 import numpy as np
 
@@ -107,9 +107,42 @@ if __name__ == "__main__":
     print()
 
     #### FOR TEST ONLY #### 
-    detailed_view = load_detailed_view(db, list_view_test, K=10)
+    detailed_view, all_data= load_detailed_view(db, list_view_test, K=10)
     print(detailed_view)
+    print()
+    print(all_data)
     #### FOR TEST ONLY #### 
+
+    #######################################
+    #### Testing load_list_view_search ####
+    #######################################
+
+
+    condition_filter = {
+    "BASIC_INFO": 'asdasdasdasd', 
+    "QUALITY_INFO": {"qc_state": ['Done'],
+                     "qc_score": ['Low', 'Medium','High'],
+                     "qc_object": ['Car','Truck','Pedestrian', 'Sitter', 'Cyclist', 'Tram', 'Misc']
+                    },
+    "SENSOR_INFO": {"Roll": (1,1), "Pitch": (3,4), "Yaw": (5,6),
+                    "Wx": (7,8), "Wy": (9,10), "Wz": (11,12),
+                    "Vf": (13,14), "Vl": (15,16), "Vu": (17,18),
+                    "Ax": (19,20), "Ay": (21,22), "Az": (23,24)
+                   },
+    "CUSTOM_FILTERING": "asdasdasd"
+    }
+
+    condition_filter = {
+    "QUALITY_INFO": {"qc_state": ['Done'], 
+                     "qc_object": ['Car','Truck','Pedestrian', 'Sitter', 'Tram', 'Misc']},
+    "SENSOR_INFO": {"Roll": (-1,1), "Pitch": (-1,1), "Yaw": (-2,1),
+                   },
+    "CUSTOM_FILTERING": "asdasdasd"
+    }
+
+
+    max_page_num, result = load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_idName = None)
+    print(max_page_num, result)
 
 
 

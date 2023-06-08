@@ -577,6 +577,8 @@ def load_detailed_view(db, df, K = 10):
         the value of column "object_info_in_detail" is dictinary that keys are object's name and value is its count
             (e.g., {'Cyclist': 1, 'Pedestrian': 1, 'Van': 2})
 
+    - result_all_df: total dataset infomation of selected dataset
+
     '''
     # 0. Initial Setting
     success = False
@@ -676,7 +678,17 @@ def load_detailed_view(db, df, K = 10):
                          on='img_id',
                          how='left'
                          )
-    return result_df
+    
+    # 6. load all images 
+    condition_all = f"features.dataset_id in {tuple(dataset_id_list)}"
+    res_all = db.readDB_with_filtering(schema = schema_name,
+                                      table = "features",
+                                      columns = "*",
+                                      condition = condition_all)
+    
+    result_all_df = pd.DataFrame(data = res_all, columns=ALL_COLUMNS[5])
+
+    return result_df, result_all_df
 
 ################ WORK IN PROGRESS #################
 
@@ -712,15 +724,73 @@ def load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_i
         the value of column "object_info_in_detail" is dictinary that keys are object's name and value is its count
             (e.g., {'Cyclist': 1, 'Pedestrian': 1, 'Van': 2})
     '''
+    # 0. cleansing condition_filter
+    condition_filter = _cleansing_condition_filter(condition_filter)
+    keys = list(condition_filter.keys())
 
-
-    # 1. initial setting and total rows cnt
+    # 1. initial setting and make conditions
     result = None
     item_start = 0 + item_per_page * (page - 1)
-    if user_idName is not None:
-        condition_id = f"where u.user_idName = '{user_idName}'"
-    else: condition_id = ""
 
+    ## make conditions 
+    condition_list = []
+    if 'BASIC_INFO' in keys:
+        string_b = f"(d.dataset_description like '%%{condition_filter['BASIC_INFO']}%%')"
+        condition_list.append(string_b)
+
+    if 'QUALITY_INFO' in keys:
+        quality_info_dict = condition_filter['QUALITY_INFO']
+        quality_info_keys = list(quality_info_dict.keys())
+        for key in quality_info_keys:
+            value_q = quality_info_dict[key]
+            if key =='qc_status':
+                if len(value_q)==1:
+                    string_q = f"(q.{key}='{value_q[0]}')"
+                    condition_list.append(string_q)
+                else:
+                    string_q = f"(g.{key} in {tuple(value_q)})"
+                    condition_list.append(string_q)
+            elif key == 'gt_object_id':
+                if len(value_q)==1:
+                    string_q = f"(g.{key}='{value_q[0]}')"
+                    condition_list.append(string_q)
+                else:
+                    string_q = f"(g.{key} in {tuple(value_q)})"
+                    condition_list.append(string_q)
+            else:
+                tmp_score_list = []
+                for value in value_q:
+                    string_q_tmp = f"(q.{key} between {float(value[0])} and {float(value[1])})"
+                    tmp_score_list.append(string_q_tmp)
+                string_q = "("+" or ".join(tmp_score_list)+")"
+                condition_list.append(string_q)
+
+    if 'SENSOR_INFO' in keys:
+        sensor_info_dict = condition_filter['SENSOR_INFO']
+        sensor_info_keys = list(sensor_info_dict.keys())
+        sensor_string_list = []
+        for key in sensor_info_keys:
+            value_s = sensor_info_dict[key]
+            string_s = f"(f.{key} between {value_s[0]} and {value_s[1]})"
+            condition_list.append(string_s)
+            sensor_string_list.append(string_s)
+        
+    if 'CUSTOM_FILTERING' in keys:
+        pass
+
+    if user_idName is not None:
+        string_id = f"u.user_idName = '{user_idName}'"
+        condition_list.append(string_id)
+
+    if not condition_list:
+        print("#####", condition_list)
+        condition = " "
+    else: 
+        condition = "WHERE "+" and ".join(condition_list)
+
+    # print(condition)
+
+    # 1. total rows cnt
     sql = f"select res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date \
             from( \
                 select f.img_id, f.upload_date, f.like_cnt, d.*, p.*, q.qc_status, q.qc_score, u.* \
@@ -729,10 +799,12 @@ def load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_i
                 left join datasetinfo d on d.dataset_id =f.dataset_id \
                 left join qc q on q.qc_id =f.qc_id \
                 left join public.user u on u.user_id =f.user_id \
-                {condition_id} \
+                join public.GroundTruth g on g.img_id=f.img_id \
+                {condition} \
                 ) res \
             group by res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date;"
     total_cnt = db.execute(sql)
+    print(total_cnt)
     total_cnt = len(total_cnt)
     if total_cnt == 0:
         return total_cnt, None
@@ -740,7 +812,7 @@ def load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_i
     # 2. dataset information
     sql = f"select res.dataset_id, res.dataset_name,\
                 sum(res.price) as price_total,\
-                count(res.dataset_id) as total_image_count,\
+                count(distinct res.img_id) as total_image_count,\
                 sum(res.price) / count(res.dataset_id) as avg_price_per_image, \
                 max(res.dataset_selection_cnt) as sales_count,\
                 sum(res.like_cnt) as like_count, \
@@ -755,7 +827,8 @@ def load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_i
                 left join datasetinfo d on d.dataset_id =f.dataset_id \
                 left join qc q on q.qc_id =f.qc_id \
                 left join public.user u on u.user_id =f.user_id \
-                {condition_id} \
+                join public.GroundTruth g on g.img_id=f.img_id \
+                {condition} \
                 ) res \
             group by res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date \
             order by res.dataset_id limit {item_per_page} offset {item_start};"
@@ -832,6 +905,59 @@ def load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_i
 
     return total_cnt, df_result
 
+def _cleansing_condition_filter(condition_filter):
+    key_dict={
+        'qc_state': 'qc_status',
+        'qc_score': 'qc_score',
+        'qc_object': 'gt_object_id',
+        'Roll': 'roll',
+        'Pitch': 'pitch',
+        'Yaw': 'yaw',
+        'Wx': 'ang_x',
+        'Wy': 'ang_y',
+        'Wz': 'ang_z',
+        'Vf': 'velo_forward',
+        'Vl': 'velo_leftward',
+        'Vu': 'velo_upward',
+        'Ax': 'accel_x',
+        'Ay': 'accel_y',
+        'Az': 'accel_z',
+        'Pending': 'uploaded',
+        'In Progress': 'QC_start',
+        'Done': 'QC_end+obj_cnt+duplicate',
+        'Low': (50, 70),
+        'Medium':(70, 90),
+        'High':(90, 100),
+        'Car': 1,
+        'Van': 2,
+        'Truck': 3,
+        'Pedestrian': 4,
+        'Sitter': 5,
+        'Cyclist': 6,
+        'Tram': 7,
+        'Misc': 8,
+    }
+    keys = list(condition_filter.keys())
+
+    if 'QUALITY_INFO' in keys:
+        temp = condition_filter['QUALITY_INFO']
+        sensor_key_bf = list(temp.keys())
+        for key in sensor_key_bf:
+            for idx, item in enumerate(temp[key]):
+                temp[key][idx] = key_dict[item]
+            temp[key_dict[key]] = temp.pop(str(key))
+            
+        condition_filter['QUALITY_INFO'] = temp
+
+    if 'SENSOR_INFO' in keys:
+        temp = condition_filter['SENSOR_INFO']
+        sensor_key_bf = list(temp.keys())
+        for key in sensor_key_bf:
+            temp[key_dict[key]] = temp.pop(str(key))
+            
+        condition_filter['SENSOR_INFO'] = temp
+    
+    return condition_filter
 
 ###################################################
 
