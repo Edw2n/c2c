@@ -2,6 +2,7 @@ import os
 import cv2
 import numpy as np
 import torch
+import pandas as pd
 import hashlib
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -371,4 +372,72 @@ def duplicates(img_path_list: list) -> list:
    print('----Duplicates----')
    return duplicates
 
+
+class HSV():
+   def read_file(self, file_name: str) -> dict:
+      ''' 
+      [Input]
+      - file_name: csv file to read
+      [Output]
+      - coordinate_dict: a nested dictionary of key - type of object, item - a list of ground truth coordinates of bounding box of the object
+         e.g) {'Car': [280, 170, 420, 285], 'Truck': [599.41, 156.40, 629.75, 189.25]}
+      '''
+      file = pd.read_csv(file_name)
+
+      keys = sorted([*set(file['filename'][i] for i in range(len(file)))])
+
+      file_coordinate_dict = {key: None for key in keys}
+      obj_coordinate_dict = {}
+      for i in range(len(file)):
+         image_file = file['filename'][i]
+         object_name = file['object'][i]
+         left, top, right, bottom = file['Xordinate'][i], file['Yordinate'][i], file['height'][i], file['weight'][i]
+         bbox = [left, top, right, bottom]
+         obj_coordinate_dict[object_name] = bbox
+         if file_coordinate_dict[image_file] is None:
+            file_coordinate_dict[image_file] = obj_coordinate_dict
+         else:
+            file_coordinate_dict[image_file].update(obj_coordinate_dict)
+
+      return file_coordinate_dict
+
+   def hsv(self, img_path_list, ground_truth: str, padding: int)->dict:
+      '''
+      Return the average of hsv of the image.
+
+      [Input]
+      - img_path_list: a list of paths(or dirs) that contains user's images
+      - ground_truth: a csv file of grouth truth of images in the img_path_list
+      - padding: edge of the images to pad
+
+      [Output]
+      - hsv_dict: a nested dictionary indicating the object as a key and the average of hsv values of the image as an item
+         e.g) {'0000001.png': {'Car': [103.59013633923779, 68.72063982823403, 109.96038003220612]}, {'Person': [120.0123, 68.7346, 100.765432]}, ...}
+      '''
+      # Set ground truth
+      grouth_truth_dict = self.read_file(ground_truth)
+
+      # Set files_path
+      files_path = ImageFolder(img_path_list, img_size=375).files #img_size: irrelavent 
+
+      keys = sorted([*set((os.path.basename(path).split('/')[-1]) for path in files_path)])
+      file_hsv_dict = {key: None for key in keys}
+
+      for path in files_path:
+         img = cv2.imread(path, cv2.IMREAD_COLOR) 
+         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+         filename = (os.path.basename(path).split('/')[-1])
+         gt_list = grouth_truth_dict[filename]
+         hsv_dict = {}
+         for obj, bbox in gt_list.items():
+            left, right, top, bottom = int(bbox[0]+padding), int(bbox[2]-padding), int(bbox[1]+padding), int(bbox[3]-padding)
+            area = hsv[top:bottom, left:right]
+            hsv_list = np.mean(area, axis=(0, 1)).tolist()
+            hsv_dict[obj] = hsv_list
+            if file_hsv_dict[filename] is None:
+               file_hsv_dict[filename] = hsv_dict
+            else:
+               file_hsv_dict[filename].update(hsv_dict)
+      return file_hsv_dict
+   
 
