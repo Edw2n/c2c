@@ -1,7 +1,8 @@
 from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG, SCHEMA_NAME, TABLE_NAME, ALL_COLUMNS
 from dbmanager.utils import initialize_db_structures, insert_user, insert_draft_dataset, \
-    load_list_view, update_multiple_columns, update_columns_af_duplicate, load_detailed_view, load_list_view_search
+    load_list_view, update_multiple_columns, update_columns_af_duplicate, load_detailed_view, load_list_view_search, \
+    insert_tx_info, load_list_view_tx
 import pandas as pd
 import numpy as np
 
@@ -110,9 +111,9 @@ if __name__ == "__main__":
 
     #### FOR TEST ONLY #### 
     detailed_view, all_data= load_detailed_view(db, list_view_test, K=10)
-    print(detailed_view)
+    print(detailed_view[1])
     print()
-    print(all_data)
+    print(all_data[2])
     #### FOR TEST ONLY #### 
 
     #######################################
@@ -146,8 +147,14 @@ if __name__ == "__main__":
     max_page_num, result = load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_idName = None)
     print(max_page_num, result)
 
+    ##########################################
+    #### Testing db.readDB_join_filtering ####
+    ##########################################
 
-
+    buyer_id = 'jeongsik'
+    img_id_list = [1,3,5,7,9,40,45]
+    buyer_defined_dataset_name = 'jeongsik'
+    insert_tx_info(db, buyer_id, img_id_list, buyer_defined_dataset_name)
 
     ##########################################
     #### Testing db.readDB_join_filtering ####
@@ -161,3 +168,9 @@ if __name__ == "__main__":
     #print(result)
     # print(result[0])
     #### FOR TEST ONLY #### 
+
+
+
+    result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'jeongsik', mode = 'buyer')
+    print(result)
+
