@@ -193,34 +193,35 @@ if __name__ == "__main__":
     buyer_defined_dataset_name = 'jeongsik'
     insert_tx_info(db, buyer_id, img_id_list, buyer_defined_dataset_name)
 
+    copy_db(db)
+    restore_db(db)
+
 
     ###################################
     #### Testing load_list_view_tx ####
     ###################################
 
     print("------- load_list_view_tx -------")
-    page_num, result = load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = 'jeongsik')
     print("seller is jeongsik, the output should be None, 0")
+    page_num, result = load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = 'jeongsik')
     print(page_num)
     print(result)
     print()
 
-    page_num, result = load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = 'tester')
     print("seller is tester")
+    page_num, result = load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = 'tester')
     print(page_num)
     print(result)
     print()
 
-    page_num, result = load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = 'SeongGu')
     print("seller is SeongGu")
-
+    page_num, result = load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = 'SeongGu')
     print(page_num)
     print(result)
     print()
 
-
-    page_num, result = load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = 'jeongsik')
     print("buyer is Jeongsik")
+    page_num, result = load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = 'jeongsik')
     print(page_num)
     print(result)
     print()

@@ -86,19 +86,12 @@ def restore_db(db):
 
     schema_name = SCHEMA_NAME
     table_name = TABLE_NAME
+    
     fk_list = FK_LIST
-
+    
     for i, table in enumerate(table_name):
         db.drop_table(schema_name, table)
         success = db.restoreTable(schema = schema_name, table = table) 
-
-    for i in range(len(fk_list)):
-        success = db.addFK(schema = schema_name,
-                           table_PK=fk_list[i][0], 
-                           column_PK=fk_list[i][1],
-                           table_FK=fk_list[i][2],
-                           column_FK=fk_list[i][3]
-                           )
 
     return success
 
@@ -1444,75 +1437,72 @@ def load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
     result_df = pd.DataFrame(data = result, columns=columns)
     print(result_df)
 
-
-    target_tpx_id = tuple(result_df['txp_id'])
-    
-    # 7. object information for 6
-        # 5. object information
+    # 3. object information
     ## a. df for final result and condition settting 
-    df_obj_list_split_by_img = pd.DataFrame(columns = ['img_id', 'object_list', 'object_count', 'object_info_in_detail'])
-    df_obj_list_split_by_img_tmp = pd.DataFrame(columns = ['img_id', 'object_list', 'object_count', 'object_info_in_detail'])
+    df_obj_list_split_by_dataset = pd.DataFrame(columns = ['dataset_id', 'object_list', 'object_count', 'object_info_in_detail'])
 
-    for dataset in txp_id_and_img_id_list:
-        img_ids_tuple = tuple(dataset[1])
-        print(img_ids_tuple)
-        for id in img_ids_tuple:
-            condition_img_id= f"WHERE dataset.img_id = {id}"
-            ## b. excute query
-            sql = f"select  res.img_id, res.gt_object, count(res.gt_object) \
-                    from ( \
-                        select o.gt_object, g.gt_height, g.gt_width, dataset.img_id \
-                        from groundtruth g  \
-                        left join ( \
-                            select f.img_id, d.dataset_id \
-                            from features f \
-                            left join datasetinfo d on d.dataset_id = f.dataset_id \
-                        ) dataset on dataset.img_id = g.img_id \
-                        left join public.object o on o.gt_object_id = g.gt_object_id \
-                        {condition_img_id} \
-                        group by o.gt_object, g.gt_height, g.gt_width, dataset.img_id \
-                    ) res \
-                    group by res.img_id, res.gt_object \
-                    order by res.img_id; "    
-            result_obj = db.execute(sql)
-            col_obj = ['img_id', 'gt_object', 'count']
-            df_obj = pd.DataFrame(data = result_obj, columns= col_obj)
+
+    target_txp_id = tuple(df_result['txp_id'])
+
+    if len(target_txp_id) == 0:
+        return df_result
+    elif len(target_txp_id) == 1:
+        condition = f"where dataset.dataset_id = '{target_txp_id[0]}'"
+    else:
+        condition = f"where dataset.dataset_id in {target_txp_id}" 
     
-            ## c. update column dataset_ids
-            df_obj_unique_img_id = df_obj['img_id'].unique()
-            df_obj_list_split_by_img_tmp['img_id'] = list(df_obj_unique_img_id)
+    ## b. excute query
+    sql = f"select  res.dataset_id, res.gt_object, count(res.gt_object) \
+            from ( \
+                select o.gt_object, g.gt_height, g.gt_width, dataset.dataset_id \
+                from groundtruth g  \
+                left join ( \
+                    select f.img_id, d.dataset_id, \
+                    from features f \
+                    left join datasetinfo d on d.dataset_id = f.dataset_id \
+                ) dataset on dataset.img_id = g.img_id \
+                left join public.object o on o.gt_object_id = g.gt_object_id \
+                {condition} \
+                group by o.gt_object, g.gt_height, g.gt_width, dataset.dataset_id \
+            ) res \
+            group by res.dataset_id, res.gt_object \
+            order by res.dataset_id; "    
+    result_obj = db.execute(sql)
+    col_obj = ['dataset_id', 'gt_object', 'count']
+    df_obj = pd.DataFrame(data = result_obj, columns= col_obj)
     
-            ## d. update column object_count
-            df_groupby1=df_obj.groupby('img_id').sum()
-            df_obj_list_split_by_img_tmp['object_count'] = list(df_groupby1['count'])
+    ## c. update column dataset_ids
+    df_obj_unique_dataset_id = df_obj['dataset_id'].unique()
+    df_obj_list_split_by_dataset['dataset_id'] = list(df_obj_unique_dataset_id)
+    
+    ## d. update column object_count
+    df_groupby1=df_obj.groupby('dataset_id').sum()
+    df_obj_list_split_by_dataset['object_count'] = list(df_groupby1['count'])
 
-            ## e. update column object_list and object_info_in_detail
-            tmp_list_for_detail = []
-            tmp_list_for_object_list = []
-            for i in df_obj_unique_img_id:
-                df_target = df_obj[df_obj['img_id']==i]
-                tmp_dict = {}
-                df_target_len = len(df_target)
-                sub_tmp_list_for_object_list = []
-                for j in range(df_target_len):
-                    tmp_key = df_target['gt_object'].iloc[j]
-                    tmp_value = df_target['count'].iloc[j]
-                    tmp_dict[tmp_key] = tmp_value
-                    sub_tmp_list_for_object_list.append(tmp_key)
-                tmp_list_for_detail.append(tmp_dict)
-                tmp_list_for_object_list.append(sub_tmp_list_for_object_list)
-                df_obj_list_split_by_img.loc[len(df_obj_list_split_by_img)] = [i, tmp_list_for_object_list[0], list(df_groupby1['count'])[0], tmp_list_for_detail[0]]
+    ## e. update column object_list and object_info_in_detail
+    tmp_list_for_detail = []
+    tmp_list_for_object_list = []
+    for i in df_obj_unique_dataset_id:
+        df_target = df_obj[df_obj['dataset_id']==i]
+        tmp_dict = {}
+        df_target_len = len(df_target)
+        sub_tmp_list_for_object_list = []
+        for j in range(df_target_len):
+            tmp_key = df_target['gt_object'].iloc[j]
+            tmp_value = df_target['count'].iloc[j]
+            tmp_dict[tmp_key] = tmp_value
+            sub_tmp_list_for_object_list.append(tmp_key)
+        tmp_list_for_detail.append(tmp_dict)
+        tmp_list_for_object_list.append(sub_tmp_list_for_object_list)
+        
+    df_obj_list_split_by_dataset['object_list'] = tmp_list_for_object_list
+    df_obj_list_split_by_dataset['object_info_in_detail'] = tmp_list_for_detail
 
-    print(df_obj_list_split_by_img)
-    target_cols = ['txp_id', 'price_total', 'image_count', 'avg_price_per_image','sales_count', 'like_count', 'qc_score', 'availability', 'buyer_defined_dataset_name','product_path']
-    result_df = result_df[target_cols]
-    result_df = pd.merge(result_df,
-                         df_obj_list_split_by_img,
-                         on='txp_id',
+    df_result = pd.merge(df_result,
+                         df_obj_list_split_by_dataset,
+                         on='dataset_id',
                          how='left'
                          )
-    
-    print(result_df)
     
     dataset_list = result_df['dataset_id'].unique()
     selected_K_img_dict = dict()

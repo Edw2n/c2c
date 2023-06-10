@@ -419,13 +419,13 @@ class CRUD(PostgrestDB):
         - success : delete 문 실행 성공 여부, bool
         '''
 
-        sql_create = f"create table {table} AS table {schema}.copy_{table};"
+        sql_create = f"create table {schema}.{table} as table {schema}.copy_{table};"
         try :
             result = self.execute(sql_create)
             if not result:
                 result = 0
             else: result = result[0][0]
         except Exception as e:
-            print( "copyTable_create err", e)
+            print( "restoreTable_create err", e)
 
         return result
