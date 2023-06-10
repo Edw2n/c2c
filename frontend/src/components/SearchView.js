@@ -94,7 +94,7 @@ function SearchView() {
         }).then(resp => {
           resp.json().then(data => {
             // if you want values of response, check!!
-            // console.log("data", data.data)
+            // console.log("data", data.datasets)
             // console.log("user identification", data.valid)
             // console.log("upload complete", data.success)
             
@@ -105,8 +105,7 @@ function SearchView() {
             } else {
               alert('upload complete!!!')  
             }
-
-            setListInfo(prev=>([...data.data]))
+            setListInfo(prev=>([...data.datasets.rows]))
           })
         })
       }
@@ -114,7 +113,7 @@ function SearchView() {
     Upload();
   }
 
-  /*
+  
   useEffect(()=>{
     search()
   },[])
@@ -129,10 +128,10 @@ function SearchView() {
     }).then(resp => {
       resp.json().then(data => {
         console.log(data)
-        setListInfo(prev=>([...data.data]))
+        // setListInfo(prev=>([...data.datasets.rows]))
       })
     })}
-  */
+  
 
   
   const handleSearch = (e) => {
@@ -196,9 +195,9 @@ function SearchView() {
       }).then(resp => {
         resp.json().then(data => {
           console.log(data.matched)
-          console.log(data.data)
+          console.log(data.datasets)
 
-          setListInfo(prev=>([...data.data]))
+          setListInfo(prev=>([...data.dataset.rows]))
 
         })
       })
