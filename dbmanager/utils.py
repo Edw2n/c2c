@@ -112,6 +112,9 @@ def _identify_user_login_scenario (db, user_idname, user_password):
     ##### result = [(user_id, user_idName, user_password)]
 
     # 3. valid: find only True case, which is id and pw is valid
+    if len(result)==0:
+        return valid
+
     if len(result[0])>0 and result[0][2]==user_password: # result is not empty and user_password is valid
         valid=True
 
@@ -1291,3 +1294,6 @@ def load_list_view_tx(db, page=1, item_per_page=10, user_idName = None, mode = '
                          )
 
     return total_cnt, df_result
+
+
+

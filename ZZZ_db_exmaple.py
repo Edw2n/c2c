@@ -1,6 +1,6 @@
 from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG, SCHEMA_NAME, TABLE_NAME, ALL_COLUMNS
-from dbmanager.utils import initialize_db_structures, insert_user, insert_draft_dataset, \
+from dbmanager.utils import initialize_db_structures, insert_user, insert_draft_dataset, identify_user, \
     load_list_view, update_multiple_columns, update_columns_af_duplicate, load_detailed_view, load_list_view_search, \
     insert_tx_info, load_list_view_tx
 import pandas as pd
@@ -19,6 +19,18 @@ if __name__ == "__main__":
     table_name = TABLE_NAME
     column_list = ALL_COLUMNS
     num_table = len(table_name)
+
+
+    flag = identify_user(db, "jeongsik", '123', 'login' )
+    print(flag)
+
+
+    flag = identify_user(db, "jeongsik", '123', 'upload' )
+    print(flag)
+
+    flag = identify_user(db, "jeongsik", '123', 'login' )
+    print(flag)
+
 
     #### FOR TEST ONLY ####
     testers = [["jeongsik", "123"],
@@ -108,8 +120,12 @@ if __name__ == "__main__":
     print("# of max page: ", max_page)
     print(list_view_test[list_view_test['dataset_id']==2])
     print()
-    test = list_view_test[list_view_test['dataset_id']==2]
+    #test = list_view_test[list_view_test['dataset_id']==2]
+    test = list_view_test
+
     #### FOR TEST ONLY #### 
+
+    print('--------------detailed_view--------------')
     detailed_view, all_data= load_detailed_view(db, test, K=10)
     print(detailed_view)
     print()
@@ -121,68 +137,68 @@ if __name__ == "__main__":
     #######################################
 
 
-    condition_filter = {
-    "BASIC_INFO": 'asdasdasdasd', 
-    "QUALITY_INFO": {"qc_state": ['Done'],
-                     "qc_score": ['Low', 'Medium','High'],
-                     "qc_object": ['Car','Truck','Pedestrian', 'Sitter', 'Cyclist', 'Tram', 'Misc']
-                    },
-    "SENSOR_INFO": {"Roll": (1,1), "Pitch": (3,4), "Yaw": (5,6),
-                    "Wx": (7,8), "Wy": (9,10), "Wz": (11,12),
-                    "Vf": (13,14), "Vl": (15,16), "Vu": (17,18),
-                    "Ax": (19,20), "Ay": (21,22), "Az": (23,24)
-                   },
-    "CUSTOM_FILTERING": "asdasdasd",
-    }
+    # condition_filter = {
+    # "BASIC_INFO": 'asdasdasdasd', 
+    # "QUALITY_INFO": {"qc_state": ['Done'],
+    #                  "qc_score": ['Low', 'Medium','High'],
+    #                  "qc_object": ['Car','Truck','Pedestrian', 'Sitter', 'Cyclist', 'Tram', 'Misc']
+    #                 },
+    # "SENSOR_INFO": {"Roll": (1,1), "Pitch": (3,4), "Yaw": (5,6),
+    #                 "Wx": (7,8), "Wy": (9,10), "Wz": (11,12),
+    #                 "Vf": (13,14), "Vl": (15,16), "Vu": (17,18),
+    #                 "Ax": (19,20), "Ay": (21,22), "Az": (23,24)
+    #                },
+    # "CUSTOM_FILTERING": "asdasdasd",
+    # }
 
-    condition_filter = {
-    "QUALITY_INFO": {"qc_state": ['Done'], 
-                     "qc_object": ['Car','Truck','Pedestrian', 'Sitter', 'Tram', 'Misc']},
-    "SENSOR_INFO": {"Roll": (-1,1), "Pitch": (-1,1), "Yaw": (-2,1),
-                   },
-    "CUSTOM_FILTERING": "asdasdasd",
-    }
-
-
-    max_page_num, result = load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_idName = None)
-    print(max_page_num, result)
-
-    ##########################################
-    #### Testing db.readDB_join_filtering ####
-    ##########################################
-
-    buyer_id = 'jeongsik'
-    img_id_list = [1,3,5,7,9,40,45]
-    buyer_defined_dataset_name = 'jeongsik'
-    insert_tx_info(db, buyer_id, img_id_list, buyer_defined_dataset_name)
-
-    ##########################################
-    #### Testing db.readDB_join_filtering ####
-    ##########################################
-
-    #### FOR TEST ONLY #### 
-    join = [["LEFT JOIN", table_name[5], table_name[2], "qc_id", "qc_id"]]
-    condition = "dataset_id='1'"
-
-    result = db.readDB_join_filtering(schema = schema_name, table = table_name[5], columns = "*", join = join, condition = condition)
-    #print(result)
-    # print(result[0])
-    #### FOR TEST ONLY #### 
-
-    ###################################
-    #### Testing load_list_view_tx ####
-    ###################################
+    # condition_filter = {
+    # "QUALITY_INFO": {"qc_state": ['Done'], 
+    #                  "qc_object": ['Car','Truck','Pedestrian', 'Sitter', 'Tram', 'Misc']},
+    # "SENSOR_INFO": {"Roll": (-1,1), "Pitch": (-1,1), "Yaw": (-2,1),
+    #                },
+    # "CUSTOM_FILTERING": "asdasdasd",
+    # }
 
 
-    print("------- load_list_view_tx -------")
-    page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'jeongsik', mode = 'buyer')
-    print(page_num)
-    print(result)
+    # max_page_num, result = load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_idName = None)
+    # print(max_page_num, result)
 
-    page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'jeongsik', mode = 'seller')
-    print(page_num)
-    print(result)
+    # ##########################################
+    # #### Testing db.readDB_join_filtering ####
+    # ##########################################
 
-    page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'tester', mode = 'seller')
-    print(page_num)
-    print(result)
+    # buyer_id = 'jeongsik'
+    # img_id_list = [1,3,5,7,9,40,45]
+    # buyer_defined_dataset_name = 'jeongsik'
+    # insert_tx_info(db, buyer_id, img_id_list, buyer_defined_dataset_name)
+
+    # ##########################################
+    # #### Testing db.readDB_join_filtering ####
+    # ##########################################
+
+    # #### FOR TEST ONLY #### 
+    # join = [["LEFT JOIN", table_name[5], table_name[2], "qc_id", "qc_id"]]
+    # condition = "dataset_id='1'"
+
+    # result = db.readDB_join_filtering(schema = schema_name, table = table_name[5], columns = "*", join = join, condition = condition)
+    # #print(result)
+    # # print(result[0])
+    # #### FOR TEST ONLY #### 
+
+    # ###################################
+    # #### Testing load_list_view_tx ####
+    # ###################################
+
+
+    # print("------- load_list_view_tx -------")
+    # page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'jeongsik', mode = 'buyer')
+    # print(page_num)
+    # print(result)
+
+    # page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'jeongsik', mode = 'seller')
+    # print(page_num)
+    # print(result)
+
+    # page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'tester', mode = 'seller')
+    # print(page_num)
+    # print(result)
