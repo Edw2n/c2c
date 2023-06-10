@@ -57,7 +57,7 @@ function SearchView() {
   ]
   // end of dummy data
   
-  const [listInfo,setListInfo] = useState([dummyData]);
+  const [listInfo,setListInfo] = useState(dummyData);
 
   const handleSubmit = (e) => {
     e.preventDefault()
