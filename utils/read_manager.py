@@ -1,4 +1,4 @@
-from dbmanager.utils import load_list_view, load_detailed_view, load_list_view_search
+from dbmanager.utils import load_list_view, load_detailed_view, load_list_view_search, get_user_point
 import pandas as pd
 import os
 
@@ -202,7 +202,8 @@ class ReadManager():
         df_result = None
         success = False
         
-        # TODO: update cache
+        #update cache
+        data["cache"] = get_user_point(self.db, user_name)['user_point'][0]
 
         #update uploaded data
         try:
