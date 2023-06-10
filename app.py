@@ -113,7 +113,9 @@ def service_data():
 
         try:
             # qeury = get_query_info(request.form~~~~)
-            # read_manager.encode_formdata(request.form, "search")
+            
+            if "keyword" in request.form.keys(): # if query is not None
+                read_manager.encode_formdata(request.form, "search")
             
             #TODO: get custom file
             
