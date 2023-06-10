@@ -144,20 +144,20 @@ if __name__ == "__main__":
     "BASIC_INFO": 'asdasdasdasd', 
     "QUALITY_INFO": {"qc_state": ['Done'],
                      "qc_score": ['Low', 'Medium','High'],
-                     "qc_object": ['Car','Truck','Pedestrian', 'Sitter', 'Cyclist', 'Tram', 'Misc']
+                     "object": ['Car','Truck','Pedestrian', 'Sitter', 'Cyclist', 'Tram', 'Misc']
                     },
-    "SENSOR_INFO": {"Roll": (1,1), "Pitch": (3,4), "Yaw": (5,6),
-                    "Wx": (7,8), "Wy": (9,10), "Wz": (11,12),
-                    "Vf": (13,14), "Vl": (15,16), "Vu": (17,18),
-                    "Ax": (19,20), "Ay": (21,22), "Az": (23,24)
+    "SENSOR_INFO": {"roll": (1,1), "pitch": (3,4), "yaw": (5,6),
+                    "wx": (7,8), "wy": (9,10), "wz": (11,12),
+                    "vf": (13,14), "vl": (15,16), "vu": (17,18),
+                    "ax": (19,20), "ay": (21,22), "az": (23,24)
                    },
     "CUSTOM_FILTERING": "asdasdasd",
     }
 
     condition_filter = {
     "QUALITY_INFO": {"qc_state": ['Done'], 
-                     "qc_object": ['Car','Truck','Pedestrian', 'Sitter', 'Tram', 'Misc']},
-    "SENSOR_INFO": {"Roll": ('null',1), "Pitch": (-1,'null'), "Yaw": (-2,1),
+                     "object": ['Car','Truck','Pedestrian', 'Sitter', 'Tram', 'Misc']},
+    "SENSOR_INFO": {"roll": ('null',1), "pitch": (-1,'null'), "yaw": (-2,1),
                    },
     "CUSTOM_FILTERING": "asdasdasd",
     }
@@ -191,6 +191,10 @@ if __name__ == "__main__":
     img_id_list = [1,3,5,7,9,40,45]
     buyer_defined_dataset_name = 'jeongsik'
     insert_tx_info(db, buyer_id, img_id_list, buyer_defined_dataset_name)
+
+    for i, table in enumerate(table_name):
+        res = db.copyTable(schema = schema_name, table = table) 
+        print(res)
 
     ###################################
     #### Testing load_list_view_tx ####

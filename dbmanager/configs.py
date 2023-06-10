@@ -160,7 +160,7 @@ FEATURES_COLUMNS_INFO = {
     "posmode":        "bigint NULL",
     "velmode":        "bigint NULL",
     "orimode":        "bigint NULL",
-    "like_cnt":       "bigint NULL",
+    "like_cnt":       "bigint NULL DEFAULT 0",
     "qc_id":          "bigint NULL",
     "user_id":        "bigint NULL",
     "product_id":     "bigint NULL",

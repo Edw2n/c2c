@@ -485,8 +485,20 @@ def _load_list_view_default(db, page=1, item_per_page=10, user_idName = None):
             order by res.dataset_id limit {item_per_page} offset {item_start};"
 
     result = db.execute(sql)
-    columns = ['dataset_id', 'dataset_name', 'price_total', 'image_count', 'avg_price_per_image', 'sales_count', 'like_count' ,'qc_state' ,'qc_score', 'uploader' ,'upload_date', 'res.dataset_description']
+    columns = ['dataset_id', 'dataset_name', 'price_total', 'image_count', 'avg_price_per_image', 'sales_count', 'like_count' ,'qc_state' ,'qc_score', 'uploader' ,'upload_date', 'description']
     df_result = pd.DataFrame(data = result, columns=columns)
+
+    to_process_qcState = list(df_result['qc_state'])
+
+    for i in range(len(to_process_qcState)):
+        if to_process_qcState[i] == 'uploaded':
+            to_process_qcState[i] = 'Pending'
+        elif to_process_qcState[i] == 'QC_start':
+            to_process_qcState[i] = 'In Progress'
+        elif to_process_qcState[i] in ('QC_end','QC_end+obj_cnt','QC_end+obj_cnt+duplicate'):
+            to_process_qcState[i] = 'Done'
+
+    df_result['qc_state'] = to_process_qcState
 
     target_dataset_id = tuple(df_result['dataset_id'])
     
@@ -938,8 +950,21 @@ def load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_i
             order by res.dataset_id limit {item_per_page} offset {item_start};"
 
     result = db.execute(sql)
-    columns = ['dataset_id', 'dataset_name', 'price_total', 'image_count', 'avg_price_per_image', 'sales_count', 'like_count' ,'qc_state' ,'qc_score', 'uploader' ,'upload_date', 'res.dataset_description']
+    columns = ['dataset_id', 'dataset_name', 'price_total', 'image_count', 'avg_price_per_image', 'sales_count', 'like_count' ,'qc_state' ,'qc_score', 'uploader' ,'upload_date', 'description']
     df_result = pd.DataFrame(data = result, columns=columns)
+
+    to_process_qcState = list(df_result['qc_state'])
+
+    for i in range(len(to_process_qcState)):
+        if to_process_qcState[i] == 'uploaded':
+            to_process_qcState[i] = 'Pending'
+        elif to_process_qcState[i] == 'QC_start':
+            to_process_qcState[i] = 'In Progress'
+        elif to_process_qcState[i] in ('QC_end','QC_end+obj_cnt','QC_end+obj_cnt+duplicate'):
+            to_process_qcState[i] = 'Done'
+
+    df_result['qc_state'] = to_process_qcState
+
 
     target_dataset_id = tuple(df_result['dataset_id'])
     
@@ -1013,7 +1038,7 @@ def _cleansing_condition_filter(condition_filter):
     key_dict={
         'qc_state': 'qc_status',
         'qc_score': 'qc_score',
-        'qc_object': 'gt_object_id',
+        'object': 'gt_object_id',
         'roll': 'roll',
         'pitch': 'pitch',
         'yaw': 'yaw',

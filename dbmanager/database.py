@@ -1,7 +1,11 @@
 import psycopg2
+from datetime import datetime
+from pytz import timezone
+import os
 
 class PostgrestDB():
     def __init__(self, db_config):
+        self.db_config = db_config
         # connect flask - postgresql => db object
         self.db = psycopg2.connect(
             host=db_config["C2C_HOST"],

@@ -384,3 +384,37 @@ class CRUD(PostgrestDB):
         
         return result
 
+
+    def copyTable(self, schema, table):
+        '''
+        table에 전체 복사
+        
+        [input]
+        - schema : 스키마 명, string
+        - table : 테이블 명, string
+       
+        [output]
+        - success : delete 문 실행 성공 여부, bool
+        '''
+
+        sql_create = f"create table copy_{table} AS table {schema}.{table};"
+        print(sql_create)
+        try :
+            result = self.execute(sql_create)
+            if not result:
+                result = 0
+            else: result = result[0][0]
+        except Exception as e:
+            print( "copyTable_create err", e)
+        
+        # sql_insert = f"insert into {schema}.copy_{table} (select * from {schema}.{table});"
+        # print(sql_insert)
+        # try :
+        #     result = self.execute(sql_insert)
+        #     if not result:
+        #         result = 0
+        #     else: result = result[0][0]
+        # except Exception as e:
+        #     print( "copyTable_insert err", e)
+
+        return result
