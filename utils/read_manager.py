@@ -1,4 +1,4 @@
-from dbmanager.utils import load_list_view, load_detailed_view
+from dbmanager.utils import load_list_view, load_detailed_view, load_list_view_search
 import pandas as pd
 import os
 
@@ -52,15 +52,25 @@ class ReadManager():
             "rows": [],
             "max_page_num": 0
         }
+
+        df_result = None
         success = False
         try:
             if query:
                 print("query is not none")
-                pass
+                try:
+                    datasets["max_page_num"], df_result = load_list_view_search(self.db, query)
+                except Exception as e:
+                    print("query search error:", e)
             else: # read all
                 datasets["max_page_num"], df_result = load_list_view(self.db)
+            
+            try:
                 if df_result is not None:
                     datasets["rows"] = self.get_listview_form(df_result)
+            except Exception as e:
+                print("load front form error", e)
+
             success = True
         except Exception as e:
             print("read data error:", e)
