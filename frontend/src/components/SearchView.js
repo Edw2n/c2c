@@ -18,46 +18,46 @@ function SearchView() {
     QCstate: 'Done', QCscore: 'High', Objects: '3 Objects (Car: 1, Truck: 2)', UploadDate: '2022-03-01',
     SalesCount: 22, MatchedData: 10, Price: 30, PricePerImage: 0.3
     },
-    {id: 2, Uploader:'henry', Title: 'afaf.zip',  
+    {id: 2, Uploader:'henry', Title: 'afaf.zip', Description: 'such is life...',
     QCstate: 'In Progress', QCscore: '', Objects: 'Car', UploadDate: '2022-03-02',
     SalesCount: 23, MatchedData: 5, Price: 40, PricePerImage: 0.4
     },
-    {id: 3, Uploader:'son', Title: 'sdfsdf.zip', 
+    {id: 3, Uploader:'son', Title: 'sdfsdf.zip', Description: 'such is life...',
     QCstate: 'Done', QCscore: 'Low', Objects: 'Car', UploadDate: '2022-03-03',
     SalesCount: 24, MatchedData: 10, Price: 60, PricePerImage: 0.6
     },
-    {id: 4, Uploader:'bale', Title: 'wrq.zip', 
+    {id: 4, Uploader:'bale', Title: 'wrq.zip', Description: 'such is life...',
     QCstate: 'Done', QCscore: 'High', Objects: 'Car', UploadDate: '2022-03-04',
     SalesCount: 55, MatchedData: 20, Price: 70, PricePerImage: 0.7
     },
-    {id: 5, Uploader:'rooney', Title: 'zzz.zip', 
+    {id: 5, Uploader:'rooney', Title: 'zzz.zip', Description: 'such is life...',
     QCstate: 'Pending', QCscore: 'Low', Objects: 'Car', UploadDate: '2022-03-05',
     SalesCount: 6, MatchedData: 25, Price: 10, PricePerImage: 0.1
     },
-    {id: 6, Uploader:'asdasd', Title: 'xxx.zip', 
+    {id: 6, Uploader:'asdasd', Title: 'xxx.zip', Description: 'such is life...',
     QCstate: 'In Progress', QCscore: '', Objects: 'Car', UploadDate: '2022-03-06',
     SalesCount: 2, MatchedData: 9, Price: 90, PricePerImage: 0.9
     },
-    {id: 7, Uploader:'nine', Title: 'yyyy.zip', 
+    {id: 7, Uploader:'nine', Title: 'yyyy.zip', Description: 'such is life...',
     QCstate: 'Done', QCscore: 'High', Objects: 'Car', UploadDate: '2022-04-01',
     SalesCount: 12, MatchedData: 3, Price: 26, PricePerImage: 0.26
     },
-    {id: 8, Uploader:'zoo', Title: 'asdfg.zip', 
+    {id: 8, Uploader:'zoo', Title: 'asdfg.zip', Description: 'such is life...',
     QCstate: 'Done', QCscore: 'Medium', Objects: 'Car', UploadDate: '2022-05-01',
     SalesCount: 14, MatchedData: 1, Price: 11, PricePerImage: 0.11
     },
-    {id: 9, Uploader:'barn', Title: 'qwer.zip', 
+    {id: 9, Uploader:'barn', Title: 'qwer.zip', Description: 'such is life...',
     QCstate: 'Done', QCscore: 'Medium', Objects: 'Car', UploadDate: '2022-06-01',
     SalesCount: 1, MatchedData: 4, Price: 41, PricePerImage: 0.41
     },
-    {id: 10, Uploader:'kookoo', Title: 'tqt.zip', 
+    {id: 10, Uploader:'kookoo', Title: 'tqt.zip', Description: 'such is life...',
     QCstate: 'Done', QCscore: 'High', Objects: 'Car', UploadDate: '2022-07-01',
     SalesCount: 3, MatchedData: 5, Price: 51, PricePerImage: 0.51
     }
   ]
   // end of dummy data
   
-  const [listInfo,setListInfo] = useState(dummyData);
+  const [listInfo,setListInfo] = useState([]);
 
   const handleSubmit = (e) => {
     e.preventDefault()
