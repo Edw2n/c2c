@@ -94,6 +94,7 @@ class ReadManager():
         # make data as front listview form
         df_result.rename(columns=self.db2front_dataset_list, inplace=True)
         df_result["Objects"] = df_result.apply(lambda x: f"{x.object_count} objects: {x.object_info_in_detail}", axis=1)
+        df_result["UploadDate"] = df_result.apply(lambda x: x.UploadDate.strftime("%Y-%m-%d %H:%M:%S"), axis=1)
         df_result["items"] = None
         
         rows = df_result.to_dict("records")
