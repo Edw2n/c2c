@@ -234,7 +234,7 @@ class UploadManager():
         success = update_columns_af_duplicate(self.db, dp_ids)
         if success:
           now = datetime.now()
-          dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+          dt_string = now.strftime("%Y-%m-%d %H:%M:%S")
           stored_info["qc_end_date"] = dt_string
           success = update_multiple_columns(self.db, df=stored_info, mode="end_QC")
     except Exception as e:
