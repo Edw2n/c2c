@@ -1661,16 +1661,3 @@ def update_tx_availability (db, txp_id, flag, download_file_path):
 
 
 
-
-
-import gzip
-from sh import pg_dump
-
-def dump_db():
-    now = datetime.now(timezone('UTC')).strftime('%Y%m%d%H%M%S')
-
-    with gzip.open(f"c2c_db_backup_{now}", 'wb') as f:
-        pg_dump('-h', 'localhost', '-U', 'postgres', )
-
-
-    return None
