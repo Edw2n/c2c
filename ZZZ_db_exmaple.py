@@ -106,11 +106,11 @@ if __name__ == "__main__":
 
     max_page, list_view_test = load_list_view(db=db, page=1, item_per_page=10)
     print("# of max page: ", max_page)
-    print(list_view_test)
+    print(list_view_test[list_view_test['dataset_id']==2])
     print()
-
+    test = list_view_test[list_view_test['dataset_id']==2]
     #### FOR TEST ONLY #### 
-    detailed_view, all_data= load_detailed_view(db, list_view_test, K=10)
+    detailed_view, all_data= load_detailed_view(db, test, K=10)
     print(detailed_view[1])
     print()
     print(all_data[2])
@@ -169,8 +169,7 @@ if __name__ == "__main__":
     # print(result[0])
     #### FOR TEST ONLY #### 
 
-
-
+    print("aaaaaaaaaaaaaaaaaaaaaaa")
     result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'jeongsik', mode = 'buyer')
     print(result)
 

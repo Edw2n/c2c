@@ -681,7 +681,10 @@ def load_detailed_view(db, df, K = 10):
         selected_K_img_dict[i] = result_df[result_df['dataset_id']==i]
 
     # 6. load all images 
-    condition_all = f"features.dataset_id in {tuple(dataset_id_list)}"
+    if len(dataset_id_list) == 1:
+        condition_all = f"features.dataset_id = {dataset_id_list[0]}"
+    else: 
+        condition_all = f"features.dataset_id in {tuple(dataset_id_list)}"
     res_all = db.readDB_with_filtering(schema = schema_name,
                                       table = "features",
                                       columns = "*",
@@ -1184,19 +1187,11 @@ def load_list_view_tx(db, page=1, item_per_page=10, user_idName = None, mode = '
     else: condition_id = ""
 
     print(condition_id)
-    sql = f"select res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date \
-            from( \
-                select f.img_id, f.upload_date, f.like_cnt, d.*, p.*, q.qc_status, q.qc_score, u.* \
-                from features f \
-                left join productinfo p on f.product_id =p.product_id \
-                left join datasetinfo d on d.dataset_id =f.dataset_id \
-                left join qc q on q.qc_id =f.qc_id \
-                left join public.user u on u.user_id =f.user_id \
-                left join public.transaction t on t.seller_id=f.user_id \
-                left join public.user u2 on u2.user_id=t.buyer_id \
-                {condition_id} \
-                ) res \
-            group by res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date;"
+    sql = f"select t.img_id_list, t.dataset_id, t.buyer_defined_dataset_name, u.user_idname , u2.user_idname \
+            from public.transaction t \
+            left join public.user u on u.user_id=t.buyer_id \
+            left join public.user u2 on u2.user_id=t.seller_id \
+            {condition_id};"
     total_cnt = db.execute(sql)
     total_cnt = len(total_cnt)
     if total_cnt == 0:
@@ -1219,7 +1214,9 @@ def load_list_view_tx(db, page=1, item_per_page=10, user_idName = None, mode = '
                 left join productinfo p on f.product_id =p.product_id \
                 left join datasetinfo d on d.dataset_id =f.dataset_id \
                 left join qc q on q.qc_id =f.qc_id \
-                left join public.user u on u.user_id =f.user_id \
+                left join transaction t \
+                left join public.user u on u.user_id=t.buyer_id \
+                left join public.user u2 on u2.user_id=t.seller_id \
                 {condition_id} \
                 ) res \
             group by res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date \
