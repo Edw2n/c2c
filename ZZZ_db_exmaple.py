@@ -2,8 +2,8 @@ from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG, SCHEMA_NAME, TABLE_NAME, ALL_COLUMNS
 from dbmanager.utils import initialize_db_structures, insert_user, insert_draft_dataset, identify_user, \
     load_list_view, update_multiple_columns, update_columns_af_duplicate, load_detailed_view, load_list_view_search, \
-    insert_tx_info, load_list_view_tx_buyer, load_list_view_tx_seller, create_download_file, update_tx_availability, \
-    copy_db, restore_db, get_user_point
+    insert_tx_info, load_list_view_tx, create_download_file, update_tx_availability, \
+    copy_db, restore_db, get_user_point, _load_list_view_tx_buyer, _load_list_view_tx_seller
 import pandas as pd
 import numpy as np
 
@@ -201,35 +201,25 @@ if __name__ == "__main__":
     #### Testing load_list_view_tx ####
     ###################################
 
-    print("------- load_list_view_tx -------")
-    print("seller is jeongsik, the output should be None, 0")
-    page_num, result = load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = 'jeongsik')
-    print(page_num)
-    print(result)
-    print()
-
     print("seller is tester")
-    page_num, result = load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = 'tester')
-    print(page_num)
-    print(result)
-    print()
+    page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'tester')
+    # print(page_num)
+    # print(result)
+    # print()
 
     print("seller is SeongGu")
-    page_num, result = load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = 'SeongGu')
-    print(page_num)
-    print(result)
-    print(result.columns)
-    print()
-
-    user_point = get_user_point(db, 'jeongsik')
-    print(user_point)
+    page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'SeongGu')
+    # print(page_num)
+    # print(result)
+    # print(result.columns)
+    # print()
 
     print("buyer is Jeongsik")
-    page_num, result = load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = 'jeongsik')
-    print(page_num)
-    print(result)
-    print(result[1].columns)
-    print()
+    page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'jeongsik')
+    # print(page_num)
+    # print(result)
+    # print(result.columns)
+    # print()
 
 
 

@@ -953,7 +953,7 @@ def load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_i
         condition_list.append(string_id)
 
     if not condition_list:
-        print("#####", condition_list)
+        # print("#####", condition_list)
         condition = " "
     else: 
         condition = "WHERE "+" and ".join(condition_list)
@@ -972,7 +972,7 @@ def load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_i
                 ) res \
             group by res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date;"
     total_cnt = db.execute(sql)
-    print(total_cnt)
+    # print(total_cnt)
     total_cnt = len(total_cnt)
     if total_cnt == 0:
         return total_cnt, None
@@ -1257,7 +1257,7 @@ def insert_tx_info(db, buyer_name, img_id_list, buyer_defined_dataset_name):
     insert 
     [inputs]
     - db          : target db object (CRUD)
-    - buyer_id    : string,
+    - buyer_name  : string,
     - img_id_list : list, list of img_id
     - buyer_defined_dataset_name: string, dataset_name made by buyer
 
@@ -1342,7 +1342,47 @@ def _calculate_total_price_selected (db, img_id_list):
     result_df = pd.DataFrame(data=result, columns = ['dataset_id', 'totalprice'])
     return result_df
 
-def load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
+def load_list_view_tx(db, page=1, item_per_page=10, user_idName=None):
+    col = ['id', 'dataset_name', 'price_total', 'image_count',
+            'avg_price_per_image','sales_count', 'like_count',
+            'qc_state', 'qc_score', 'uploader', 'date', 'availability',
+            'object_list', 'object_count', 'object_info_in_detail', 'product_path', 'flag']
+    
+    cnt_buy, df_buy = _load_list_view_tx_buyer(db, page, item_per_page, user_idName)
+    col_buy = ['txp_id', 'dataset_name', 'price_total', 'image_count',
+            'avg_price_per_image','sales_count', 'like_count',
+            'qc_state', 'qc_score', 'uploader', 'upload_date', 'availability',
+            'object_list', 'object_count', 'object_info_in_detail', 'product_path']
+
+    if df_buy is not None:
+        df_buy = df_buy[col_buy]
+        df_buy['flag'] = 'buy'
+    else:
+        df_buy = pd.DataFrame(columns=[*col_buy, 'flag'])
+    df_buy.columns = col
+#    print(df_buy)
+
+    cnt_sell, df_sell = _load_list_view_tx_seller(db, page, item_per_page, user_idName)
+    col_sell = ['dataset_id', 'dataset_name', 'price_total', 'image_count',
+            'avg_price_per_image', 'sales_count', 'like_count',
+            'qc_state', 'qc_score', 'uploader', 'upload_date', 'availability',
+            'object_list','object_count', 'object_info_in_detail', 'product_path']
+    if df_sell is not None:
+        df_sell = df_sell[col_sell]
+        df_sell['flag'] = 'sell'
+    else:
+        df_sell = pd.DataFrame(columns=[*col_sell, 'flag'])
+    df_sell.columns = col
+#    print(df_sell)
+
+    df_concat = pd.concat([df_buy, df_sell], axis=0)
+    df_concat.columns = col
+
+ #   print(df_concat)
+
+    return cnt_buy+cnt_sell, df_concat
+
+def _load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
     '''
     load_list view of transaction
     if user_idName is not None -> then returns listview for the user's uploaded dataset
@@ -1521,7 +1561,7 @@ def load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
     df_obj_list_split_by_dataset['object_list'] = tmp_list_for_object_list
     df_obj_list_split_by_dataset['object_info_in_detail'] = tmp_list_for_detail
 
-    print(df_obj_list_split_by_dataset)
+    # print(df_obj_list_split_by_dataset)
 
     result_df = pd.merge(result_df,
                          df_obj_list_split_by_dataset,
@@ -1535,12 +1575,12 @@ def load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
     result = db.execute(sql)
     result_uploader_df = pd.DataFrame(data = result, columns = ['tx_id', 'seller_id', 'txp_id', 'uploader']) 
 
-    print(result_uploader_df)
+    # print(result_uploader_df)
     seller_df = pd.DataFrame(columns = ['txp_id', 'uploader'])
     id_tmp = []
     seller_tmp = []
     for i, id in enumerate(result_df['txp_id'].unique()):
-        print(i, id)
+        # print(i, id)
         seller_list = list(result_uploader_df[result_uploader_df['txp_id']==id]['uploader'])
         id_tmp.append(id)
         seller_tmp.append("["+", ".join(seller_list) + "]")
@@ -1553,15 +1593,15 @@ def load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
                          on= 'txp_id',
                          how='left')
     
-    dataset_list = result_df['txp_id'].unique()
-    result_dict = dict()
+    # dataset_list = result_df['txp_id'].unique()
+    # result_dict = dict()
 
-    for i in dataset_list:
-        result_dict[i] = result_df[result_df['txp_id']==i]
+    # for i in dataset_list:
+    #     result_dict[i] = result_df[result_df['txp_id']==i]
 
-    return total_cnt, result_dict
+    return total_cnt, result_df
 
-def load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = None):
+def _load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = None):
     '''
     load_list view of transaction
     if user_idName is not None -> then returns listview for the user's uploaded dataset
@@ -1771,6 +1811,9 @@ def update_tx_availability (db, txp_id, flag, download_file_path):
         success =  db.updateDB(schema=schema_name, table = table, column=column, value = values[idx], condition = condition)
 
     return success
+
+
+# def update_like_cnt (db, img_id_list):
 
 
 
