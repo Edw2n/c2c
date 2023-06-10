@@ -95,6 +95,16 @@ def restore_db(db):
 
     return success
 
+def get_user_point(db, user_idname):
+    '''
+    output = pd.dataframe, 그 유저가 가지고 있는 포인트
+    '''
+
+    sql = f"select u.user_point from public.user u where u.user_idName = '{user_idname}';"
+    data = db.execute(sql)
+    result_df = pd.DataFrame(data=data, columns=['user_point'])
+
+    return result_df
 
 ####################################################
 ########## USER IDENTIFICATION FUNCTIONS ###########
@@ -498,6 +508,7 @@ def _load_list_view_default(db, page=1, item_per_page=10, user_idName = None):
                 ) res \
             group by res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date;"
     total_cnt = db.execute(sql)
+    # print("###############################", total_cnt)
     total_cnt = len(total_cnt)
     if total_cnt == 0:
         return total_cnt, None
@@ -1344,13 +1355,10 @@ def load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
 
     [output]
     - total_count: int, the number of rows
-    - df_result: pd.DataFrame, output from query, if df_result is empty pd.DataFrame, returns None
-      cols = ['dataset_id', 'dataset_name',
-              'price_total', 'iamge_count', 'avg_price_per_image',
-              'sales_count', 'like_count',
-              'qc_state', 'qc_score', 
-              'uploader', 'upload_date', availability', 'buyer_defined_dataset_name', 'product_path',
-              'object_list', 'object_count','object_info_in_detail']
+    - selected_K_img_df: output from query, dictionary, if empty dictionary, returns None
+      key: dataset_id
+      values: pd.dataframe with cols = ['img_id', 'image_path', 'qc_score', 'dataset_id'
+                                        'object_list', 'object_count','object_info_in_detail']  ==> PLEASE FIX
       also,
         the value of colmnn "object_list" is *list* of object 
             (e.g., ['Van','Cyclist', 'Pedestrian'])
@@ -1402,7 +1410,7 @@ def load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
     for i in txp_id_and_img_id_list:
         img_id_list_fin = [*img_id_list_fin, *i[1]]
 
-    print(img_id_list_fin)
+    # print(img_id_list_fin)
 
     condition_img_id_list = f"where q.qc_status not in ('uploaded', 'QC_start') and u.user_idname = '{user_idName}' and f.img_id in {tuple(img_id_list_fin)}"
 
@@ -1415,10 +1423,10 @@ def load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
                 sum(res.like_cnt) as like_count, \
                 res.qc_status as qc_state, \
                 AVG(res.qc_score) as qc_score, \
-                res.upload_date as upload_date, \
+                res.tx_date as transaction_date, \
                 res.availability, res.buyer_defined_dataset_name, res.product_path \
             from( \
-                select f.img_id, f.upload_date, f.like_cnt, d.*, p.*, q.qc_status, q.qc_score, u2.user_idname as user_idname, u.user_idname as buyer_idname, tp.txp_id, tp.availability, tp.buyer_defined_dataset_name, tp.product_path \
+                select f.img_id, f.upload_date, f.like_cnt, d.*, p.*, t.tx_date, q.qc_status, q.qc_score, u2.user_idname as user_idname, u.user_idname as buyer_idname, tp.txp_id, tp.availability, tp.buyer_defined_dataset_name, tp.product_path \
                 from features f \
                 left join productinfo p on f.product_id =p.product_id \
                 left join datasetinfo d on d.dataset_id =f.dataset_id \
@@ -1429,61 +1437,76 @@ def load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
                 left join TransactionProduct tp on tp.txp_id=t.txp_id \
                 {condition_img_id_list} \
                 ) res \
-            group by res.txp_id, res.qc_status, res.upload_date, res.availability, res.buyer_defined_dataset_name, res.product_path \
+            group by res.txp_id, res.qc_status, res.tx_date, res.availability, res.buyer_defined_dataset_name, res.product_path \
             order by res.txp_id limit {item_per_page} offset {item_start};"
 
     result = db.execute(sql)
-    columns = ['txp_id', 'price_total', 'image_count', 'avg_price_per_image', 'sales_count', 'like_count' ,'qc_state' ,'qc_score','upload_date', 'availability', 'buyer_defined_dataset_name', 'product_path']
+    columns = ['txp_id', 'price_total', 'image_count', 'avg_price_per_image', 'sales_count', 'like_count' ,'qc_state' ,'qc_score','upload_date', 'availability', 'dataset_name', 'product_path']
     result_df = pd.DataFrame(data = result, columns=columns)
-    print(result_df)
+    # print(result_df)
+
+    to_process_qcState = list(result_df['qc_state'])
+
+    for i in range(len(to_process_qcState)):
+        if to_process_qcState[i] == 'uploaded':
+            to_process_qcState[i] = 'Pending'
+        elif to_process_qcState[i] == 'QC_start':
+            to_process_qcState[i] = 'In Progress'
+        elif to_process_qcState[i] in ('QC_end','QC_end+obj_cnt','QC_end+obj_cnt+duplicate'):
+            to_process_qcState[i] = 'Done'
+
+    result_df['qc_state'] = to_process_qcState
+
 
     # 3. object information
     ## a. df for final result and condition settting 
-    df_obj_list_split_by_dataset = pd.DataFrame(columns = ['dataset_id', 'object_list', 'object_count', 'object_info_in_detail'])
+    df_obj_list_split_by_dataset = pd.DataFrame(columns = ['txp_id', 'object_list', 'object_count', 'object_info_in_detail'])
 
-
-    target_txp_id = tuple(df_result['txp_id'])
+    target_txp_id = tuple(result_df['txp_id'])
 
     if len(target_txp_id) == 0:
-        return df_result
+        return result_df
     elif len(target_txp_id) == 1:
         condition = f"where dataset.dataset_id = '{target_txp_id[0]}'"
     else:
         condition = f"where dataset.dataset_id in {target_txp_id}" 
     
     ## b. excute query
-    sql = f"select  res.dataset_id, res.gt_object, count(res.gt_object) \
+    sql = f"select  res.txp_id, res.gt_object, count(res.gt_object) \
             from ( \
-                select o.gt_object, g.gt_height, g.gt_width, dataset.dataset_id \
+                select o.gt_object, g.gt_height, g.gt_width, dataset.txp_id \
                 from groundtruth g  \
                 left join ( \
-                    select f.img_id, d.dataset_id, \
+                    select f.img_id, d.dataset_id, t.txp_id \
                     from features f \
                     left join datasetinfo d on d.dataset_id = f.dataset_id \
+                    left join transaction t on t.seller_id = f.user_id \
+                    left join transactionproduct tp on tp.txp_id = t.txp_id \
                 ) dataset on dataset.img_id = g.img_id \
                 left join public.object o on o.gt_object_id = g.gt_object_id \
                 {condition} \
-                group by o.gt_object, g.gt_height, g.gt_width, dataset.dataset_id \
+                group by o.gt_object, g.gt_height, g.gt_width, dataset.txp_id \
             ) res \
-            group by res.dataset_id, res.gt_object \
-            order by res.dataset_id; "    
+            group by res.txp_id, res.gt_object \
+            order by res.txp_id; "    
     result_obj = db.execute(sql)
-    col_obj = ['dataset_id', 'gt_object', 'count']
+    col_obj = ['txp_id', 'gt_object', 'count']
     df_obj = pd.DataFrame(data = result_obj, columns= col_obj)
+    # print(df_obj)
     
     ## c. update column dataset_ids
-    df_obj_unique_dataset_id = df_obj['dataset_id'].unique()
-    df_obj_list_split_by_dataset['dataset_id'] = list(df_obj_unique_dataset_id)
+    df_obj_unique_dataset_id = df_obj['txp_id'].unique()
+    df_obj_list_split_by_dataset['txp_id'] = list(df_obj_unique_dataset_id)
     
     ## d. update column object_count
-    df_groupby1=df_obj.groupby('dataset_id').sum()
+    df_groupby1=df_obj.groupby('txp_id').sum()
     df_obj_list_split_by_dataset['object_count'] = list(df_groupby1['count'])
 
     ## e. update column object_list and object_info_in_detail
     tmp_list_for_detail = []
     tmp_list_for_object_list = []
     for i in df_obj_unique_dataset_id:
-        df_target = df_obj[df_obj['dataset_id']==i]
+        df_target = df_obj[df_obj['txp_id']==i]
         tmp_dict = {}
         df_target_len = len(df_target)
         sub_tmp_list_for_object_list = []
@@ -1498,19 +1521,42 @@ def load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
     df_obj_list_split_by_dataset['object_list'] = tmp_list_for_object_list
     df_obj_list_split_by_dataset['object_info_in_detail'] = tmp_list_for_detail
 
-    df_result = pd.merge(df_result,
+    print(df_obj_list_split_by_dataset)
+
+    result_df = pd.merge(result_df,
                          df_obj_list_split_by_dataset,
-                         on='dataset_id',
+                         on='txp_id',
                          how='left'
                          )
     
-    dataset_list = result_df['dataset_id'].unique()
-    selected_K_img_dict = dict()
+
+    # 4. uploader list
+    sql = f"select t.tx_id, t.seller_id, txp_id, u.user_idname from transaction t left join public.user u on u.user_id = t.seller_id"
+    result = db.execute(sql)
+    result_uploader_df = pd.DataFrame(data = result, columns = ['tx_id', 'seller_id', 'txp_id', 'uploader']) 
+
+    print(result_uploader_df)
+    seller_df = pd.DataFrame(columns = ['txp_id', 'uploader'])
+    for i, id in enumerate(result_df['txp_id'].unique()):
+        print(i, id)
+        seller_list = list(result_uploader_df[result_uploader_df['txp_id']==id]['uploader'])
+        seller_df['txp_id'].iloc[i] = int(id)
+        print("["+", ".join(seller_list) + "]")
+#        seller_df['uploader'].iloc[i] = 
+
+    print(seller_df)
+
+
+
+
+    
+    dataset_list = result_df['txp_id'].unique()
+    result_dict = dict()
 
     for i in dataset_list:
-        selected_K_img_dict[i] = result_df[result_df['dataset_id']==i]
+        result_dict[i] = result_df[result_df['txp_id']==i]
 
-    return total_cnt, selected_K_img_dict
+    return total_cnt, result_dict
 
 def load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = None):
     '''
