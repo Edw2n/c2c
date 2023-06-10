@@ -84,7 +84,7 @@ class UploadManager():
     zip_file = zipfile.ZipFile(zip_path)
     zip_file.extractall(unzip_dir)
     zip_file.close()
-    
+
     extracted_dir = unzip_dir + dir_name
     filenames = os.listdir(extracted_dir)
     print("contents:", filenames)
@@ -101,7 +101,11 @@ class UploadManager():
     print(f"extracted in {extracted_dataset_info}")
 
     #압축 풀고나면 zip 파일 삭제하기
-    os.remove(zip_path)
+    try:
+      os.remove(zip_path)
+    except Exception as e:
+      print("zip file is not deleted", e)
+      
 
     return extracted_dataset_info
 
@@ -176,7 +180,7 @@ class UploadManager():
     success = False
     try:
       now = datetime.now()
-      dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+      dt_string = now.strftime("%Y-%m-%d %H:%M:%S")
       stored_info["qc_start_date"] = dt_string
       success = update_multiple_columns(self.db, df=stored_info, mode="start_QC")
 
