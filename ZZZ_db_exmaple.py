@@ -3,7 +3,7 @@ from dbmanager.configs import POSTGRES_CONFIG, SCHEMA_NAME, TABLE_NAME, ALL_COLU
 from dbmanager.utils import initialize_db_structures, insert_user, insert_draft_dataset, identify_user, \
     load_list_view, update_multiple_columns, update_columns_af_duplicate, load_detailed_view, load_list_view_search, \
     insert_tx_info, load_list_view_tx_buyer, load_list_view_tx_seller, create_download_file, update_tx_availability, \
-    copy_db, restore_db
+    copy_db, restore_db, get_user_point
 import pandas as pd
 import numpy as np
 
@@ -218,13 +218,19 @@ if __name__ == "__main__":
     page_num, result = load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = 'SeongGu')
     print(page_num)
     print(result)
+    print(result.columns)
     print()
+
+    user_point = get_user_point(db, 'jeongsik')
+    print(user_point)
 
     print("buyer is Jeongsik")
     page_num, result = load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = 'jeongsik')
     print(page_num)
     print(result)
+    print(result[1].columns)
     print()
+
 
 
     print("------- create_download_file -------")

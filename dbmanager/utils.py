@@ -1537,18 +1537,21 @@ def load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
 
     print(result_uploader_df)
     seller_df = pd.DataFrame(columns = ['txp_id', 'uploader'])
+    id_tmp = []
+    seller_tmp = []
     for i, id in enumerate(result_df['txp_id'].unique()):
         print(i, id)
         seller_list = list(result_uploader_df[result_uploader_df['txp_id']==id]['uploader'])
-        seller_df['txp_id'].iloc[i] = int(id)
-        print("["+", ".join(seller_list) + "]")
-#        seller_df['uploader'].iloc[i] = 
+        id_tmp.append(id)
+        seller_tmp.append("["+", ".join(seller_list) + "]")
 
-    print(seller_df)
+    seller_df['txp_id'] = id_tmp
+    seller_df['uploader'] = seller_tmp
 
-
-
-
+    result_df = pd.merge(result_df,
+                         seller_df,
+                         on= 'txp_id',
+                         how='left')
     
     dataset_list = result_df['txp_id'].unique()
     result_dict = dict()
