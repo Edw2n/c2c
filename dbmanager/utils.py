@@ -800,7 +800,7 @@ def load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_i
     - db: target db object (CRUD)
     - condition_filter: dictionary 
        {"BASIC_INFO": string, 
-        "QUALITY_INFO": {"qc_state", "qc_score", "qc_object"}
+        "QUALITY_INFO": {"qc_state", "qc_score", "objects"}
         "SENSOR_INFO": {"Roll", "Pitch", "Yaw", "Wx", "Wy", "Wz", "Vf", "Vl", "Vu","Ax", "Ay", "Az"}
         "CUSTOM_FILTERING": WIP
         }
@@ -808,7 +808,7 @@ def load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_i
         "BASIC_INFO": 'asdasdasdasd', 
         "QUALITY_INFO": {"qc_state": ['Done'],
                         "qc_score": ['Low', 'Medium','High'],
-                        "qc_object": ['Car','Truck','Pedestrian', 'Sitter', 'Cyclist', 'Tram', 'Misc']
+                        "objects": ['Car','Truck','Pedestrian', 'Sitter', 'Cyclist', 'Tram', 'Misc']
                         },
         "SENSOR_INFO": {"Roll": (1,1), "Pitch": (3,4), "Yaw": (5,6),
                         "Wx": (7,8), "Wy": (9,10), "Wz": (11,12),
@@ -1038,7 +1038,7 @@ def _cleansing_condition_filter(condition_filter):
     key_dict={
         'qc_state': 'qc_status',
         'qc_score': 'qc_score',
-        'object': 'gt_object_id',
+        'objects': 'gt_object_id',
         'roll': 'roll',
         'pitch': 'pitch',
         'yaw': 'yaw',

@@ -1,4 +1,4 @@
-from dbmanager.utils import load_list_view, load_detailed_view
+from dbmanager.utils import load_list_view, load_detailed_view, load_list_view_search
 import pandas as pd
 import os
 
@@ -52,15 +52,25 @@ class ReadManager():
             "rows": [],
             "max_page_num": 0
         }
+
+        df_result = None
         success = False
         try:
             if query:
                 print("query is not none")
-                pass
+                try:
+                    datasets["max_page_num"], df_result = load_list_view_search(self.db, query)
+                except Exception as e:
+                    print("query search error:", e)
             else: # read all
                 datasets["max_page_num"], df_result = load_list_view(self.db)
+            
+            try:
                 if df_result is not None:
                     datasets["rows"] = self.get_listview_form(df_result)
+            except Exception as e:
+                print("load front form error", e)
+
             success = True
         except Exception as e:
             print("read data error:", e)
@@ -102,4 +112,52 @@ class ReadManager():
                 "listview": lv_data.to_dict("records"),
             }
         return rows
+    
+    def transform_data(self, v):
+        if '(' in v:
+            return tuple(v.translate({ord('('): None, ord(')'):None}).split(','))
+        else:
+            return v.split(',')
+    
+    def extract_targetInfo(self, formData, target_keys):
+        target_info = {k: self.transform_data(v) for k, v in formData.items() if k in target_keys and 'none' not in v}
+
+        # for only this version,
+        target_info = dict(filter(lambda x: not (len(x[1])==1 and x[1][0]=='null'), target_info.items()))
+        
+        return target_info
+
+    def encode_formdata(self, formdata, mode="search"):
+        data = {}
+        if mode=="search":
+            # get Basic Info
+            keyword = formdata["keyword"]
+            print('keyword: ', keyword)
+
+            if keyword!="none":
+                data["BASIC_INFO"]=keyword
+
+            # get Q Info
+            qc_keys_front = ["qc_state", "qc_score", "objects"]
+            Q_info = self.extract_targetInfo(formdata, qc_keys_front)
+            if len(Q_info)>0:
+                data["QUALITY_INFO"] = Q_info
+           
+            
+            # get S Info
+            angle_keys_front = ["roll", "pitch", "yaw"]
+            angular_keys_front = ["wx", "wy", "wz"]
+            v_keys_front = ["vf", "vl", "vu"]
+            accel_keys_front = ["ax", "ay", "az"]
+
+            sensor_keys_front = angle_keys_front + angular_keys_front + v_keys_front + accel_keys_front
+            S_info = self.extract_targetInfo(formdata, sensor_keys_front)
+
+            if len(S_info)>0:
+                data["SENSOR_INFO"] = S_info
+
+            print("query data", data)
+        else:
+            pass
+        return data        
     

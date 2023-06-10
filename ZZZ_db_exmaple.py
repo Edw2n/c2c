@@ -144,7 +144,7 @@ if __name__ == "__main__":
     "BASIC_INFO": 'asdasdasdasd', 
     "QUALITY_INFO": {"qc_state": ['Done'],
                      "qc_score": ['Low', 'Medium','High'],
-                     "object": ['Car','Truck','Pedestrian', 'Sitter', 'Cyclist', 'Tram', 'Misc']
+                     "objects": ['Car','Truck','Pedestrian', 'Sitter', 'Cyclist', 'Tram', 'Misc']
                     },
     "SENSOR_INFO": {"roll": (1,1), "pitch": (3,4), "yaw": (5,6),
                     "wx": (7,8), "wy": (9,10), "wz": (11,12),
@@ -156,7 +156,7 @@ if __name__ == "__main__":
 
     condition_filter = {
     "QUALITY_INFO": {"qc_state": ['Done'], 
-                     "object": ['Car','Truck','Pedestrian', 'Sitter', 'Tram', 'Misc']},
+                     "objects": ['Car','Truck','Pedestrian', 'Sitter', 'Tram', 'Misc']},
     "SENSOR_INFO": {"roll": ('null',1), "pitch": (-1,'null'), "yaw": (-2,1),
                    },
     "CUSTOM_FILTERING": "asdasdasd",
@@ -193,6 +193,8 @@ if __name__ == "__main__":
     insert_tx_info(db, buyer_id, img_id_list, buyer_defined_dataset_name)
 
     for i, table in enumerate(table_name):
+        table_copy = f"copy_{table}"
+        db.drop_table(schema_name, table_copy)
         res = db.copyTable(schema = schema_name, table = table) 
         print(res)
 
