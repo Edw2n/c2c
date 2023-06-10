@@ -57,7 +57,7 @@ function SearchView() {
   ]
   // end of dummy data
   
-  const [listInfo,setListInfo] = useState(dummyData);
+  const [listInfo,setListInfo] = useState([]);
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -104,8 +104,9 @@ function SearchView() {
               alert('upload failed!!!')  
             } else {
               alert('upload complete!!!')  
+              setListInfo(prev=>([...data.datasets.rows])) // 여기 바뀜(위로 올라옴)
             }
-            setListInfo(prev=>([...data.datasets.rows]))
+            
           })
         })
       }
