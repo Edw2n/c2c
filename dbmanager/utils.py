@@ -1169,7 +1169,7 @@ def load_list_view_tx(db, page=1, item_per_page=10, user_idName = None, mode = '
               'price_total', 'iamge_count', 'avg_price_per_image',
               'sales_count', 'like_count',
               'qc_state', 'qc_score', 
-              'uploader', 'upload_date', 
+              'uploader', 'upload_date', availability', 'buyer_defined_dataset_name', 'product_path',
               'object_list', 'object_count','object_info_in_detail']
       also,
         the value of colmnn "object_list" is *list* of object 
@@ -1186,12 +1186,10 @@ def load_list_view_tx(db, page=1, item_per_page=10, user_idName = None, mode = '
         condition_id = f"where u2.user_idname = '{user_idName}'"
     else: condition_id = ""
 
-    print(condition_id)
     sql = f"select t.img_id_list, t.dataset_id, t.buyer_defined_dataset_name, u.user_idname , u2.user_idname \
             from public.transaction t \
             left join public.user u on u.user_id=t.buyer_id \
-            left join public.user u2 on u2.user_id=t.seller_id \
-            {condition_id};"
+            left join public.user u2 on u2.user_id=t.seller_id {condition_id};"
     total_cnt = db.execute(sql)
     total_cnt = len(total_cnt)
     if total_cnt == 0:
@@ -1207,23 +1205,23 @@ def load_list_view_tx(db, page=1, item_per_page=10, user_idName = None, mode = '
                 res.qc_status as qc_state, \
                 AVG(res.qc_score) as qc_score, \
                 res.user_idname as uploader, \
-                res.upload_date as upload_date \
+                res.upload_date as upload_date, \
+                res.availability, res.buyer_defined_dataset_name, res.product_path \
             from( \
-                select f.img_id, f.upload_date, f.like_cnt, d.*, p.*, q.qc_status, q.qc_score, u.* \
+                select f.img_id, f.upload_date, f.like_cnt, d.*, p.*, q.qc_status, q.qc_score, u2.user_idname as user_idname, u.user_idname as buyer_idname, t.availability, t.buyer_defined_dataset_name, t.product_path \
                 from features f \
                 left join productinfo p on f.product_id =p.product_id \
                 left join datasetinfo d on d.dataset_id =f.dataset_id \
                 left join qc q on q.qc_id =f.qc_id \
-                left join transaction t \
+                left join transaction t on t.dataset_id=f.dataset_id\
                 left join public.user u on u.user_id=t.buyer_id \
-                left join public.user u2 on u2.user_id=t.seller_id \
-                {condition_id} \
+                left join public.user u2 on u2.user_id=t.seller_id {condition_id} \
                 ) res \
-            group by res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date \
+            group by res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date, res.availability, res.buyer_defined_dataset_name, res.product_path \
             order by res.dataset_id limit {item_per_page} offset {item_start};"
 
     result = db.execute(sql)
-    columns = ['dataset_id', 'dataset_name', 'price_total', 'image_count', 'avg_price_per_image', 'sales_count', 'like_count' ,'qc_state' ,'qc_score', 'uploader' ,'upload_date']
+    columns = ['dataset_id', 'dataset_name', 'price_total', 'image_count', 'avg_price_per_image', 'sales_count', 'like_count' ,'qc_state' ,'qc_score', 'uploader' ,'upload_date', 'availability', 'buyer_defined_dataset_name', 'product_path']
     df_result = pd.DataFrame(data = result, columns=columns)
 
     target_dataset_id = tuple(df_result['dataset_id'])

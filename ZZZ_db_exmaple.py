@@ -111,9 +111,9 @@ if __name__ == "__main__":
     test = list_view_test[list_view_test['dataset_id']==2]
     #### FOR TEST ONLY #### 
     detailed_view, all_data= load_detailed_view(db, test, K=10)
-    print(detailed_view[1])
+    print(detailed_view)
     print()
-    print(all_data[2])
+    print(all_data)
     #### FOR TEST ONLY #### 
 
     #######################################
@@ -169,7 +169,20 @@ if __name__ == "__main__":
     # print(result[0])
     #### FOR TEST ONLY #### 
 
-    print("aaaaaaaaaaaaaaaaaaaaaaa")
-    result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'jeongsik', mode = 'buyer')
+    ###################################
+    #### Testing load_list_view_tx ####
+    ###################################
+
+
+    print("------- load_list_view_tx -------")
+    page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'jeongsik', mode = 'buyer')
+    print(page_num)
     print(result)
 
+    page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'jeongsik', mode = 'seller')
+    print(page_num)
+    print(result)
+
+    page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'tester', mode = 'seller')
+    print(page_num)
+    print(result)
