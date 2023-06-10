@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 
 from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG
-from dbmanager.utils import initialize_db_structures, identify_user
+from dbmanager.utils import initialize_db_structures, identify_user, copy_db, restore_db
 from utils.upload_manager import UploadManager
 from utils.read_manager import ReadManager
 
@@ -168,17 +168,15 @@ def check_user():
     # read entire data
     query = None
     try:
-        _, main_data = read_manager.read_searched_data(query)
-        success_main = True
+        success_main, main_data = read_manager.read_searched_data(query)
     except Exception as e:
         print("read data error after check user pipeline:", e)
 
     if valid:
-        #TODO: get manager data of identified user and set success == True
-            # _, manage_data = read_manage_data(user_name)
-            # success == True
-        pass
+        #TODO: get manage data of identified user and set success == True
+        success_manage, manage_data = read_manager.read_manage_data(user_name)
 
+    print(manage_data)
     result = {
         "main_data": main_data,
         "manage_data": manage_data,
@@ -243,7 +241,7 @@ def qc1(target_image): #qc interaction
     qced_image = None
     return qced_image
 
-def connect_db(initialize=False):
+def connect_db(initialize=False, copy=False, restore=False):
     '''
     db connection + db object 생성, db structure initailization
 
@@ -265,8 +263,13 @@ def connect_db(initialize=False):
     db = CRUD(app.config)
     print("Postgress is connected")
 
+    if copy:
+        copy_db(db)
+
     # if needed, init db
-    if initialize:
+    if restore:
+        restore_db(db)
+    elif initialize:
         if(initialize_db_structures(db)):
             success = True
             print("DB Structure is initailized")
@@ -282,7 +285,7 @@ if __name__ == "__main__":
     
     try:
         # connect db (연결, 필요시 db 초기 structure 구성)
-        db, success = connect_db(initialize=False)
+        db, success = connect_db(copy=False, restore=False, initialize=False)
 
         # initialize helpers for service pipeline
         if success:
