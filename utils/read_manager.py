@@ -63,7 +63,11 @@ class ReadManager():
                 except Exception as e:
                     print("query search error:", e)
             else: # read all
-                datasets["max_page_num"], df_result = load_list_view(self.db)
+                try:
+                    print("load list view result", load_list_view(self.db))
+                    datasets["max_page_num"], df_result = load_list_view(self.db)
+                except Exception as e:
+                    print("query default load error:", e)
             
             try:
                 if df_result is not None:
@@ -87,9 +91,14 @@ class ReadManager():
         - rows: listview data (a list of dictionary), each element is matched to a dataset(row: contains dataset information and detail-listview-info(key:"items")
         '''
         rows = []
+        cardview_data = None
+        listview_data = None
 
         # load detail view data
-        cardview_data, listview_data = load_detailed_view(self.db, df_result)
+        try:
+            cardview_data, listview_data = load_detailed_view(self.db, df_result)
+        except Exception as e:
+            print("db access for detailview data error,", e)
         
         # make data as front listview form
         df_result.rename(columns=self.db2front_dataset_list, inplace=True)
@@ -100,18 +109,21 @@ class ReadManager():
         rows = df_result.to_dict("records")
 
         #add items for detailview (listview, cardview data for each datasets)
-        for row in rows:
-            d_id = row["d_id"]
-            cv_data = cardview_data[d_id]
-            lv_data = listview_data[d_id]
+        try:
+            for row in rows:
+                d_id = row["d_id"]
+                cv_data = cardview_data[d_id]
+                lv_data = listview_data[d_id]
 
-            # make detail_list data as front listview form
-            lv_data.rename(columns=self.db2front_detail_list, inplace=True)
-            lv_data["Objects"] = lv_data.apply(lambda x: f"{x.object_count} objects: {x.object_info_in_detail}", axis=1)
-            row["items"] = {
-                "cardview": cv_data.to_dict("records"),
-                "listview": lv_data.to_dict("records"),
-            }
+                # make detail_list data as front listview form
+                lv_data.rename(columns=self.db2front_detail_list, inplace=True)
+                lv_data["Objects"] = lv_data.apply(lambda x: f"{x.object_count} objects: {x.object_info_in_detail}", axis=1)
+                row["items"] = {
+                    "cardview": cv_data.to_dict("records"),
+                    "listview": lv_data.to_dict("records"),
+                }
+        except Exception as e:
+            print("get detail view data error", e)
         return rows
     
     def transform_data(self, v):
@@ -162,3 +174,44 @@ class ReadManager():
             pass
         return data        
     
+    def read_manage_data(self, user_name):
+        '''
+        read manage data of user
+
+        [input]
+        - user_name: str
+
+        [output]
+        - success: bool
+        - data: searched data (a dictionary with below keys)
+            - "rows": a list of dictionary(row)
+            - "max_page_num": ax page number of queried data
+        '''
+        data = {
+            "cache": 0,
+            "uploaded": {
+                "rows":[],
+                "max_page_num": 0
+            },
+            "transactions": {
+                "rows":[],
+                "max_page_num": 0
+            }
+        }
+
+        df_result = None
+        success = False
+        
+        # TODO: update cache
+
+        #update uploaded data
+        try:
+            data["uploaded"]["max_page_num"], df_result = load_list_view(self.db, user_idName=user_name)
+            if df_result is not None:
+                data["uploaded"]["rows"] = self.get_listview_form(df_result)
+            success = True
+        except Exception as e:
+            print("read data error:", e)
+        
+        # TODO: update transactions
+        return success, data 

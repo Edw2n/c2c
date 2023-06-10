@@ -1,9 +1,10 @@
 .ids {
-    width: 800px;
-    text-align: center;
-    align-items: center;
-    margin: auto;
-    display: grid;
-    grid-template-columns: 80% 10%;
-    gap : 1%;
-  }
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+  display: grid;
+  width: 70%;
+  grid-template-columns: 61% 39%;
+  gap : 1%;
+}
