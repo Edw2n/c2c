@@ -57,7 +57,7 @@ function SearchView() {
   ]
   // end of dummy data
   
-  const [listInfo,setListInfo] = useState(dummyData)
+  const [listInfo,setListInfo] = useState([dummyData]);
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -128,7 +128,7 @@ function SearchView() {
     }).then(resp => {
       resp.json().then(data => {
         console.log(data)
-        // setListInfo(prev=>([...data.datasets.rows]))
+        setListInfo(prev=>([...data.datasets.rows]))
       })
     })}
   
@@ -141,74 +141,84 @@ function SearchView() {
     console.log(e.target);
 
     var keyword = document.getElementById("keyword").value ? `${document.getElementById("keyword").value}` : 'none';
-    var qcState = StateCheckbox.qc_state ? [...StateCheckbox.qc_state] : ['Pending','In Progress','Done'];
-    var qcScore = StateCheckbox.qc_score ? [...StateCheckbox.qc_score] : ['Low','Medium','High'];
-    var qcObject = StateCheckbox.qc_object ? [...StateCheckbox.qc_object] : ['Car', 'Van', 'Truck', 'Pedestrian', 'Sitter', 'Cyclist', 'Tram', 'Misc'];
-    var roll = StateNumbers.Roll ? `(${StateNumbers.Roll.start || null},${StateNumbers.Roll.end || null})` : (null,null);
-    var pitch = StateNumbers.Pitch ? `(${StateNumbers.Pitch.start || null},${StateNumbers.Pitch.end || null})` : (null,null);
-    var yaw = StateNumbers.Yaw ? `(${StateNumbers.Yaw.start || null},${StateNumbers.Yaw.end || null})` : (null,null);
-    var wx = StateNumbers.Wx ? `(${StateNumbers.Wx.start || null},${StateNumbers.Wx.end || null})` : (null,null);
-    var wy = StateNumbers.Wy ? `(${StateNumbers.Wy.start || null},${StateNumbers.Wy.end || null})` : (null,null);
-    var wz = StateNumbers.Wz ? `(${StateNumbers.Wz.start || null},${StateNumbers.Wz.end || null})` : (null,null);
-    var vf = StateNumbers.Vf ? `(${StateNumbers.Vf.start || null},${StateNumbers.Vf.end || null})` : (null,null);
-    var vl = StateNumbers.Vl ? `(${StateNumbers.Vl.start || null},${StateNumbers.Vl.end || null})` : (null,null);
-    var vu = StateNumbers.Vu ? `(${StateNumbers.Vu.start || null},${StateNumbers.Vu.end || null})` : (null,null);
-    var ax = StateNumbers.Ax ? `(${StateNumbers.Ax.start || null},${StateNumbers.Ax.end || null})` : (null,null);
-    var ay = StateNumbers.Ay ? `(${StateNumbers.Ay.start || null},${StateNumbers.Ay.end || null})` : (null,null);
-    var az = StateNumbers.Az ? `(${StateNumbers.Az.start || null},${StateNumbers.Az.end || null})` : (null,null);
+    var qcState = StateCheckbox.qc_state ? [...StateCheckbox.qc_state] : 'not selected';
+    var qcScore = StateCheckbox.qc_score ? [...StateCheckbox.qc_score] : 'not selected';
+    var qcObject = StateCheckbox.qc_object ? [...StateCheckbox.qc_object] : 'not selected';
+    var roll = StateNumbers.Roll ? `(${StateNumbers.Roll.start || null},${StateNumbers.Roll.end || null})` : 'none';
+    var pitch = StateNumbers.Pitch ? `(${StateNumbers.Pitch.start || null},${StateNumbers.Pitch.end || null})` : 'none';
+    var yaw = StateNumbers.Yaw ? `(${StateNumbers.Yaw.start || null},${StateNumbers.Yaw.end || null})` : 'none';
+    var wx = StateNumbers.Wx ? `(${StateNumbers.Wx.start || null},${StateNumbers.Wx.end || null})` : 'none';
+    var wy = StateNumbers.Wy ? `(${StateNumbers.Wy.start || null},${StateNumbers.Wy.end || null})` : 'none';
+    var wz = StateNumbers.Wz ? `(${StateNumbers.Wz.start || null},${StateNumbers.Wz.end || null})` : 'none';
+    var vf = StateNumbers.Vf ? `(${StateNumbers.Vf.start || null},${StateNumbers.Vf.end || null})` : 'none';
+    var vl = StateNumbers.Vl ? `(${StateNumbers.Vl.start || null},${StateNumbers.Vl.end || null})` : 'none';
+    var vu = StateNumbers.Vu ? `(${StateNumbers.Vu.start || null},${StateNumbers.Vu.end || null})` : 'none';
+    var ax = StateNumbers.Ax ? `(${StateNumbers.Ax.start || null},${StateNumbers.Ax.end || null})` : 'none';
+    var ay = StateNumbers.Ay ? `(${StateNumbers.Ay.start || null},${StateNumbers.Ay.end || null})` : 'none';
+    var az = StateNumbers.Az ? `(${StateNumbers.Az.start || null},${StateNumbers.Az.end || null})` : 'none';
    
     // console.log(selectedValue)
     // var customScript = document.getElementById('form-custom-script-file').value ? true : false;
     // TODO: customSCript form에 붙이기
     if (qcState.includes('All')) {
-      qcState = ['Pending','In Progress','Done']
+      qcState = 'none'
     }
     if (qcScore.includes('All')) {
-      qcScore = ['Low','Medium','High']
+      qcScore = 'none'
     }
     if (qcObject.includes('All')) {
-      qcObject = ['Car', 'Van', 'Truck', 'Pedestrian', 'Sitter', 'Cyclist', 'Tram', 'Misc']
+      qcObject = 'none'
     }
-
-    formData.append('keyword', keyword)
-    formData.append('qc_state',qcState)
-    formData.append('qc_score',qcScore)
-    formData.append('objects',qcObject)
-    formData.append('roll',roll)
-    formData.append('pitch',pitch)
-    formData.append('yaw',yaw)
-    formData.append('wx',wx)
-    formData.append('wy',wy)
-    formData.append('wz',wz)
-    formData.append('vf',vf)
-    formData.append('vl',vl)
-    formData.append('vu',vu)
-    formData.append('ax',ax)
-    formData.append('ay',ay)
-    formData.append('az',az)
-    formData.append('custom_script', document.getElementById('form-custom-script-file').files[0] ? document.getElementById('form-custom-script-file').files[0] : false)
-    console.log(formData)
-    const search = async () => {
-      await fetch('http://127.0.0.1:3000/read', {
-        method: 'POST',
-        body: formData
-      }).then(resp => {
-        resp.json().then(data => {
-          console.log(data.matched)
-          console.log(data.datasets)
-
-          setListInfo(prev=>([...data.dataset.rows]))
-
+    if (qcState == 'not selected') {
+      alert("Please select at least one item from QC State!")
+      return
+    }
+    else if (qcScore == 'not selected') {
+      alert("Please select at least one item from QC Score!")
+      return
+    }
+    else if (qcObject == 'not selected') {
+      alert("Please select at least one item from QC Object!")
+    }
+    else {
+      formData.append('keyword', keyword)
+      formData.append('qc_state',qcState)
+      formData.append('qc_score',qcScore)
+      formData.append('objects',qcObject)
+      formData.append('roll',roll)
+      formData.append('pitch',pitch)
+      formData.append('yaw',yaw)
+      formData.append('wx',wx)
+      formData.append('wy',wy)
+      formData.append('wz',wz)
+      formData.append('vf',vf)
+      formData.append('vl',vl)
+      formData.append('vu',vu)
+      formData.append('ax',ax)
+      formData.append('ay',ay)
+      formData.append('az',az)
+      formData.append('custom_script', document.getElementById('form-custom-script-file').files[0] ? document.getElementById('form-custom-script-file').files[0] : false)
+      console.log(formData)
+      const search = async () => {
+        await fetch('http://127.0.0.1:3000/read', {
+          method: 'POST',
+          body: formData
+        }).then(resp => {
+          resp.json().then(data => {
+            console.log(data.matched)
+            console.log(data.datasets)
+  
+            setListInfo(prev=>([...data.datasets.rows]))
+          })
         })
-      })
+      }
+      search();
+      console.log('search')
+      console.log('FormData Key-value pairs:')
+      for (let pair of formData.entries()) {
+        console.log(pair[0], pair[1]);
+      }
     }
-    search();
-    console.log('search')
-    console.log('FormData Key-value pairs:')
-    for (let pair of formData.entries()) {
-      console.log(pair[0], pair[1]);
-    }
-
   }
   
   const handleOptions = (e)=> {
@@ -219,7 +229,7 @@ function SearchView() {
   // 필터1: 퀵서치(검색창)
   const f1_titles = (
     <div className='LowLevelGroup' style={{gridRow: '1', borderBottom: '1px solid lightgray'}}>
-      <text style={{marginLeft: '5px', fontSize: '0.7rem'}}>
+      <text style={{marginLeft: '5px', fontSize: '0.8rem'}}>
         Quick Search
       </text>
     </div>
@@ -229,7 +239,7 @@ function SearchView() {
     <div className='filters'>
       <input 
         type="text" id="keyword" placeholder="Search"
-        style={{width: '40%', height: '80%', fontSize: '0.7rem'}}>
+        style={{width: '35%', height: '80%', fontSize: '0.75rem'}}>
       </input>
     </div>
   )
@@ -305,7 +315,7 @@ function SearchView() {
     {f2category.map((catdata, index) => (
       <text
         key={catdata.id} 
-        style={{height: '80%', marginLeft: '5px', textAlign: 'left', fontSize: '0.7rem'}}>
+        style={{height: '80%', marginLeft: '5px', textAlign: 'left', fontSize: '0.8rem'}}>
         {catdata.title}
       </text>))}
       <div>
@@ -326,7 +336,7 @@ function SearchView() {
                 textAlign: 'left',
                 width: '100%',
                 height: '80%',
-                fontSize: '0.7rem',
+                fontSize: '0.75rem',
                 verticalAlign: 'middle',
               }}>
               {subItem}
@@ -377,7 +387,7 @@ function SearchView() {
     {f3category.map((catdata, index) => (
       <text 
         key={catdata.id} 
-        style={{marginLeft: '5px', textAlign: 'left', fontSize: '0.7rem'}}>
+        style={{marginLeft: '5px', textAlign: 'left', fontSize: '0.8rem'}}>
         {catdata.title}
       </text>))}
     </div>
@@ -413,33 +423,33 @@ function SearchView() {
   // Display
   return (
     // 전체 화면: 각 Part들이 가로로 쌓이도록 구성
-    <div style={{height: '100%', display: 'grid', gridTemplateRows: '7% 3% 30% 3% 57%'}}> 
+    <div style={{height: '100%', display: 'grid', gridTemplateRows: '7% 3% 36% 3% 51%', gridTemplateColumns: '13% 74% 13%', alignItems: 'center'}}> 
     
     {/* Part 1: 업로드 */}
       <div className='UploadContainer'>
         
       {/* Part 1-1: 제목 */}
         <h5 className='ContainerTitle'>
-          데이터셋 업로드하기
+          Uploading Dataset
         </h5>
 
       {/* Part 1-2: 업로드 창 */}
         <div className='ContainerDetail'>
           <form onSubmit={handleSubmit} className="Uploaderbar" enctype="multipart/form-data" >
-            <Form.Group controlId="formFile" style={{width: '98%', height: '100%', gridColumn: '1'}}>
-              <Form.Control type="file" controlId="file" name="file" style={{width: '99%', height: '70%', fontSize: '0.7rem'}}/>
+            <Form.Group controlId="formFile" style={{width: '99%', height: '100%', gridColumn: '1'}}>
+              <Form.Control type="file" controlId="file" name="file" style={{width: '99%', height: '70%', fontSize: '0.75rem'}}/>
             </Form.Group>
             <div class="input-group" style={{width: '99%', height: '100%', gridColumn: '2'}}>
-              <span class="input-group-text" style={{fontSize: '0.7rem', width: '12%', height: '70%', textAlign: 'center'}}>
+              <span class="input-group-text" style={{fontSize: '0.7rem', width: '13%', height: '70%', textAlign: 'center', justifyContent: 'center'}}>
                 Information
               </span>
-              <input type="text" aria-label="ID" placeholder="ID" class="form-control" style={{fontSize: '0.7rem', width: '10%', height: '70%'}}/>
-              <input type="password" aria-label="PW" placeholder="pw"  class="form-control" style={{fontSize: '0.7rem', width: '10%', height: '70%'}}/>
-              <input type="text" aria-label="Title" placeholder="title"  class="form-control" style={{fontSize: '0.7rem', width: '13%', height: '70%'}}/>
-              <input type="text" aria-label="Description" placeholder="description"  class="form-control" style={{fontSize: '0.7rem', width: '32%', height: '70%' }}/>
+              <input type="text" aria-label="ID" placeholder="ID" class="form-control" style={{fontSize: '0.75rem', width: '10%', height: '70%'}}/>
+              <input type="password" aria-label="PW" placeholder="pw"  class="form-control" style={{fontSize: '0.75rem', width: '10%', height: '70%'}}/>
+              <input type="text" aria-label="Title" placeholder="title"  class="form-control" style={{fontSize: '0.75rem', width: '13%', height: '70%'}}/>
+              <input type="text" aria-label="Description" placeholder="description"  class="form-control" style={{fontSize: '0.75rem', width: '33%', height: '70%' }}/>
             </div>
             <div className="input-group" style={{width: '100%', height: '100%', gridColumn: '3'}}>
-              <Button type="submit" variant="outline-secondary" style={{fontSize: '0.7rem', width: '100%', height: '70%', color: 'white', fontWeight: 'bold', background: 'rgb(38, 73, 132)'}} >
+              <Button type="submit" variant="outline-secondary" style={{fontSize: '0.75rem', width: '100%', height: '70%', color: 'white', fontWeight: 'bold', background: 'rgb(38, 73, 132)'}} >
                 Upload
               </Button>
             </div>
@@ -453,7 +463,7 @@ function SearchView() {
       
       {/* Part 2-1: 제목 */}
         <h5 className='ContainerTitle' style={{marginTop: '5px'}}>
-          데이터셋 검색하기
+          Searching Datasets
         </h5>
 
       {/* Part 2-2: 필터 창 */}
@@ -490,7 +500,7 @@ function SearchView() {
           {f3category_titles}
           {f3category_filters}
           
-          {/* Part 2-2-4: Custom Filter Upload - 여기 뭔가 고쳐야 할 듯 */}
+          {/* Part 2-2-4: Custom Filter Upload */}
           <div className='HighLevelGroup' 
             style={{gridRow: '4'}}>
             <text style={{marginLeft: '5px', fontSize: '0.8rem'}}>
@@ -502,8 +512,8 @@ function SearchView() {
             <CInputGroup 
               style={{alignSelf: 'center', width: '100%', height: '100%'}}>
               <form className='Searcher'>
-                  <Form.Group controlId="form-custom-script-file" style={{height: '80%', width: '90%'}}>
-                    <Form.Control type="file" controlId="file" name="file" style={{marginBottom:'0px' , fontSize: '0.7rem', height: '80%'}}/>
+                  <Form.Group controlId="form-custom-script-file" style={{height: '90%', width: '90%'}}>
+                    <Form.Control type="file" controlId="file" name="file" style={{marginBottom:'0px' , fontSize: '0.7rem', height: '100%'}}/>
                   </Form.Group>
               </form>
             </CInputGroup>
@@ -512,10 +522,10 @@ function SearchView() {
       </div>
           
       {/* ############## 검색 버튼 ############## */}
-      <div style={{gridRow: '4', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', justifyItems: 'end', marginTop: '5px'}}>
+      <div style={{gridRow: '4', gridColumn: '2', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', justifyItems: 'end', marginTop: '35px'}}>
           <CButton type="button" color="secondary" className="mb-3" variant="outline" id="button-addon2" 
-            style={{width: '20%', height: '60%', gridColumn: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgb(38, 73, 132)'}} onClick={handleSearch}>
-              <span style={{fontSize: '0.7rem', color: 'white', fontWeight: 'bold'}}>Search</span>
+            style={{width: '35%', height: '60%', gridColumn: 5, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgb(38, 73, 132)'}} onClick={handleSearch}>
+              <span style={{fontSize: '0.75rem', color: 'white', fontWeight: 'bold'}}>Search</span>
           </CButton>
       </div> 
 
@@ -524,7 +534,7 @@ function SearchView() {
           
         {/* Part 3-1: 제목 */}
         <h5 className='ContainerTitle' style={{marginTop: '15px'}}>
-          데이터셋 살펴보기
+          Dataset List
         </h5>
         
         {/* Part 3-2: 리스트뷰 창 */}
