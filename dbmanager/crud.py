@@ -360,3 +360,27 @@ class CRUD(PostgrestDB):
         
         return result
 
+    def find_last_txp_id(self, schema):
+        '''
+        마지막 img_id를 찾는 함수
+        
+        [input]
+        - schema : 스키마 명, string
+ 
+        [output]
+        - 결과: 실형 성공 여부
+        '''
+
+        result = 0
+
+        sql = f"select txp_id from {schema}.transactionproduct order by txp_id desc limit 1;"
+        try :
+            result = self.execute(sql)
+            if not result:
+                result = 0
+            else: result = result[0][0]
+        except Exception as e:
+            print( "img_id err", e)
+        
+        return result
+

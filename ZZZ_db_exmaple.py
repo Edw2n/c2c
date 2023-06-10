@@ -2,7 +2,7 @@ from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG, SCHEMA_NAME, TABLE_NAME, ALL_COLUMNS
 from dbmanager.utils import initialize_db_structures, insert_user, insert_draft_dataset, identify_user, \
     load_list_view, update_multiple_columns, update_columns_af_duplicate, load_detailed_view, load_list_view_search, \
-    insert_tx_info, load_list_view_tx, create_download_file, update_tx_availability
+    insert_tx_info, load_list_view_tx_buyer, load_list_view_tx_seller, create_download_file, update_tx_availability
 import pandas as pd
 import numpy as np
 
@@ -82,7 +82,9 @@ if __name__ == "__main__":
             'qc_id', 'qc_start_date', 'qc_score', 'object_count', 'qc_end_date', 'product_id', 'price']
     data = [[1, 'path_1', 12, 13, 1, '2023-05-01 11:11:11', 12, 13, '2023-05-01 22:22:22', 1, 1000], 
             [2, 'path_2', 22, 23, 2, '2023-05-02 11:11:11', 22, 23, '2023-05-02 22:22:22', 2, 2000],
-            [3, 'path_3', 32, 33, 3, '2023-05-03 11:11:11', 32, 33, '2023-05-03 22:22:22', 3, 3000]
+            [3, 'path_3', 32, 33, 3, '2023-05-03 11:11:11', 32, 33, '2023-05-03 22:22:22', 3, 3000],
+            [40, 'path_3', 42, 43, 40, '2023-05-03 11:11:11', 42, 43, '2023-05-03 22:22:22', 40, 40000],
+
            ]
     df = pd.DataFrame(data=data, columns=cols)    
     #### FOR TEST ONLY ####
@@ -155,7 +157,7 @@ if __name__ == "__main__":
     condition_filter = {
     "QUALITY_INFO": {"qc_state": ['Done'], 
                      "qc_object": ['Car','Truck','Pedestrian', 'Sitter', 'Tram', 'Misc']},
-    "SENSOR_INFO": {"Roll": (-1,1), "Pitch": (-1,1), "Yaw": (-2,1),
+    "SENSOR_INFO": {"Roll": ('null',1), "Pitch": (-1,'null'), "Yaw": (-2,1),
                    },
     "CUSTOM_FILTERING": "asdasdasd",
     }
@@ -164,46 +166,62 @@ if __name__ == "__main__":
     max_page_num, result = load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_idName = None)
     print(max_page_num, result)
 
+    # print()
+    # print('--------------readDB_join_filtering--------------')
+
     ##########################################
     #### Testing db.readDB_join_filtering ####
     ##########################################
+
+    #### FOR TEST ONLY #### 
+    # join = [["LEFT JOIN", table_name[5], table_name[2], "qc_id", "qc_id"]]
+    # condition = "dataset_id='1'"
+
+    # result = db.readDB_join_filtering(schema = schema_name, table = table_name[5], columns = "*", join = join, condition = condition)
+    # print(result)
+    # print(result[0])
+    #### FOR TEST ONLY #### 
+
+
+    ################################
+    #### Testing insert_tx_info ####
+    ################################
 
     buyer_id = 'jeongsik'
     img_id_list = [1,3,5,7,9,40,45]
     buyer_defined_dataset_name = 'jeongsik'
     insert_tx_info(db, buyer_id, img_id_list, buyer_defined_dataset_name)
 
-    ##########################################
-    #### Testing db.readDB_join_filtering ####
-    ##########################################
-
-    #### FOR TEST ONLY #### 
-    join = [["LEFT JOIN", table_name[5], table_name[2], "qc_id", "qc_id"]]
-    condition = "dataset_id='1'"
-
-    result = db.readDB_join_filtering(schema = schema_name, table = table_name[5], columns = "*", join = join, condition = condition)
-    #print(result)
-    # print(result[0])
-    #### FOR TEST ONLY #### 
-
     ###################################
     #### Testing load_list_view_tx ####
     ###################################
 
-
     print("------- load_list_view_tx -------")
-    page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'jeongsik', mode = 'buyer')
+    page_num, result = load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = 'jeongsik')
+    print("seller is jeongsik, the output should be None, 0")
     print(page_num)
     print(result)
+    print()
 
-    page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'jeongsik', mode = 'seller')
+    page_num, result = load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = 'tester')
+    print("seller is tester")
     print(page_num)
     print(result)
+    print()
 
-    page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'tester', mode = 'seller')
+    page_num, result = load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = 'SeongGu')
+    print("seller is SeongGu")
+
     print(page_num)
     print(result)
+    print()
 
+
+    page_num, result = load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = 'jeongsik')
+    print("buyer is Jeongsik")
+    print(page_num)
+    print(result)
+    print()
 
 
     print("------- create_download_file -------")
@@ -212,7 +230,7 @@ if __name__ == "__main__":
 
 
     print("------- update_tx_availabilty -------")
-    tx_id = 1
+    txp_id = 1
     flag = True
     downlaod_file_path = "./tmp.zip"
-    update_tx_availability(db, tx_id, flag, downlaod_file_path)
+    update_tx_availability(db, txp_id, flag, downlaod_file_path)
