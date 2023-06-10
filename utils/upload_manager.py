@@ -80,7 +80,11 @@ class UploadManager():
     target_zip = zipfile.ZipFile(zip_path)
     # 첫번쨰가 dir name이라 가정하겠음
     dir_name = target_zip.namelist()[0]
-    zipfile.ZipFile(zip_path).extractall(unzip_dir)
+
+    zip_file = zipfile.ZipFile(zip_path)
+    zip_file.extractall(unzip_dir)
+    zip_file.close()
+    
     extracted_dir = unzip_dir + dir_name
     filenames = os.listdir(extracted_dir)
     print("contents:", filenames)
