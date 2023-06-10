@@ -23,9 +23,10 @@ list_data_num = 10
 
 @app.route("/upload",methods=["POST"])
 def upload_data():
+    
     print("uploaded")
     global list_data_num
-    data = []
+    datasets = None
     
     if request.method =="POST":
 
@@ -39,10 +40,19 @@ def upload_data():
             pw = request.form["pw"]
             title = request.form["title"]
             description = request.form["description"]
-        
+
+            print("descriptions")
+            print(identify_user(db, user_name, pw, case = "upload"))
+            try:
+                identify_user(db, user_name, pw, case = "upload")
+            except Exception as e:
+                print("identify error", e)
+
             # user validation check (+ create user info)
             if identify_user(db, user_name, pw, case = "upload"):
+                
                 valid = True
+                print("valid")
 
                 target_temp_dataset_info = {
                     "PATH": file_path,
@@ -74,27 +84,30 @@ def upload_data():
     # read entire data
     query = None
     try:
-        _, data, max_page_num = read_manager.read_searched_data(query)
-        print('after upload, data:', data)
+        _, datasets = read_manager.read_searched_data(query)
+
+        # for debugging
+        '''
+        print('after upload, max num pages:', datasets["max_page_num"])
+        print('after upload, data:', datasets["rows"])
         print('after upload, success:', success)
+        '''
     except Exception as e:
         print("read data error in upload pipeline:", e)
 
     result = {
-        "data": data,
+        "datasets": datasets,
         "valid": valid,
         "success": success,
-        "max_page_num": max_page_num,
     }
 
     return json.dumps(result)
 
 @app.route("/read",methods=["POST"])
 def service_data():
-    data = []
+    datasets = None
     query = None
     success = False
-    max_page_num = None
     if request.method =="POST":
         print("*******     read info     ********")
 
@@ -105,17 +118,19 @@ def service_data():
             #TODO: get custom file
             
             # read data from db (read all data)
-            
-            success, data, max_page_num = read_manager.read_searched_data(query)
-            # print('after read, data:', data)
-            # print('after read, success:', success)
+            success, datasets = read_manager.read_searched_data(query)
+            # for debugging
+            '''
+            print('after upload, max num pages:', datasets["max_page_num"])
+            print('after upload, data:', datasets["rows"])
+            print('after upload, success:', success)
+            '''
         except Exception as e:
             print("read data service error:", e)
 
     result = {
-        "data": data,
+        "datasets": datasets,
         "success": success,
-        "max_page_num": max_page_num,
     }
 
     return json.dumps(result)
@@ -132,8 +147,6 @@ def check_user():
         - "valid": user identification 결과 (bool),
         - "success_main": main_data 읽어온 결과 성공여부 (bool),
         - "success_manage": manage_data 읽어온 결과 성공여부 (bool),
-        - "main_max_page_num": main_data 페이지수 (int) (will be updated),
-        - "manage_page_info": manage_data 페이지수 정보, (will be updated)
     '''
 
     main_data = []
@@ -142,8 +155,6 @@ def check_user():
     valid = False
     success_main = False
     success_manage = False
-    max_page_num_main = 0
-    max_page_num_info = []
 
     if request.method =="POST":
         try:
@@ -157,14 +168,14 @@ def check_user():
     # read entire data
     query = None
     try:
-        _, main_data, max_page_num_main = read_manager.read_searched_data(query)
+        _, main_data = read_manager.read_searched_data(query)
         success_main = True
     except Exception as e:
         print("read data error after check user pipeline:", e)
 
     if valid:
         #TODO: get manager data of identified user and set success == True
-            # _, manage_data, max_page_num_info = read_manage_data(user_name)
+            # _, manage_data = read_manage_data(user_name)
             # success == True
         pass
 
@@ -174,8 +185,6 @@ def check_user():
         "valid": valid,
         "success_main": success_main,
         "success_manage": success_manage,
-        "main_max_page_num": max_page_num_main,
-        "manage_page_info": max_page_num_info,
     }
 
     return json.dumps(result)
@@ -191,9 +200,16 @@ def buy_items():
 
     returns: jsonified dictionary with below items
         - "manage_data": user identify 성공시 각 list 뷰에 뿌릴 manage_data, 실패시 빈 list (will be updated)
+            - keys()
+                - "cash": 잔여 포인트 (int)
+                - "uploaded": 
+                    - "rows": a list of dict
+                    - "page_info": 페이지수 정보
+                - "transactions": a list of dict
+                    - "rows": a list of dict
+                    - "page_info": 페이지수 정보
         - "success_transaction": main_data 읽어온 결과 성공여부 (bool),
         - "success_manage": manage_data 읽어온 결과 성공여부 (bool),
-        - "manage_page_info": manage_data 페이지수 정보, (will be updated)
     '''
 
     manage_data = []
@@ -222,10 +238,6 @@ def buy_items():
     }
 
     return json.dumps(result)
-
-def read_data(query): #db interaction
-    queried_data = list(range(list_data_num))
-    return queried_data
 
 def qc1(target_image): #qc interaction
     qced_image = None
