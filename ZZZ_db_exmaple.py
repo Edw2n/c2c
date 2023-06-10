@@ -2,7 +2,7 @@ from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG, SCHEMA_NAME, TABLE_NAME, ALL_COLUMNS
 from dbmanager.utils import initialize_db_structures, insert_user, insert_draft_dataset, identify_user, \
     load_list_view, update_multiple_columns, update_columns_af_duplicate, load_detailed_view, load_list_view_search, \
-    insert_tx_info, load_list_view_tx
+    insert_tx_info, load_list_view_tx, create_download_file, update_tx_availability
 import pandas as pd
 import numpy as np
 
@@ -25,10 +25,10 @@ if __name__ == "__main__":
     print(flag)
 
 
-    flag = identify_user(db, "jeongsik", '123', 'upload' )
+    flag = identify_user(db, "jeongsik1", '123', 'upload' )
     print(flag)
 
-    flag = identify_user(db, "jeongsik", '123', 'login' )
+    flag = identify_user(db, "jeongsik1", '123', 'login' )
     print(flag)
 
 
@@ -132,73 +132,87 @@ if __name__ == "__main__":
     print(all_data)
     #### FOR TEST ONLY #### 
 
-    #######################################
-    #### Testing load_list_view_search ####
-    #######################################
+    ######################################
+    ### Testing load_list_view_search ####
+    ######################################
+
+    print()
+    print('--------------search_view--------------')
+    condition_filter = {
+    "BASIC_INFO": 'asdasdasdasd', 
+    "QUALITY_INFO": {"qc_state": ['Done'],
+                     "qc_score": ['Low', 'Medium','High'],
+                     "qc_object": ['Car','Truck','Pedestrian', 'Sitter', 'Cyclist', 'Tram', 'Misc']
+                    },
+    "SENSOR_INFO": {"Roll": (1,1), "Pitch": (3,4), "Yaw": (5,6),
+                    "Wx": (7,8), "Wy": (9,10), "Wz": (11,12),
+                    "Vf": (13,14), "Vl": (15,16), "Vu": (17,18),
+                    "Ax": (19,20), "Ay": (21,22), "Az": (23,24)
+                   },
+    "CUSTOM_FILTERING": "asdasdasd",
+    }
+
+    condition_filter = {
+    "QUALITY_INFO": {"qc_state": ['Done'], 
+                     "qc_object": ['Car','Truck','Pedestrian', 'Sitter', 'Tram', 'Misc']},
+    "SENSOR_INFO": {"Roll": (-1,1), "Pitch": (-1,1), "Yaw": (-2,1),
+                   },
+    "CUSTOM_FILTERING": "asdasdasd",
+    }
 
 
-    # condition_filter = {
-    # "BASIC_INFO": 'asdasdasdasd', 
-    # "QUALITY_INFO": {"qc_state": ['Done'],
-    #                  "qc_score": ['Low', 'Medium','High'],
-    #                  "qc_object": ['Car','Truck','Pedestrian', 'Sitter', 'Cyclist', 'Tram', 'Misc']
-    #                 },
-    # "SENSOR_INFO": {"Roll": (1,1), "Pitch": (3,4), "Yaw": (5,6),
-    #                 "Wx": (7,8), "Wy": (9,10), "Wz": (11,12),
-    #                 "Vf": (13,14), "Vl": (15,16), "Vu": (17,18),
-    #                 "Ax": (19,20), "Ay": (21,22), "Az": (23,24)
-    #                },
-    # "CUSTOM_FILTERING": "asdasdasd",
-    # }
+    max_page_num, result = load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_idName = None)
+    print(max_page_num, result)
 
-    # condition_filter = {
-    # "QUALITY_INFO": {"qc_state": ['Done'], 
-    #                  "qc_object": ['Car','Truck','Pedestrian', 'Sitter', 'Tram', 'Misc']},
-    # "SENSOR_INFO": {"Roll": (-1,1), "Pitch": (-1,1), "Yaw": (-2,1),
-    #                },
-    # "CUSTOM_FILTERING": "asdasdasd",
-    # }
+    ##########################################
+    #### Testing db.readDB_join_filtering ####
+    ##########################################
 
+    buyer_id = 'jeongsik'
+    img_id_list = [1,3,5,7,9,40,45]
+    buyer_defined_dataset_name = 'jeongsik'
+    insert_tx_info(db, buyer_id, img_id_list, buyer_defined_dataset_name)
 
-    # max_page_num, result = load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_idName = None)
-    # print(max_page_num, result)
+    ##########################################
+    #### Testing db.readDB_join_filtering ####
+    ##########################################
 
-    # ##########################################
-    # #### Testing db.readDB_join_filtering ####
-    # ##########################################
+    #### FOR TEST ONLY #### 
+    join = [["LEFT JOIN", table_name[5], table_name[2], "qc_id", "qc_id"]]
+    condition = "dataset_id='1'"
 
-    # buyer_id = 'jeongsik'
-    # img_id_list = [1,3,5,7,9,40,45]
-    # buyer_defined_dataset_name = 'jeongsik'
-    # insert_tx_info(db, buyer_id, img_id_list, buyer_defined_dataset_name)
+    result = db.readDB_join_filtering(schema = schema_name, table = table_name[5], columns = "*", join = join, condition = condition)
+    #print(result)
+    # print(result[0])
+    #### FOR TEST ONLY #### 
 
-    # ##########################################
-    # #### Testing db.readDB_join_filtering ####
-    # ##########################################
-
-    # #### FOR TEST ONLY #### 
-    # join = [["LEFT JOIN", table_name[5], table_name[2], "qc_id", "qc_id"]]
-    # condition = "dataset_id='1'"
-
-    # result = db.readDB_join_filtering(schema = schema_name, table = table_name[5], columns = "*", join = join, condition = condition)
-    # #print(result)
-    # # print(result[0])
-    # #### FOR TEST ONLY #### 
-
-    # ###################################
-    # #### Testing load_list_view_tx ####
-    # ###################################
+    ###################################
+    #### Testing load_list_view_tx ####
+    ###################################
 
 
-    # print("------- load_list_view_tx -------")
-    # page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'jeongsik', mode = 'buyer')
-    # print(page_num)
-    # print(result)
+    print("------- load_list_view_tx -------")
+    page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'jeongsik', mode = 'buyer')
+    print(page_num)
+    print(result)
 
-    # page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'jeongsik', mode = 'seller')
-    # print(page_num)
-    # print(result)
+    page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'jeongsik', mode = 'seller')
+    print(page_num)
+    print(result)
 
-    # page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'tester', mode = 'seller')
-    # print(page_num)
-    # print(result)
+    page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'tester', mode = 'seller')
+    print(page_num)
+    print(result)
+
+
+
+    print("------- create_download_file -------")
+
+    df_ft, df_gt, df_pt = create_download_file(db, img_id_list)
+
+
+    print("------- update_tx_availabilty -------")
+    tx_id = 1
+    flag = True
+    downlaod_file_path = "./tmp.zip"
+    update_tx_availability(db, tx_id, flag, downlaod_file_path)
