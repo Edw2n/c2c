@@ -2,7 +2,8 @@ from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG, SCHEMA_NAME, TABLE_NAME, ALL_COLUMNS
 from dbmanager.utils import initialize_db_structures, insert_user, insert_draft_dataset, identify_user, \
     load_list_view, update_multiple_columns, update_columns_af_duplicate, load_detailed_view, load_list_view_search, \
-    insert_tx_info, load_list_view_tx_buyer, load_list_view_tx_seller, create_download_file, update_tx_availability
+    insert_tx_info, load_list_view_tx_buyer, load_list_view_tx_seller, create_download_file, update_tx_availability, \
+    copy_db, restore_db
 import pandas as pd
 import numpy as np
 
@@ -192,11 +193,6 @@ if __name__ == "__main__":
     buyer_defined_dataset_name = 'jeongsik'
     insert_tx_info(db, buyer_id, img_id_list, buyer_defined_dataset_name)
 
-    for i, table in enumerate(table_name):
-        table_copy = f"copy_{table}"
-        db.drop_table(schema_name, table_copy)
-        res = db.copyTable(schema = schema_name, table = table) 
-        print(res)
 
     ###################################
     #### Testing load_list_view_tx ####

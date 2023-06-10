@@ -53,6 +53,55 @@ def initialize_db_structures(db):
         
     return success
 
+def copy_db(db):
+    '''
+    db를 복사하는 함수
+
+    [input]
+    - db : target db object (CRUD)
+
+    [output]
+    - success : initalize 성공여부
+    '''
+
+    schema_name = SCHEMA_NAME
+    table_name = TABLE_NAME
+    for i, table in enumerate(table_name):
+        table_copy = f"copy_{table}"
+        db.drop_table(schema_name, table_copy)
+        success = db.copyTable(schema = schema_name, table = table) 
+
+    return success
+
+def restore_db(db):
+    '''
+    db를 복구하는 함수
+
+    [input]
+    - db : target db object (CRUD)
+
+    [output]
+    - success : initalize 성공여부
+    '''
+
+    schema_name = SCHEMA_NAME
+    table_name = TABLE_NAME
+    fk_list = FK_LIST
+
+    for i, table in enumerate(table_name):
+        db.drop_table(schema_name, table)
+        success = db.restoreTable(schema = schema_name, table = table) 
+
+    for i in range(len(fk_list)):
+        success = db.addFK(schema = schema_name,
+                           table_PK=fk_list[i][0], 
+                           column_PK=fk_list[i][1],
+                           table_FK=fk_list[i][2],
+                           column_FK=fk_list[i][3]
+                           )
+
+    return success
+
 
 ####################################################
 ########## USER IDENTIFICATION FUNCTIONS ###########
