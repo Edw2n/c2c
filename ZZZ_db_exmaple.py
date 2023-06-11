@@ -3,7 +3,7 @@ from dbmanager.configs import POSTGRES_CONFIG, SCHEMA_NAME, TABLE_NAME, ALL_COLU
 from dbmanager.utils import initialize_db_structures, insert_user, insert_draft_dataset, identify_user, \
     load_list_view, update_multiple_columns, update_columns_af_duplicate, load_detailed_view, load_list_view_search, \
     insert_tx_info, load_list_view_tx, create_download_file, update_tx_availability, \
-    copy_db, restore_db, get_user_point, _load_list_view_tx_buyer, _load_list_view_tx_seller
+    copy_db, restore_db, get_user_point, update_like_count
 import pandas as pd
 import numpy as np
 
@@ -233,3 +233,7 @@ if __name__ == "__main__":
     flag = True
     downlaod_file_path = "./tmp.zip"
     update_tx_availability(db, txp_id, flag, downlaod_file_path)
+
+    print("------- update_like_count -------")
+    update_like_count(db, img_id_list)
+        

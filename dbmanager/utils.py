@@ -1813,7 +1813,34 @@ def update_tx_availability (db, txp_id, flag, download_file_path):
     return success
 
 
-# def update_like_cnt (db, img_id_list):
+def update_like_count(db, img_id_list):
+    '''
+    update like count
+
+    [input]
+    - db: db object (CRUD)
+    - img_id_lis: list, list of img_ids
+    [output]
+    img_id_like_cnt: pd.DataFrame, column: img_id, like_count
+    
+    '''
+    if len(img_id_list) == 0:
+        return None
+    elif len(img_id_list) == 1:
+        condition = f"features.img_id = '{img_id_list[0]}'"
+    else:
+       condition = f"features.img_id in {tuple(img_id_list)}"
+    data = db.readDB_with_filtering(schema = 'public', table = 'features', columns = ['img_id', 'like_cnt'], condition = condition)    
+
+    img_id_like_cnt = pd.DataFrame(data=data, columns=['img_id', 'like_count'])
+    img_id_like_cnt['like_count'] += 1
+
+    for i in range(len(img_id_like_cnt)):
+        condition_1 = f"features.img_id = '{img_id_like_cnt['img_id'].iloc[i]}'"
+        db.updateDB(schema = 'public', table='features', column = 'like_cnt', value = img_id_like_cnt['like_count'].iloc[i], condition = condition_1)
+
+    return img_id_like_cnt
+
 
 
 
