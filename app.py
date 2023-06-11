@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 
 from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG
-from dbmanager.utils import initialize_db_structures, identify_user, copy_db, restore_db, create_download_file, _create_download_file
+from dbmanager.utils import initialize_db_structures, identify_user, copy_db, restore_db, create_download_file, _create_download_file, update_tx_availability
 from utils.transaction_manager import TXManager
 from utils.upload_manager import UploadManager
 from utils.read_manager import ReadManager
@@ -306,7 +306,8 @@ def download_dataset():
                         zipf.write(file_path, arcname=os.path.relpath(file_path, dataset_dir))
                 zipf.close()
 
-                success = True
+                update_tx_availability(db, txp_id, True, zip_filename)
+
             except Exception as e:
                 print("download dataset error,", e)
         except Exception as e:
