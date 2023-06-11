@@ -1747,8 +1747,40 @@ def _load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = None):
 
     return total_cnt, df_result       
 
+def create_download_file(db, txp_id):
+    '''
+    다운로드할 파일 추출
+    [inputs]
+    - db          : target db object (CRUD)
+    - txp_id : list, list of img_id
 
-def create_download_file (db, img_id_list):
+    [output]
+    - df_ft : features to download, pd.DataFrame
+    - df_gt : groundtruth to download, pd.DataFrame
+    - df_pt : image_path to download, pd.DataFrame
+    - dataset_name : dataset_name, string
+    '''
+
+    sql1 = f"select img_id_list from public.transaction t where t.txp_id={txp_id};"
+    data = db.execute(sql1)
+    result_df = pd.DataFrame(data = data, columns=['img_id_list'])
+
+    img_id_list = []
+    for i in range(len(result_df)):
+        tmp = result_df['img_id_list'].iloc[i]
+        tmp = eval(tmp)
+        img_id_list = [*img_id_list, *tmp]
+
+    sql2 = f"select buyer_defined_dataset_name from public.transactionproduct tp where tp.txp_id={txp_id};"
+    dataset_name = db.execute(sql2)
+    dataset_name = dataset_name[0][0]
+
+    df_ft, df_gt, df_pt = _create_download_file(db, img_id_list)
+
+    return df_ft, df_gt, df_pt, dataset_name
+
+
+def _create_download_file (db, img_id_list):
     '''
     다운로드할 파일 추출
     [inputs]

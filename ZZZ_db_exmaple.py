@@ -225,8 +225,9 @@ if __name__ == "__main__":
 
     print("------- create_download_file -------")
 
-    df_ft, df_gt, df_pt = create_download_file(db, img_id_list)
+    d = create_download_file(db, 1)
 
+    # df_ft, df_gt, df_pt = create_download_file(db, img_id_list)
 
     print("------- update_tx_availabilty -------")
     txp_id = 1
