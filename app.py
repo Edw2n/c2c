@@ -123,8 +123,11 @@ def service_data():
             #TODO: get custom file
             
             # read data from db (read all data)
+            if "keyword" in request.form.keys(): # if query is not None
+                read_manager.encode_formdata(request.form, "search")
+                
             success, datasets = read_manager.read_searched_data(query)
-            
+
             # for debugging
             '''
             print('after upload, max num pages:', datasets["max_page_num"])
