@@ -550,13 +550,6 @@ function UserPageView({user_name, uploadedRows, transactRows, cartList, cartList
               style={{fontSize: '0.7rem', marginTop: '0px'}}
           />
       </div>
-      <form onSubmit={downloadDataset} className="ids" enctype="multipart/form-data" >
-        <div class="input-group identifier" style={{width: '50%', justifySelf: 'end'}}>
-            <span class="input-group-text" style={{fontSize: '0.8rem'}}>TXP_ID</span>
-            <input type="text" aria-label="txp_id" id="d-txp-id" placeholder="txp-id"  class="form-control" style={{fontSize: '0.8rem', textAlign: 'center'}}/>
-        </div>
-        <Button type="submit" variant="outline-secondary" style={{width: '20%', justifySelf: 'start', fontSize: '0.8rem'}}>Downloads</Button>
-      </form>
     
     </div> 
   </div>

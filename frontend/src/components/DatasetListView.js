@@ -217,7 +217,7 @@ function DatasetListView({listInfo, onAddToCart, onAddToCart_img}) {
 
 
 
-  const [DetailMode,setDetailMode] = useState('listview')
+  const [DetailMode,setDetailMode] = useState('cardview')
 
   const handleDetailMode = (e) => {
     setDetailMode(e.currentTarget.id) // 여기 수정
