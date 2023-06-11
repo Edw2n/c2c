@@ -9,7 +9,7 @@ import { SpeedDialAction } from '@mui/material';
 import React from 'react';
 import styled from '@emotion/styled';
 
-function SearchView() {
+function SearchView( {onAddToCart, onAddToCart_img} ) {
   
   // 지금은 dummy data -> listinfo 받아오도록 수정 필요
   // dummy data
@@ -88,29 +88,25 @@ function SearchView() {
         alert('Please enter the description')
       }
       else {
-        await fetch('http://127.0.0.1:3000/upload', {
+        const resp = await fetch('http://127.0.0.1:3000/upload', {
           method: 'POST',
           body: formData
-        }).then(resp => {
-          resp.json().then(data => {
+        })
+        const data = await resp.json();
+        if (!data.valid) {
+          alert('pw is not valid!!!!')  
+        } else if (!data.success) {
+          alert('upload failed!!!')  
+        } else {
+          alert('upload complete!!!')  
+          search();
             // if you want values of response, check!!
             // console.log("data", data.datasets)
             // console.log("user identification", data.valid)
             // console.log("upload complete", data.success)
-            
-            if (!data.valid) {
-              alert('pw is not valid!!!!')  
-            } else if (!data.success) {
-              alert('upload failed!!!')  
-            } else {
-              alert('upload complete!!!')  
-              setListInfo(prev=>([...data.datasets.rows])) // 여기 바뀜(위로 올라옴)
-            }
-            
-          })
-        })
+        }
       }
-    }
+    };
     Upload();
   }
 
@@ -122,18 +118,17 @@ function SearchView() {
   
   const search = async () => {
     const formData = new FormData();
-
+  
     await fetch('http://127.0.0.1:3000/read', {
       method: 'POST',
       body: formData
     }).then(resp => {
       resp.json().then(data => {
-        console.log(data)
-        setListInfo(prev=>([...data.datasets.rows]))
-      })
-    })}
-  
-
+        console.log(data);
+        setListInfo([...data.datasets.rows]);
+      });
+    });
+  };
   
   const handleSearch = (e) => {
     e.preventDefault()
@@ -539,7 +534,7 @@ function SearchView() {
         </h5>
         
         {/* Part 3-2: 리스트뷰 창 */}
-        {listInfo.length>0 ? <DatasetListView listInfo={listInfo}/> : 'No results'}
+        {listInfo.length>0 ? <DatasetListView listInfo={listInfo} onAddToCart={onAddToCart} onAddToCart_img={onAddToCart_img}/> : 'No results'}
 
       </div>
 
