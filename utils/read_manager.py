@@ -212,7 +212,14 @@ class ReadManager():
                 data["uploaded"]["rows"] = self.get_listview_form(df_result)
             success = True
         except Exception as e:
-            print("read data error:", e)
+            print("read uploaded data error:", e)
         
         # TODO: update transactions
+        try:
+            data["transactions"]["max_page_num"], df_result = load_list_view(self.db, user_idName=user_name)
+            if df_result is not None:
+                data["transactions"]["rows"] = self.get_listview_form(df_result)
+            success = True
+        except Exception as e:
+            print("read transaction data error:", e)
         return success, data 
