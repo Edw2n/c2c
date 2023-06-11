@@ -7,6 +7,7 @@ from werkzeug.utils import secure_filename
 from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG
 from dbmanager.utils import initialize_db_structures, identify_user, copy_db, restore_db
+from utils.transaction_manager import TXManager
 from utils.upload_manager import UploadManager
 from utils.read_manager import ReadManager
 
@@ -17,6 +18,7 @@ CORS(app)
 db = None
 upload_manager = None
 read_manager = None
+tx_manager = None
 print("service is created")
 
 list_data_num = 10
@@ -202,10 +204,10 @@ def buy_items():
                 - "cash": 잔여 포인트 (int)
                 - "uploaded": 
                     - "rows": a list of dict
-                    - "page_info": 페이지수 정보
+                    - "max_page_num": 페이지수 정보
                 - "transactions": a list of dict
                     - "rows": a list of dict
-                    - "page_info": 페이지수 정보
+                    - "max_page_num": 페이지수 정보
         - "success_transaction": main_data 읽어온 결과 성공여부 (bool),
         - "success_manage": manage_data 읽어온 결과 성공여부 (bool),
     '''
@@ -217,16 +219,23 @@ def buy_items():
 
     if request.method =="POST":
         try:
-            #TODO: transaction pipeline
-            pass
+            user_name = request.form["user_name"]
+            img_ids = request.form["items"].split(',')
+            dataset_name = request.form["dataset-name"]
+
+            transaction_info= {
+                "user_name": user_name,
+                "img_ids": img_ids,
+                "dataset_name": dataset_name
+            }
+            
+            success_transaction =  tx_manager.update_transaction(transaction_info)
         except Exception as e:
             print("trasaction error:", e)
 
     if success_transaction:
-        #TODO: get manager data of identified user and set success == True
-            # _, manage_data, max_page_num_info = read_manage_data(user_name)
-            # success_manage == True
-        pass
+        #TODO: get updated manage data user after transaction
+        success_manage, manage_data = read_manager.read_manage_data(user_name)
 
     result = {
         "manage_data": manage_data,
@@ -291,6 +300,7 @@ if __name__ == "__main__":
         if success:
             upload_manager = UploadManager(db)
             read_manager = ReadManager(db)
+            tx_manager = TXManager(db)
 
         # run flask server
         app.run(host="0.0.0.0", port=3000)
