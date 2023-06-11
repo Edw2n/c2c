@@ -10,12 +10,12 @@
   align-items: center;
   background-color: #259a6d;
   min-height: 100px;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 15% 20% 30% 20% 15%;
   justify-content: center;
   font-size: calc(30px + 3vmin);
   color: white;
-  text-align: left;
+  text-align: center;
   margin-bottom: 20px;
 }
 
@@ -160,6 +160,7 @@
   grid-row: 5;
   grid-column: 2;
   height: 100%;
+  width: 100%;
   grid-template-rows: 8% 92%;
 }
 
