@@ -120,13 +120,14 @@ def service_data():
         print("*******     read info     ********")
 
         try:
-            # qeury = get_query_info(request.form~~~~)
-            # read_manager.encode_formdata(request.form, "search")
-            
             #TODO: get custom file
             
             # read data from db (read all data)
+            if "keyword" in request.form.keys(): # if query is not None
+                read_manager.encode_formdata(request.form, "search")
+                
             success, datasets = read_manager.read_searched_data(query)
+
             # for debugging
             '''
             print('after upload, max num pages:', datasets["max_page_num"])
@@ -313,14 +314,6 @@ def download_dataset():
 
     # 다운로드 링크 제공
     return send_file(zip_filename, mimetype="zip",  as_attachment=True)
-
-
-
-
-
-def qc1(target_image): #qc interaction
-    qced_image = None
-    return qced_image
 
 def connect_db(initialize=False, copy=False, restore=False):
     '''
