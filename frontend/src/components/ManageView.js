@@ -100,6 +100,36 @@ function ManageView() {
     }
     buy();
   }
+
+  const downloadDataset = (e) => {
+
+    e.preventDefault()
+    const formData = new FormData();
+    
+    var txp_id = document.getElementById("d-txp-id").value;
+
+    formData.append('txp_id', txp_id)
+    formData.append('test_mode', "true") // ui 구현 후에는 이부분을 false로 해서 붙이면 됨, 지금은 transaction data가 없는데 다운로드 되는걸 보고싶으니 이렇게 넣는것임
+
+    //우리 시나리오에 맞게 stae 변경하면서 구현하면됨
+    const download = async () => {
+      await fetch('http://127.0.0.1:3000/download', {
+        method: 'POST',
+        body: formData
+      }).then(resp => {
+        resp.blob().then(blob => {
+          const url = window.URL.createObjectURL(new Blob([blob]));
+          console.log(url)
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = "dataset.zip";
+          a.click();
+        });
+      });
+    };
+    download();
+
+  }
   
   return (
     <div>
@@ -110,6 +140,14 @@ function ManageView() {
                 <input type="password" aria-label="PW" id="manage-pw" placeholder="Password"  class="form-control" style={{fontSize: '0.8rem', textAlign: 'center'}}/>
             </div>
             <Button type="submit" variant="outline-secondary" style={{width: '20%', justifySelf: 'start', fontSize: '0.8rem'}}>Identify</Button>
+        </form>
+
+        <form onSubmit={downloadDataset} className="ids" enctype="multipart/form-data" >
+            <div class="input-group identifier" style={{width: '50%', justifySelf: 'end'}}>
+                <span class="input-group-text" style={{fontSize: '0.8rem'}}>TXP_ID</span>
+                <input type="text" aria-label="txp_id" id="d-txp-id" placeholder="txp-id"  class="form-control" style={{fontSize: '0.8rem', textAlign: 'center'}}/>
+            </div>
+            <Button type="submit" variant="outline-secondary" style={{width: '20%', justifySelf: 'start', fontSize: '0.8rem'}}>Downloads</Button>
         </form>
         {/*rows ? <UserPageView user_name={document.getElementById("manage-user-name").value} rows={rows}/> : 'nothing'*/}
 
