@@ -4,7 +4,7 @@ import './UserPageView.js';
 import UserPageView from './UserPageView.js';
 import { useEffect, useState } from 'react';
 
-function ManageView( {cartList, cartList_img, LoggedIn, UserInfo,
+function ManageView( {LoggedIn, UserInfo,
                       URows, TRows, onManagesChange} ) 
 {
   const [userName, setUserName] = useState('')
@@ -77,14 +77,14 @@ function ManageView( {cartList, cartList_img, LoggedIn, UserInfo,
 
   return (
     <div>
-        <form onSubmit={getUserPost} className="ids" enctype="multipart/form-data" >
+        {LoggedIn !== "true" ? <form onSubmit={getUserPost} className="ids" enctype="multipart/form-data" >
             <div class="input-group identifier" style={{width: '50%', justifySelf: 'end'}}>
                 <span class="input-group-text" style={{fontSize: '0.8rem'}}>ID and PW</span>
                 <input type="text" aria-label="User Name" id="manage-user-name" placeholder="Username" class="form-control" style={{fontSize: '0.8rem', textAlign: 'center'}}/>
                 <input type="password" aria-label="PW" id="manage-pw" placeholder="Password"  class="form-control" style={{fontSize: '0.8rem', textAlign: 'center'}}/>
             </div>
             <Button type="submit" variant="outline-secondary" style={{width: '20%', justifySelf: 'start', fontSize: '0.8rem'}}>Identify</Button>
-        </form>
+        </form> : null}
         {LoggedIn === "true" ? <UserPageView user_name={userName} uploadedRows={URows} transactRows={TRows} UserInfo={UserInfo} onAddUserInfo={onManagesChange}/> : 'nothing'}
     </div>  
 
