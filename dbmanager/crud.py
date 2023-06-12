@@ -396,9 +396,12 @@ class CRUD(PostgrestDB):
         - success : delete 문 실행 성공 여부, bool
         '''
 
-        sql_create = f"create table copy_{table} AS table {schema}.{table};"
+
+        sql1 = f"create table {schema}.copy_{table} (like {schema}.{table} including all);"
+        sql2 = f"insert into {schema}.copy_{table}  (select * from {schema}.{table});"
         try :
-            result = self.execute(sql_create)
+            result = self.execute(sql1)
+            result = self.execute(sql2)
             if not result:
                 result = 0
             else: result = result[0][0]
@@ -418,10 +421,47 @@ class CRUD(PostgrestDB):
         [output]
         - success : delete 문 실행 성공 여부, bool
         '''
-
-        sql_create = f"create table {schema}.{table} as table {schema}.copy_{table};"
+        
+        sql1 =  f"create table {schema}.{table} (like {schema}.copy_{table} including all);"
+        sql2 =  f"insert into {schema}.{table}  (select * from {schema}.copy_{table});"
         try :
-            result = self.execute(sql_create)
+            result = self.execute(sql1)
+            result = self.execute(sql2)
+            if not result:
+                result = 0
+            else: result = result[0][0]
+        except Exception as e:
+            print( "restoreTable_create err", e)
+
+        return result
+
+    def restoreTable2(self, schema, table, table_column):
+        '''
+        table에 전체 복사
+        
+        [input]
+        - schema : 스키마 명, string
+        - table : 테이블 명, string
+       
+        [output]
+        - success : delete 문 실행 성공 여부, bool
+        '''
+        
+        print(table_column[1:])
+        table_column_res = ", ".join(table_column[1:])
+        print(table_column_res)
+        # sql1 =  f" SET IDENTITY_INSERT {table} ON; "
+        sql2 =  f"insert into {schema}.{table}  (select {table_column_res} from {schema}.copy_{table}); "
+        #sql3 =  f" SET IDENTITY_INSERT {table} OFF; "
+
+        # try :
+        #     result = self.execute(sql1)
+        #     result = self.execute(sql2)
+        #     result = self.execute(sql3)
+
+        # sql4 = sql1 + sql2 + sql3
+        try:
+            result = self.execute(sql2)
             if not result:
                 result = 0
             else: result = result[0][0]

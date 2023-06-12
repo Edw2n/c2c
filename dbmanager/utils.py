@@ -29,6 +29,7 @@ def initialize_db_structures(db):
 
     for i in range(num_table):
         success = db.drop_table(schema_name, table_name[i])
+        success = db.drop_table(schema_name, str("copy_"+table_name[i]))
         success = db.create_table(schema_name, table_name[i], all_columns_info[i])
         # success = db.addPK(schema_name, table_name[i], pk_list[i])
 
@@ -83,15 +84,36 @@ def restore_db(db):
     [output]
     - success : initalize 성공여부
     '''
-
     schema_name = SCHEMA_NAME
     table_name = TABLE_NAME
-    
+    all_columns_info = ALL_COLUMNS_INFO
+    all_columns = ALL_COLUMNS
+    pk_list = PK_LIST
     fk_list = FK_LIST
-    
+    num_table = len(table_name)
+
+    success = False
+
+    for i in range(num_table):
+        success = db.drop_table(schema_name, table_name[i])
+        success = db.create_table(schema_name, table_name[i], all_columns_info[i])
+        # success = db.addPK(schema_name, table_name[i], pk_list[i])
+
+    for i in range(len(fk_list)):
+        success = db.addFK(schema = schema_name,
+                           table_PK=fk_list[i][0], 
+                           column_PK=fk_list[i][1],
+                           table_FK=fk_list[i][2],
+                           column_FK=fk_list[i][3]
+                           )
+
     for i, table in enumerate(table_name):
-        db.drop_table(schema_name, table)
-        success = db.restoreTable(schema = schema_name, table = table) 
+        success = db.restoreTable2(schema = schema_name, table = table, table_column = all_columns[i])
+
+        # success = db.drop_table(schema_name, table_name[i])
+        # success = db.restoreTable(schema_name, table = table)
+        # success = db.addPK(schema_name, table_name[i], pk_list[i])
+
 
     return success
 
@@ -421,6 +443,9 @@ def insert_draft_dataset(db, unzipped_dataset_info):
 
     return inserted_info
 
+
+
+
 ########################################
 ########## LISTVIEW FUNCTIONS ##########
 ########################################
@@ -493,7 +518,7 @@ def _load_list_view_default(db, page=1, item_per_page=10, user_idName = None):
     result = None
     item_start = 0 + item_per_page * (page - 1)
     if user_idName is not None:
-        condition_id = f"where u.user_idName = '{user_idName}'"
+        condition_id = f"where u.user_idName = '{user_idName}' and f.not_show = FALSE"
     else: condition_id = ""
 
     sql = f"select res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date \
@@ -1141,7 +1166,8 @@ def _cleansing_condition_filter(condition_filter):
     
     return condition_filter
 
-###################################################
+
+
 
 ######################################
 ########## UPDATE FUNCTIONS ##########
@@ -1248,9 +1274,53 @@ def update_columns_af_duplicate(db, qc_ids):
 
     return success 
 
-######################################
-######### UPDATE TRANSACTION #########
-######################################
+def update_tx_availability (db, txp_id, flag, download_file_path):
+    schema_name = SCHEMA_NAME
+    table = 'transactionproduct'
+    columns = ['availability',  'product_path']
+    values = [flag, download_file_path]
+    condition = f"txp_id={txp_id}"
+    success = False
+    for idx, column in enumerate(columns):
+        success =  db.updateDB(schema=schema_name, table = table, column=column, value = values[idx], condition = condition)
+
+    return success
+
+def update_like_count(db, img_id_list):
+    '''
+    update like count
+
+    [input]
+    - db: db object (CRUD)
+    - img_id_lis: list, list of img_ids
+    [output]
+    img_id_like_cnt: pd.DataFrame, column: img_id, like_count
+    
+    '''
+    if len(img_id_list) == 0:
+        return None
+    elif len(img_id_list) == 1:
+        condition = f"features.img_id = '{img_id_list[0]}'"
+    else:
+       condition = f"features.img_id in {tuple(img_id_list)}"
+    data = db.readDB_with_filtering(schema = 'public', table = 'features', columns = ['img_id', 'like_cnt'], condition = condition)    
+
+    img_id_like_cnt = pd.DataFrame(data=data, columns=['img_id', 'like_count'])
+    img_id_like_cnt['like_count'] += 1
+
+    for i in range(len(img_id_like_cnt)):
+        condition_1 = f"features.img_id = '{img_id_like_cnt['img_id'].iloc[i]}'"
+        db.updateDB(schema = 'public', table='features', column = 'like_cnt', value = img_id_like_cnt['like_count'].iloc[i], condition = condition_1)
+
+    return img_id_like_cnt
+
+
+
+
+
+###############################
+######### TRANSACTION #########
+###############################
 
 def insert_tx_info(db, buyer_name, img_id_list, buyer_defined_dataset_name):
     '''
@@ -1832,47 +1902,16 @@ def _create_download_file (db, img_id_list):
 
     return df_ft, df_gt, df_pt
 
-def update_tx_availability (db, txp_id, flag, download_file_path):
-    schema_name = SCHEMA_NAME
-    table = 'transactionproduct'
-    columns = ['availability',  'product_path']
-    values = [flag, download_file_path]
-    condition = f"txp_id={txp_id}"
-    success = False
-    for idx, column in enumerate(columns):
-        success =  db.updateDB(schema=schema_name, table = table, column=column, value = values[idx], condition = condition)
 
-    return success
+##########################
+######### DELETE #########
+##########################
 
 
-def update_like_count(db, img_id_list):
-    '''
-    update like count
+def delete_dataset(db, dataset_id):
+    schema = SCHEMA_NAME
+    table = 'features'
+    condition = f"features.dataset_id={dataset_id}"
+    success = db.updateDB(schema=schema, table=table, column='not_show', value=True, condition=condition)
 
-    [input]
-    - db: db object (CRUD)
-    - img_id_lis: list, list of img_ids
-    [output]
-    img_id_like_cnt: pd.DataFrame, column: img_id, like_count
-    
-    '''
-    if len(img_id_list) == 0:
-        return None
-    elif len(img_id_list) == 1:
-        condition = f"features.img_id = '{img_id_list[0]}'"
-    else:
-       condition = f"features.img_id in {tuple(img_id_list)}"
-    data = db.readDB_with_filtering(schema = 'public', table = 'features', columns = ['img_id', 'like_cnt'], condition = condition)    
-
-    img_id_like_cnt = pd.DataFrame(data=data, columns=['img_id', 'like_count'])
-    img_id_like_cnt['like_count'] += 1
-
-    for i in range(len(img_id_like_cnt)):
-        condition_1 = f"features.img_id = '{img_id_like_cnt['img_id'].iloc[i]}'"
-        db.updateDB(schema = 'public', table='features', column = 'like_cnt', value = img_id_like_cnt['like_count'].iloc[i], condition = condition_1)
-
-    return img_id_like_cnt
-
-
-
-
+    return success 

@@ -36,7 +36,7 @@ ALL_COLUMNS = [[
                     "accel_x", "accel_y", "accel_z", "accel_forward", "accel_leftward", "accel_upward", 
                     "ang_x", "ang_y", "ang_z", "ang_forward","ang_leftward", "ang_upward", 
                     "pos_accuracy", "vel_accuracy", "navstat", "numsats", "posmode", "velmode", "orimode",
-                    "like_cnt", "qc_id", "user_id", "product_id", "dataset_id"
+                    "like_cnt", "qc_id", "user_id", "product_id", "dataset_id", "not_show", 'hsv_hue', 'hsv_sat', 'hsv_val'
 
                 ],
                 [
@@ -165,6 +165,10 @@ FEATURES_COLUMNS_INFO = {
     "user_id":        "bigint NULL",
     "product_id":     "bigint NULL",
     "dataset_id":     "bigint NULL",
+    "not_show":       "BOOLEAN NOT NULL DEFAULT FALSE",
+    'hsv_hue':        "numeric NULL",
+    'hsv_sat':        "numeric NULL",
+    'hsv_val':        "numeric NULL",
 }
 
 # transaction

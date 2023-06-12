@@ -3,7 +3,7 @@ from dbmanager.configs import POSTGRES_CONFIG, SCHEMA_NAME, TABLE_NAME, ALL_COLU
 from dbmanager.utils import initialize_db_structures, insert_user, insert_draft_dataset, identify_user, \
     load_list_view, update_multiple_columns, update_columns_af_duplicate, load_detailed_view, load_list_view_search, \
     insert_tx_info, load_list_view_tx, create_download_file, update_tx_availability, \
-    copy_db, restore_db, get_user_point, update_like_count
+    copy_db, restore_db, get_user_point, update_like_count, delete_dataset
 import pandas as pd
 import numpy as np
 
@@ -193,9 +193,13 @@ if __name__ == "__main__":
     buyer_defined_dataset_name = 'jeongsik'
     insert_tx_info(db, buyer_id, img_id_list, buyer_defined_dataset_name)
 
-    copy_db(db)
-    restore_db(db)
+    unzipped_dataset_info = {"PATH": '../../04_sampledata/',
+                             "USER_NAME": 'SeongGu',
+                             "PW": '123',
+                             "TITLE": 'kitti_2',
+                             "DESCRIPTIONS": "kitti_3_description"}
 
+    inserted_info2 = insert_draft_dataset(db=db, unzipped_dataset_info=unzipped_dataset_info)
 
     ###################################
     #### Testing load_list_view_tx ####
@@ -238,3 +242,5 @@ if __name__ == "__main__":
     print("------- update_like_count -------")
     update_like_count(db, img_id_list)
         
+    print(("------- update_like_count -------"))
+    delete_dataset(db,dataset_id = 1)
