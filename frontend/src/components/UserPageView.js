@@ -48,20 +48,23 @@ function UserPageView({user_name, uploadedRows, transactRows, UserInfo, onAddUse
   const handleInputChange = (e) => {
     setDatasetName(e.target.value);
   };
-  // 2. 업로드한 데이터셋
+  // 2. 업로드한 데이터셋 (1120)
   const columns_uploaded = [
-    { field: 'Uploader', headerName: 'Uploader', width: 65},
-    { field: 'Title', headerName: 'Dataset Name', width: 90},
-    { field: 'Description', headerName: 'Description', width: 190},
-    { field: 'QCstate', headerName: 'QC State', width: 100},
-    { field: 'QCscore', headerName: 'QC Score', width: 100},
-    { field: 'Objects', headerName: 'Objects', width: 270},
+    { field: 'Uploader', headerName: 'Uploader', width: 70},
+    { field: 'Title', headerName: 'Dataset Name', width: 100},
+    { field: 'QCstate', headerName: 'QC State', width: 80},
+    { field: 'QCscore', headerName: 'QC Score', width: 120},
+    { field: 'Objects', headerName: 'Objects', width: 290},
     { field: 'UploadDate', headerName: 'Upload Date', width: 140},
-    { field: 'SalesCount', headerName: 'Sales', width: 40},
+    
     { field: 'MatchedData', headerName: 'Data', width: 40},
+
     { field: 'Price', headerName: 'Price($)', width: 80},
-    { field: 'PricePerImage', headerName: 'Avg. Price($)', width: 110},
-    { field: 'Delete', headerName: '', width:'80',
+    { field: 'PricePerImage', headerName: 'Avg. Price($)', width: 100},
+    { field: 'SalesCount', headerName: 'Sales', width: 40},
+    { field: 'Description', headerName: 'Description', width: 180},
+    { field: 'Delete', headerName: '', width:100,
+    
     renderCell: (params) => (
       <strong>
         <Button
@@ -151,15 +154,15 @@ function UserPageView({user_name, uploadedRows, transactRows, UserInfo, onAddUse
   };
 
   const columns_transaction = [
-    { field: 'Flag', headerName: 'TX_Type', width: 90},
-    { field: 'Title', headerName: 'Dataset Name', width: 90},
-    { field: 'QCstate', headerName: 'QC State', width: 100},
-    { field: 'QCscore', headerName: 'QC Score', width: 100},
-    { field: 'Objects', headerName: 'Objects', width: 270},
+    { field: 'Flag', headerName: 'TX_Type', width: 70},
+    { field: 'Title', headerName: 'Dataset Name', width: 100},
+    { field: 'QCstate', headerName: 'QC State', width: 80},
+    { field: 'QCscore', headerName: 'QC Score', width: 120},
+    { field: 'Objects', headerName: 'Objects', width: 290},
     { field: 'Date', headerName: 'Transaction Date', width: 140},
     { field: 'MatchedData', headerName: 'Data', width: 40},
     { field: 'Price', headerName: 'Price($)', width: 80},
-    { field: 'PricePerImage', headerName: 'Avg. Price($)', width: 90},
+    { field: 'PricePerImage', headerName: 'Avg. Price($)', width: 200},
     { field: 'Download', headerName: '', width:'100',
       renderCell: (params) => (
         <strong>
@@ -250,36 +253,6 @@ function UserPageView({user_name, uploadedRows, transactRows, UserInfo, onAddUse
           <h5 style={{fontWeight: 'bold', marginTop: '45px', gridColumn: '1'}}>
             Transacted Datasets
           </h5>
-          <CButtonGroup horizontal role="group" aria-label="Vertical button group" style={{gridColumn: '2', justifySelf: 'end', width: '25%', marginTop: '45px', marginBottom: '10px'}}>
-            <CFormCheck
-              type="radio"
-              style={{width: '100%'}}
-              button={{ color: 'danger', variant: 'outline', size: 'sm' }}
-              name="vbtnradio"
-              id="all_button"
-              autoComplete="off"
-              label="All"
-              defaultChecked
-            />
-            <CFormCheck
-              type="radio"
-
-              button={{ color: 'danger', variant: 'outline', size: 'sm' }}
-              name="vbtnradio"
-              id="buy_button"
-              autoComplete="off"
-              label="Bought"
-            />
-            <CFormCheck
-              type="radio"
-
-              button={{ color: 'danger', variant: 'outline', size: 'sm' }}
-              name="vbtnradio"
-              id="sell_button"
-              autoComplete="off"
-              label="Sold"
-            />
-          </CButtonGroup>
         </div>
           <DataGrid
               rows={rows_transaction}

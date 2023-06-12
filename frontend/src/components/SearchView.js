@@ -110,9 +110,6 @@ function SearchView( {userName, onManagesChange} ) {
     Upload();
   }
 
-
-
-  
   useEffect(()=>{
     search()
   },[userName])
