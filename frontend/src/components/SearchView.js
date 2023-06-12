@@ -98,7 +98,8 @@ function SearchView( {userName, onManagesChange} ) {
         } else if (!data.success) {
           alert('upload failed!!!')  
         } else {
-          alert('upload complete!!!')  
+          alert('upload complete!!!')
+          setListInfo([...data.datasets.rows]);
             // if you want values of response, check!!
             // console.log("data", data.datasets)
             // console.log("user identification", data.valid)
@@ -109,10 +110,12 @@ function SearchView( {userName, onManagesChange} ) {
     Upload();
   }
 
+
+
   
   useEffect(()=>{
     search()
-  },[])
+  },[userName])
 
 
   const search = async () => {

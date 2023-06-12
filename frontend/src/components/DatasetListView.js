@@ -270,10 +270,10 @@ function DatasetListView({listInfo, userName, onManagesInfo}) {
                                 );                                
       const selected = selectedRow_img.concat(...rowsItems)
       console.log("selected:", selected)
-
+      var keyword = document.getElementById("user-defined").value ? `${document.getElementById("user-defined").value}` : 'dataset';
       formData.append('user_name',userName)
       formData.append('items',selected)
-      formData.append('dataset-name',"mine") // todo update
+      formData.append('dataset-name',keyword) // todo update
 
       const buy = async () => {
         await fetch('http://127.0.0.1:3000/buy', {
@@ -321,11 +321,14 @@ function DatasetListView({listInfo, userName, onManagesInfo}) {
           style={{fontSize: '0.7rem'}}
 
         />
-
-        <div style={{display: 'grid', gridTemplateColumns: '30% 30% 10% 22% 8%', justifyItems: 'end', marginTop: '5px'}}>
-            <span style={{fontSize: '0.8rem', fontWeight: 'bold', gridColumn: '4', justifySelf: 'end', marginTop: '5px', marginRight: '5px'}}>Price for Selected Items : {totalPrice} $</span>
+        <div style={{display: 'grid', gridTemplateColumns: '40% 17% 23% 12% 8%', justifyItems: 'end', marginTop: '5px'}}>
+            <span style={{fontSize: '0.8rem', fontWeight: 'bold', gridColumn: '3', justifySelf: 'end', marginTop: '5px', marginRight: '5px' }}>Price for Selected Items : {totalPrice} $</span>
+            <input 
+              type="text" id="user-defined" placeholder="user defined dataset-name"
+              style={{width: '100%', height: '60%', fontSize: '0.75rem', gridColumn: '4',}}>
+            </input>
             <CButton type="button" color="secondary" className="mb-3" variant="outline" id="button-addon2" 
-              style={{width: '90%', height: '60%', gridColumn: '5', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgb(38, 73, 132)'}}
+              style={{width: '100%', height: '60%', gridColumn: '5', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgb(38, 73, 132)'}}
               onClick={handleAddToCart}>
                 <span style={{fontSize: '0.7rem', color: 'white', fontWeight: 'bold'}}>Buy</span>
             </CButton>
