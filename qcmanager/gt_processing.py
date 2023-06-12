@@ -104,6 +104,7 @@ class GT_processing():
     img_detections = [] # Stores detections for each image index
 
     for batch_i, (img_paths, input_imgs) in enumerate(dataloader): #img_paths = ('sampledata/Images/0000000000.png',)
+        print("-----", batch_i)
         # Configure input
         input_imgs = Variable(input_imgs.type(torch.FloatTensor))
         file_name = img_paths[0].split('/')[-1]
@@ -129,5 +130,5 @@ class GT_processing():
                     file_df['bbox_top'].iloc[i], file_df['bbox_bottom'].iloc[i] = float(y1), float(y2)
                   else:
                     continue
-                  
     self.save_csv(file_df, gt_csv)
+    return file_df
