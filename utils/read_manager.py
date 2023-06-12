@@ -118,6 +118,7 @@ class ReadManager():
                 # make detail_list data as front listview form
                 lv_data.rename(columns=self.db2front_detail_list, inplace=True)
                 lv_data["Objects"] = lv_data.apply(lambda x: f"{x.object_count} objects: {x.object_info_in_detail}", axis=1)
+                cv_data["Objects"] = cv_data.apply(lambda x: f"{str(x.object_info_in_detail).translate({ord('{'): None, ord('}'): None})}", axis=1)
                 row["items"] = {
                     "cardview": cv_data.to_dict("records"),
                     "listview": lv_data.to_dict("records"),

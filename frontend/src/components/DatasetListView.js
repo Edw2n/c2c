@@ -5,16 +5,10 @@ import { DataGrid, GRID_CHECKBOX_SELECTION_COL_DEF } from '@mui/x-data-grid';
 import { Button, Checkbox } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 
-function DatasetListView({listInfo}) {
+function DatasetListView({listInfo, onAddToCart, onAddToCart_img}) {
   console.log("listinfo: ", listInfo)
 
-  // return (
-  //  <div className="ResultList">
-  //      {listInfo.map((item,idx) => <p> row {item}</p>)}
-  //  </div>
-  //);
-
-  const [items, setItems] = useState(listInfo);
+  const [RowsInfo, setRowsInfo] = useState(listInfo);
   const [selectedRow, setSelectedRow] = useState([]);
   const [selectedCheckboxes, setSelectedCheckboxes] = useState([]);
   const [selectedPrices, setSelectedPrices] = useState([]);
@@ -25,17 +19,17 @@ function DatasetListView({listInfo}) {
     const isChecked = event.target.checked;
     const updatedCheckboxes = {};
 
-    items.forEach((row) => {
+    RowsInfo.forEach((row) => {
       updatedCheckboxes[row.d_id] = isChecked;
     });
 
     setSelectedCheckboxes(updatedCheckboxes);
 
     if (isChecked) {
-      const prices = items.map((row) => row.Price);
+      const prices = RowsInfo.map((row) => row.Price);
       setSelectedPrices(prices);
       calculateTotalPrice(prices);
-      setSelectedRow(items.map((row) => row.d_id));
+      setSelectedRow(RowsInfo.map((row) => row.d_id));
     } else {
       setSelectedPrices([]);
       setTotalPrice([]);
@@ -45,11 +39,11 @@ function DatasetListView({listInfo}) {
   
   useEffect(() => {
     const defaultCheckboxes = {};
-    items.forEach((row) => {
+    RowsInfo.forEach((row) => {
       defaultCheckboxes[row.d_id] = false;
     });
     setSelectedCheckboxes(defaultCheckboxes);
-  }, [items]);
+  }, [RowsInfo]);
 
   const handleCheckboxChange = (event, rowId, price) => {
     setSelectedCheckboxes((prevState) => ({
@@ -93,7 +87,7 @@ function DatasetListView({listInfo}) {
     { field: 'Likes', headerName: 'Likes', width: 50},
     { field: 'MatchedData', headerName: 'Matched Data', width: 90},
     { field: 'Price', headerName: 'Price($)', width: 80},
-    { field: 'PricePerImage', headerName: 'Price per Image($)', width: 110},
+    { field: 'PricePerImage', headerName: 'Avg. Price($)', width: 110},
     { field: 'LikeButton', headerName: '', width:'80',
       renderCell: (params) => (
         <strong>
@@ -128,10 +122,10 @@ function DatasetListView({listInfo}) {
     }
 
   ];
-  const rows = items.map((row) => (
+  const rows = RowsInfo.map((row) => (
     {id: row.d_id, Uploader: row.Uploader, Title: row.Title, Description: row.Description,
       QCstate: row.QCstate, QCscore: row.QCscore, Objects: row.Objects, UploadDate: row.UploadDate, 
-      SalesCount: row.SalesCount, Likes: row.Likes, MatchedData: row.MatchedData, Price: row.Price, PricePerImage: row.PricePerImage}
+      SalesCount: row.SalesCount, Likes: row.Likes, MatchedData: row.MatchedData, Price: row.Price, PricePerImage: row.PricePerImage, Listview: row.items.listview, Cardview: row.items.cardview}
   ));
 
 
@@ -143,35 +137,94 @@ function DatasetListView({listInfo}) {
   const [DetailListview, setDetailListview] = useState([]);
   const [DetailCardview, setDetailCardview] = useState([]);
 
-  /*
   const handleRowClick = (param) => {
-    if (param.row.d_id === selectedForDetail) {
+    console.log("param.row.items: ", param.items)
+    if (param.row.id === selectedForDetail) {
       setSelectedForDetail(null);
       setShowDetail(false);
       setDetailListview([]);
       setDetailCardview([]);
     } else {
-      const selectedDetailListview = items.items.listview.filter((row) => row.dataset_id === param.row.d_id);
-      const selectedDetailCardview = items.items.cardview.filter((row) => row.dataset_id === param.row.d_id);
-      setSelectedForDetail(param.row.d_id);
+      const current_row = RowsInfo.filter((rows) => rows.d_id === param.row.id);
+      const selectedDetailListview = current_row[0].items.listview;
+      // const selectedDetailCardview = current_row[0].items.view;
+      setSelectedForDetail(param.row.id);
       setShowDetail(true);
       setDetailListview(selectedDetailListview);
-      setDetailCardview(selectedDetailCardview);
+      // setDetailCardview(selectedDetailCardview);
     }
+  }
 
-  };*/
+  // 체크박스핸들러_디테일
+  const [selectedRow_img, setSelectedRow_img] = useState([]);
+  const [selectedCheckboxes_img, setSelectedCheckboxes_img] = useState([]);
+
+  const handleHeaderCheckboxChange_img = (event) => {
+    const isChecked = event.target.checked;
+    const updatedCheckboxes = {};
+
+    RowsInfo.forEach((row) => {
+      updatedCheckboxes[row.items.listview.img_id] = isChecked;
+    });
+
+    setSelectedCheckboxes_img(updatedCheckboxes);
+
+    if (isChecked) {
+      const prices = RowsInfo.map((row) => row.Price);
+      setSelectedPrices(prices);
+      calculateTotalPrice(prices);
+      setSelectedRow_img(RowsInfo.map((row) => row.items.listview.img_id));
+    } else {
+      setSelectedPrices([]);
+      setTotalPrice([]);
+      setSelectedRow_img([]);
+    }
+  };
+  
+  useEffect(() => {
+    const defaultCheckboxes = {};
+    RowsInfo.forEach((row) => {
+      defaultCheckboxes[row.items.listview.img_id] = false;
+    });
+    setSelectedCheckboxes_img(defaultCheckboxes);
+  }, [RowsInfo]);
+  
+  const handleCheckboxChange_img = (event, rowId, price) => {
+    setSelectedCheckboxes_img((prevState) => ({
+      ...prevState,
+      [rowId]: event.target.checked,
+      }));
+
+
+      setSelectedPrices((prevPrices) => {
+        const updatedPrices = event.target.checked
+          ? [...prevPrices, price]
+          : prevPrices.filter((p) => p !== price);
+        calculateTotalPrice(updatedPrices);
+        return updatedPrices;
+      });
+
+      setSelectedRow_img((prevSelectedRow) => {
+        if (event.target.checked) {
+          return [...prevSelectedRow, rowId];
+        } else {
+          return prevSelectedRow.filter((selected) => selected !== rowId);
+        }
+      });
+  };
+
     // 추가로, detail info에서 선택하여 장바구니에 담는 경우 dataset 전체가 아니라 dataset의 subset이 들어가야 함
 
 
 
-  const [DetailMode,setDetailMode] = useState('listview')
+  const [DetailMode,setDetailMode] = useState('cardview')
 
   const handleDetailMode = (e) => {
     setDetailMode(e.currentTarget.id) // 여기 수정
   }
 
-  const columns_detail = [
-    { field: 'img_id', headerName: 'Image ID', width: 90},
+  const columns_listview = [
+    { field: 'id', headerName: 'Image ID', width: 90},
     { field: 'QCstate', headerName: 'QC State', width: 70},
     { field: 'QCscore', headerName: 'QC Score', width: 80},
     { field: 'Objects', headerName: 'Objects', width: 130},
@@ -195,41 +248,43 @@ function DatasetListView({listInfo}) {
       renderHeader: () => (
         <Checkbox
           color="primary"
-          checked={Object.values(selectedCheckboxes).every((value) => value)}
-          onChange={handleHeaderCheckboxChange}
+          checked={Object.values(selectedCheckboxes_img).every((value) => value)}
+          onChange={handleHeaderCheckboxChange_img}
         />
       ),
       renderCell: (params) => (
         <Checkbox
           color="primary"
-          checked={selectedCheckboxes[params.row.id] || false}
-          onChange={(event) => handleCheckboxChange(event, params.row.id, params.row.Price)}
+          checked={selectedCheckboxes_img[params.row.id] || false}
+          onChange={(event) => handleCheckboxChange_img(event, params.row.id, params.row.Price)}
         />
       ),
     }
   ];
 
-  /*
-  const rows_detail = items.items.listview.map((row) => (
-    {dataset_id: row.dataset_id, img_id: row.img_id, QCstate: row.QCstate, QCscore: row.QCscore, Objects: row.Objects,
+
+  const rows_listview = DetailListview.map((row) => (
+    {dataset_id: row.dataset_id, id: row.img_id, QCstate: row.QCstate, QCscore: row.QCscore, Objects: row.Objects,
       roll: row.roll, pitch: row.pitch, yaw: row.yaw, wx: row.wx, wy: row.wy, wz: row.wz, vf: row.vf, vl: row.vl, vu: row.vu, ax: row.ax, ay: row.ay, az: row.az, Price: row.Price}
   ));
-*/
 
-
-
-/*
   const handleAddToCart = () => {
-    const selectedRows = items.filter((row) => selectedCheckboxes[row.d_id]);
-    if (selectedRows.length === 0) {
+    const selectedRows = RowsInfo.filter((row) => selectedCheckboxes[row.d_id]);
+    if (selectedRows.length === 0 && selectedRow_img.length == 0) {
       alert('Please select at least one item!');
     }
     else {
       alert('Added to Cart!');
       onAddToCart(selectedRows);
+
+      selectedRows.forEach((row) => {
+        const imgIds = row.items.listview.map((item) => item.img_id);
+        console.log('img_ids: ', imgIds)
+        onAddToCart_img(imgIds);
+      })
     }
   };
-*/
+ 
   // 리스트뷰 표시 부분
   return (
     <div className='ListViewContainerDetail'>
@@ -240,6 +295,7 @@ function DatasetListView({listInfo}) {
           initialState={{
             pagination: { paginationModel: {pageSize: 10}}
           }}
+          onRowClick={handleRowClick}
           style={{fontSize: '0.7rem'}}
 
         />
@@ -247,42 +303,44 @@ function DatasetListView({listInfo}) {
         <div style={{display: 'grid', gridTemplateColumns: '30% 30% 10% 22% 8%', justifyItems: 'end', marginTop: '5px'}}>
             <span style={{fontSize: '0.8rem', fontWeight: 'bold', gridColumn: '4', justifySelf: 'end', marginTop: '5px', marginRight: '5px'}}>Price for Selected Items : {totalPrice} $</span>
             <CButton type="button" color="secondary" className="mb-3" variant="outline" id="button-addon2" 
-              style={{width: '90%', height: '60%', gridColumn: '5', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgb(38, 73, 132)'}}>
+              style={{width: '90%', height: '60%', gridColumn: '5', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgb(38, 73, 132)'}}
+              onClick={handleAddToCart}>
                 <span style={{fontSize: '0.7rem', color: 'white', fontWeight: 'bold'}}>Add to Cart</span>
             </CButton>
         </div> 
         {showDetail && (
-          <div style={{justifyContent: 'start', textAlign: 'left'}}>
-          <h5 style={{fontWeight: 'bold'}}>
-            Detail Information
-          </h5>
-          <CButtonGroup horizontal role="group" aria-label="Vertical button group" style={{marginBottom:'10px', fontSize: '0.5rem'}}>
-            <CFormCheck
-              type="radio"
-              onClick={handleDetailMode}
-              button={{ color: 'danger', variant: 'outline', size: 'sm' }}
-              name="vbtnradio"
-              id="cardview"
-              autoComplete="off"
-              label="View Images"
-            />
-            <CFormCheck
-              type="radio"
-              onClick={handleDetailMode}
-              button={{ color: 'danger', variant: 'outline', size: 'sm' }}
-              name="vbtnradio"
-              id="listview"
-              autoComplete="off"
-              label="View Lists"
-              defaultChecked
-            />
-          </CButtonGroup>
-          
-          {/* DetailMode=='listview' ? 
-            <DataGrid
-              rows={DetailListview}
+          <div>  
+            <div style={{justifyContent: 'start', textAlign: 'left', display: 'grid', gridTemplateColumns: '50% 50%'}}>
+              <h5 style={{gridColumn: '1', fontWeight: 'bold'}}>
+                Detail Information
+              </h5>
+              <CButtonGroup horizontal role="group" aria-label="Vertical button group" style={{justifySelf: 'end', width: '30%', marginBottom:'10px'}}>
+                <CFormCheck
+                  type="radio"
+                  onClick={handleDetailMode}
+                  button={{ color: 'danger', variant: 'outline', size: 'sm' }}
+                  name="vbtnradio"
+                  id="cardview"
+                  autoComplete="off"
+                  label="View Images"
+                  defaultChecked
+                />
+                <CFormCheck
+                  type="radio"
+                  onClick={handleDetailMode}
+                  button={{ color: 'danger', variant: 'outline', size: 'sm' }}
+                  name="vbtnradio"
+                  id="listview"
+                  autoComplete="off"
+                  label="View Lists"
+                />
+              </CButtonGroup>
+            </div>
+            {DetailMode === 'listview' ? ( 
+              <DataGrid
+              rows={rows_listview}
               checkboxSelection
-              columns={columns_detail}
+              columns={columns_listview}
               initialState={{
                 pagination: { paginationModel: {pageSize: 10}}
               }}
@@ -291,12 +349,17 @@ function DatasetListView({listInfo}) {
               hideFooterSelectedRowCount
               autoHeight
               style={{fontSize: '0.7rem'}}
-            /> : 
-            <div/> */}
-        </div>
+            />
+            ) : (
+              <div>
+                <text>No results yet</text>
+              </div>
+            )}
+          </div>
         )}
     </div>
-  );
-};
+  ); 
+}
+
 
 export default DatasetListView;

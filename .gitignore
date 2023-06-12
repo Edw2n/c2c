@@ -30,6 +30,9 @@ uploads/*
 temporal-datasets/*
 images/*
 
+available/*
+downloads-temporal/*
+
 qcmanager/ckpt_koniq10k.pt
 qcmanager/yolov3-kitti.weights
 

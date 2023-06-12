@@ -133,7 +133,9 @@ class UploadManager():
       for ind in stored_info.index:
         src = source_dir + stored_info["filename"][ind]
         dst = target_dir + str(stored_info["img_id"][ind]) + ".png"
+        dst_front = './frontend/public/images/' + str(stored_info["img_id"][ind]) + ".png"
         copyfile(src, dst)
+        copyfile(src, dst_front)
         print(f"copy {src} to {dst}")
         stored_info['image_path'][ind] = dst
 

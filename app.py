@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, send_file
 from pandas.io import json
 from flask_cors import CORS #comment this on deployment
 import pandas as pd
@@ -6,10 +6,16 @@ from werkzeug.utils import secure_filename
 
 from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG
-from dbmanager.utils import initialize_db_structures, identify_user, copy_db, restore_db
+from dbmanager.utils import initialize_db_structures, identify_user, copy_db, restore_db, create_download_file, _create_download_file, update_tx_availability
 from utils.transaction_manager import TXManager
 from utils.upload_manager import UploadManager
 from utils.read_manager import ReadManager
+
+import os
+from shutil import copyfile
+import zipfile
+import glob
+import shutil
 
 imgfile_path_list = []
 UPLOAD_ROOTDIR = "./uploads/"
@@ -114,13 +120,14 @@ def service_data():
         print("*******     read info     ********")
 
         try:
-            # qeury = get_query_info(request.form~~~~)
-            # read_manager.encode_formdata(request.form, "search")
-            
             #TODO: get custom file
             
             # read data from db (read all data)
+            if "keyword" in request.form.keys(): # if query is not None
+                read_manager.encode_formdata(request.form, "search")
+                
             success, datasets = read_manager.read_searched_data(query)
+
             # for debugging
             '''
             print('after upload, max num pages:', datasets["max_page_num"])
@@ -229,7 +236,7 @@ def buy_items():
                 "dataset_name": dataset_name
             }
             
-            success_transaction =  tx_manager.update_transaction(transaction_info)
+            success_transaction = tx_manager.update_transaction(transaction_info)
         except Exception as e:
             print("trasaction error:", e)
 
@@ -246,9 +253,68 @@ def buy_items():
 
     return json.dumps(result)
 
-def qc1(target_image): #qc interaction
-    qced_image = None
-    return qced_image
+@app.route("/download",methods=["POST"])
+def download_dataset():
+    '''
+    :download dataset()
+    [request.form 에 받을 데이터(key:value)] // can be updated
+    - "txp_id": 다운 받을 데이터셋의 txp_id
+        
+    returns:
+    - send_file : down load link of dataset
+    '''
+
+    if request.method =="POST":
+        try:
+            txp_id = request.form["txp_id"]
+            is_test_mode = request.form["test_mode"]
+            try:
+                if is_test_mode == "true":
+                    print("test mode")
+                    img_ids = [1,2,3,4,5]
+                    features, gt, img_paths = _create_download_file(db, img_ids)
+                    dataset_name = "mine"
+                else: 
+                    features, gt, img_paths, dataset_name = create_download_file(db, txp_id)
+
+                # dataset 생성
+                dataset_dir = f"./downloads-temporal/{dataset_name}" # 압축할 폴더 경로
+                imageset_dir = dataset_dir+"/images"
+                os.makedirs(dataset_dir, exist_ok=True)
+                os.makedirs(imageset_dir, exist_ok=True)
+                features.to_csv(dataset_dir+"/features.csv")
+                gt.to_csv(dataset_dir+"/gt.csv")
+                for src in img_paths:
+                    file_name = src.split("images")[-1]
+                    dst = imageset_dir + file_name
+                    print(dst)
+                    copyfile(src, dst)
+            
+                # 압축 파일 저장 경로
+                if not os.path.exists("./available/"):
+                    os.makedirs("./available/")
+                zip_filename = f"./available/{dataset_name}.zip"
+
+                # 폴더를 압축
+                zipf = zipfile.ZipFile(zip_filename, "w", zipfile.ZIP_DEFLATED)
+                for root, dirs, files in os.walk(dataset_dir):
+                    for dir in dirs:
+                        dir_path = os.path.join(root, dir)
+                        zipf.write(dir_path, arcname=os.path.relpath(dir_path, dataset_dir))
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        zipf.write(file_path, arcname=os.path.relpath(file_path, dataset_dir))
+                zipf.close()
+
+                update_tx_availability(db, txp_id, True, zip_filename)
+
+            except Exception as e:
+                print("download dataset error,", e)
+        except Exception as e:
+            print("read formdata in download pipeline,", e)
+
+    # 다운로드 링크 제공
+    return send_file(zip_filename, mimetype="zip",  as_attachment=True)
 
 def connect_db(initialize=False, copy=False, restore=False):
     '''
