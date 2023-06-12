@@ -1179,7 +1179,8 @@ def update_multiple_columns(db, df, mode):
 
     [inputs]
     - target db object (CRUD)
-    - df: pd.DataFrame
+    - df: pd.DataFrame - ['img_id', 'image_path', 'image_width', 'image_height',
+                          'qc_id', 'qc_start_date', 'qc_score', 'object_count', 'qc_end_date', 'product_id', 'price']
     - mode: string, the mode should be one of ["img_path", "img_WH", "start_QC", "QC_score", "object_count", "end_QC", "price"]
             if mode is start_QC     : qd_status in DB becomes "QC_start"
             if mode is QC_score     : qd_status in DB becomes "QC_end"
