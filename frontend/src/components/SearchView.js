@@ -9,7 +9,7 @@ import { SpeedDialAction } from '@mui/material';
 import React from 'react';
 import styled from '@emotion/styled';
 
-function SearchView( {onAddToCart, onAddToCart_img} ) {
+function SearchView( {userName, onManagesChange} ) {
   
   // 지금은 dummy data -> listinfo 받아오도록 수정 필요
   // dummy data
@@ -533,7 +533,7 @@ function SearchView( {onAddToCart, onAddToCart_img} ) {
         </h5>
         
         {/* Part 3-2: 리스트뷰 창 */}
-        {listInfo.length>0 ? <DatasetListView listInfo={listInfo}/> : 'No results'}
+        {listInfo.length>0 ? <DatasetListView listInfo={listInfo} userName={userName} onManagesInfo={onManagesChange}/> : 'No results'}
 
       </div>
 

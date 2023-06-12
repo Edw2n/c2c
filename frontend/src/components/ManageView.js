@@ -85,7 +85,7 @@ function ManageView( {cartList, cartList_img, LoggedIn, UserInfo,
             </div>
             <Button type="submit" variant="outline-secondary" style={{width: '20%', justifySelf: 'start', fontSize: '0.8rem'}}>Identify</Button>
         </form>
-        {LoggedIn === "true" ? <UserPageView user_name={userName} uploadedRows={URows} transactRows={TRows} cartList={cartList} cartList_img={cartList_img} UserInfo={UserInfo} onAddUserInfo={onManagesChange}/> : 'nothing'}
+        {LoggedIn === "true" ? <UserPageView user_name={userName} uploadedRows={URows} transactRows={TRows} UserInfo={UserInfo} onAddUserInfo={onManagesChange}/> : 'nothing'}
     </div>  
 
   );

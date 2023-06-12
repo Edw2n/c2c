@@ -138,7 +138,7 @@ function App() {
         />
       </CButtonGroup>
       </div>
-      {mode=='search' ? <SearchView onAddToCart={onAddToCart} onAddToCart_img={onAddToCart_img}/> 
+      {mode=='search' ? <SearchView userName={Manages.userInfo.username} onManagesChange={handleManagesChanges}/> 
                       : <ManageView cartList={selectedRows} cartList_img={SelectedImgIds} 
                                     LoggedIn={Manages.login} 
                                     UserInfo={Manages.userInfo} 

@@ -6,7 +6,7 @@ import { Button, Checkbox } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import CardView from './CardView';
 
-function DatasetListView({listInfo, onAddToCart, onAddToCart_img}) {
+function DatasetListView({listInfo, userName, onManagesInfo}) {
   console.log("listinfo: ", listInfo)
 
   const [RowsInfo, setRowsInfo] = useState(listInfo);
@@ -262,14 +262,58 @@ function DatasetListView({listInfo, onAddToCart, onAddToCart_img}) {
     }
     else {
       alert('Added to Cart!');
-      onAddToCart(selectedRows);
+      const formData = new FormData();
+      
 
-      selectedRows.forEach((row) => {
-        const imgIds = row.items.listview.map((item) => item.img_id);
-        console.log('img_ids: ', imgIds)
-        onAddToCart_img(imgIds);
-      })
+      const rowsItems = selectedRows
+                                .map((row) => row.items.listview
+                                .map((row)=> row.img_id)
+                                );                                
+      const selected = selectedRow_img.concat(...rowsItems)
+      console.log("selected:", selected)
+
+      formData.append('user_name',userName)
+      formData.append('items',selected)
+      formData.append('dataset-name',"mine") // todo update
+
+      const buy = async () => {
+        await fetch('http://127.0.0.1:3000/buy', {
+          method: 'POST',
+          body: formData
+        }).then(resp => {
+          resp.json().then(data => {
+            let success = data['success_transaction']
+            if (!success){
+              alert('failed!!!')
+            }else{
+              alert('success!!!')
+              onManagesInfo(prev => (
+                {...prev,
+                  uploads: data.manage_data.uploaded.rows,
+                  transctions: data.manage_data.transactions.rows,
+                  login: 'true',
+                  userInfo: {
+                    username: userName,
+                    pw: prev.userInfo.pw,
+                    cash: data.manage_data.cachecash,
+                  }
+                }))
+              // console.log("bought data: ", data.manage_data.transactions.rows)
+              // const newRows = data.manage_data.transactions.rows
+              // setTransactRows(prevRows => [...prevRows,...newRows]);
+              // console.log("trows: ", TRows)
+              // setShowInput(false);
+              // // 캐시 추가되면 주석 해제 처리할 것
+              // const cash_remain = data.manage_data.cache;
+              // console.log("cash: ", cash_remain)
+              // onAddUserInfo(userName, UserInfo.pw, cash_remain)
+            }
+          })
+        })
+      }
+      buy();
     }
+    
   };
  
   // 리스트뷰 표시 부분
@@ -292,7 +336,7 @@ function DatasetListView({listInfo, onAddToCart, onAddToCart_img}) {
             <CButton type="button" color="secondary" className="mb-3" variant="outline" id="button-addon2" 
               style={{width: '90%', height: '60%', gridColumn: '5', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgb(38, 73, 132)'}}
               onClick={handleAddToCart}>
-                <span style={{fontSize: '0.7rem', color: 'white', fontWeight: 'bold'}}>Add to Cart</span>
+                <span style={{fontSize: '0.7rem', color: 'white', fontWeight: 'bold'}}>Buy</span>
             </CButton>
         </div> 
         {showDetail && (
