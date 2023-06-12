@@ -68,7 +68,9 @@ def upload_data():
                     "PW": pw,
                     "TITLE": title,
                     "DESCRIPTIONS": description,
-                } 
+                }
+
+                print("f:", f) 
 
                 if upload_manager.upload_dataset(f, target_temp_dataset_info):
                     success = True
@@ -118,12 +120,21 @@ def service_data():
     success = False
     if request.method =="POST":
         print("*******     read info     ********")
-
         try:
             #TODO: get custom file
             
             # read data from db (read all data)
             if "keyword" in request.form.keys(): # if query is not None
+                # custom file save
+                try:
+                    print("form data",request.files)
+                    f = request.files["custom_script"]
+                    file_path = UPLOAD_ROOTDIR + secure_filename(f.filename)
+                    f.save(file_path)
+
+                    # 저 쿼리 뒤에 커스텀 파일 처리 넣기
+                except Exception as e:
+                    print("no custom script!", e)
                 read_manager.encode_formdata(request.form, "search")
                 
             success, datasets = read_manager.read_searched_data(query)
@@ -169,6 +180,8 @@ def check_user():
         try:
             user_name = request.form["user_name"]
             pw = request.form["pw"]
+            print(user_name, pw)
+            print(identify_user(db, user_name, pw, case = "login"))
             if identify_user(db, user_name, pw, case = "login"):
                 valid = True
         except Exception as e:
@@ -316,6 +329,46 @@ def download_dataset():
     # 다운로드 링크 제공
     return send_file(zip_filename, mimetype="zip",  as_attachment=True)
 
+@app.route("/delete",methods=["POST"])
+def delete_dataset():
+    '''
+    delete dataset in uploaded dataset / transaction dataset?
+
+    [input]
+    - user_name, dataset_id
+
+    returns: jsonified dictionary with below items
+        - "main_data": list/search view에 뿌릴 리스트 데이터 (홈페이지 처음 받으면 받던 데이터), list of dict
+        - "manage_data": user identify 성공시 각 list 뷰에 뿌릴 manage_data, 실패시 빈 list (will be updated)
+        - "success_main": main_data 읽어온 결과 성공여부 (bool),
+        - "success_manage": manage_data 읽어온 결과 성공여부 (bool),
+    '''
+    pass
+
+@app.route("/feedback",methods=["POST"])
+def feedback_qc():
+    '''
+    feedback qc score from user (front alert: 피드백 감사합니다!)
+
+    [input]
+    - qc_feedback
+    - txp_id
+    - user_id
+
+    returns: jsonified dictionary with below items
+        - success:
+    '''
+    result = {
+        "success": True
+    }
+    return json.dumps(result)
+
+@app.route('/image/<path:image_path>')
+def get_image(image_path):
+    print(image_path)
+    with open(image_path, 'rb') as f:
+        return send_file(f, mimetype='image/png')
+
 def connect_db(initialize=False, copy=False, restore=False):
     '''
     db connection + db object 생성, db structure initailization
@@ -344,6 +397,7 @@ def connect_db(initialize=False, copy=False, restore=False):
     # if needed, init db
     if restore:
         restore_db(db)
+        success = True
     elif initialize:
         if(initialize_db_structures(db)):
             success = True

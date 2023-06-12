@@ -79,29 +79,15 @@ function DatasetListView({listInfo, onAddToCart, onAddToCart_img}) {
   const columns = [
     { field: 'Uploader', headerName: 'Uploader', width: 65},
     { field: 'Title', headerName: 'Dataset Name', width: 90},
-    { field: 'Description', headerName: 'Description', width: 130},
+    { field: 'Description', headerName: 'Description', width: 200},
     { field: 'QCstate', headerName: 'QC State', width: 80},
     { field: 'QCscore', headerName: 'QC Score', width: 70},
-    { field: 'Objects', headerName: 'Objects', width: 160},
-    { field: 'UploadDate', headerName: 'Upload Date', width: 80},
+    { field: 'Objects', headerName: 'Objects', width: 320},
+    { field: 'UploadDate', headerName: 'Upload Date', width: 150},
     { field: 'SalesCount', headerName: 'Sales Count', width: 80},
-    { field: 'Likes', headerName: 'Likes', width: 50},
     { field: 'MatchedData', headerName: 'Matched Data', width: 90},
     { field: 'Price', headerName: 'Price($)', width: 80},
     { field: 'PricePerImage', headerName: 'Avg. Price($)', width: 110},
-    { field: 'LikeButton', headerName: '', width:'80',
-      renderCell: (params) => (
-        <strong>
-          <Button
-            variant="contained"
-            color="primary"
-            size="small"
-            style={{fontSize: '0.6rem'}}>
-            Like
-          </Button>
-        </strong>
-      )
-    },
     {
       ...GRID_CHECKBOX_SELECTION_COL_DEF,
       width: '80',

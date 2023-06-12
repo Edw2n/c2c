@@ -4,8 +4,8 @@ import './UserPageView.js';
 import UserPageView from './UserPageView.js';
 import { useEffect, useState } from 'react';
 
-function ManageView( {cartList, cartList_img, LoggedIn, onAddLoggedIn, UserInfo, onAddUserInfo,
-                      URows, onURowsChange, TRows, onTRowsChange } ) 
+function ManageView( {cartList, cartList_img, LoggedIn, UserInfo,
+                      URows, TRows, onManagesChange} ) 
 {
   const [userName, setUserName] = useState('')
 
@@ -29,19 +29,35 @@ function ManageView( {cartList, cartList_img, LoggedIn, onAddLoggedIn, UserInfo,
         body: formData
       }).then(resp => {
         resp.json().then(data => {
+          console.log(pw, userName)
           let matched = data['valid']
+          console.log(matched)
           if (!matched){
             alert('not valid!!!')
           }else{
             alert('valid')
-            onURowsChange(data.manage_data.uploaded.rows)
-            onTRowsChange(data.manage_data.transactions.rows)
+            const current_cash = data.manage_data.cache
+            onManagesChange(prev => (
+                {...prev,
+                  uploads: data.manage_data.uploaded.rows,
+                  transctions: data.manage_data.transactions.rows,
+                  login: 'true',
+                  userInfo: {
+                    username: userName,
+                    pw: pw,
+                    cash: current_cash,
+                  }
+                })
+              )
+            // onURowsChange(data.manage_data.uploaded.rows)
+            // onTRowsChange(data.manage_data.transactions.rows)
             console.log("URows: ", URows)
             console.log("TRows: ", TRows)
-            const current_cash = data.manage_data.cache
-            setUserName(userName)
-            onAddLoggedIn('true');
-            onAddUserInfo(userName, pw, current_cash)
+            // console.log(data.manage_data.transactions.rows)
+            
+            // setUserName(userName)
+            // onAddLoggedIn('true');
+            // onAddUserInfo(userName, pw, current_cash)
           }
         })
       })
@@ -51,8 +67,12 @@ function ManageView( {cartList, cartList_img, LoggedIn, onAddLoggedIn, UserInfo,
 
   useEffect(() => {
     // 컴포넌트가 처음 렌더링될 때 저장된 데이터 설정
-    onURowsChange(URows);
-    onTRowsChange(TRows);
+    // onURowsChange(URows);
+    // onTRowsChange(TRows);
+    onManagesChange({
+      uploads: URows,
+      transctions: TRows
+    })
   }, []);
 
   return (
@@ -65,7 +85,7 @@ function ManageView( {cartList, cartList_img, LoggedIn, onAddLoggedIn, UserInfo,
             </div>
             <Button type="submit" variant="outline-secondary" style={{width: '20%', justifySelf: 'start', fontSize: '0.8rem'}}>Identify</Button>
         </form>
-        {LoggedIn === "true" ? <UserPageView user_name={userName} uploadedRows={URows} transactRows={TRows} cartList={cartList} cartList_img={cartList_img} UserInfo={UserInfo} onAddUserInfo={onAddUserInfo}/> : 'nothing'}
+        {LoggedIn === "true" ? <UserPageView user_name={userName} uploadedRows={URows} transactRows={TRows} cartList={cartList} cartList_img={cartList_img} UserInfo={UserInfo} onAddUserInfo={onManagesChange}/> : 'nothing'}
     </div>  
 
   );
