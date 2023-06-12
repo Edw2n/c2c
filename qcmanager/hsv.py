@@ -1,10 +1,12 @@
 import pandas as pd
 from dbmanager.configs import SCHEMA_NAME, ALL_COLUMNS
+from dbmanager.utils import find_img_id_with_dataset_id
 import cv2
 import os
 import numpy as np
 
-def hsv(db, df):
+
+def hsv(db, dataset_id_list):
   '''
   calculate the hsv
 
@@ -18,11 +20,15 @@ def hsv(db, df):
   '''
 
   schema_name = SCHEMA_NAME
-  
-  img_path_list = df['image_path']
-  img_id_list = df['img_id']
+  img_dataset_df = find_img_id_with_dataset_id(db, dataset_id_list)
+  img_id_list = list(img_dataset_df['img_id'])
 
-  df_tmp3 = df[['image_path', 'img_id']]
+
+  col_ft = ALL_COLUMNS[5]
+  sql_ft = f"select * from {schema_name}.features f where f.img_id in {tuple(img_id_list)};"
+  res_ft = db.execute(sql_ft)
+  df_ft = pd.DataFrame(data=res_ft, columns=col_ft)    
+  df_tmp3 = df_ft[['image_path', 'img_id']]
 
   col_gt = [*ALL_COLUMNS[0], *ALL_COLUMNS[2], *ALL_COLUMNS[7]]
   sql_gt = f"select * from {schema_name}.GroundTruth g \
@@ -33,7 +39,7 @@ def hsv(db, df):
   df_gt = pd.DataFrame(data=res_gt, columns=col_gt)
 
   df_gt = pd.merge(df_gt, df_tmp3, how='left', on='img_id')
-
+  
   target_col_gt = ['image_path', 'gt_object', 'gt_height', 'gt_width', 'gt_length',
       'gt_Xordinate', 'gt_Yordinate', 'gt_Zordinate', 'gt_Xrotate',
       'gt_Yrotate', 'gt_Zrotate', 'gt_state', 'gt_occlusion',
@@ -43,10 +49,10 @@ def hsv(db, df):
       'bbox_left', 'bbox_right', 'bbox_top','bbox_bottom']
 
   df_gt = df_gt[target_col_gt]
+  img_path_list = list(df_gt['image_path'])
 
   file = _hsv(img_path_list=img_path_list, ground_truth=df_gt, padding = 10)
-  result = (file['average_hue'], file['average_saturation'], file['average_value'])
-  return result
+  return file
 
 
 def _hsv(img_path_list: str, ground_truth: pd.DataFrame, padding: int):
@@ -61,8 +67,7 @@ def _hsv(img_path_list: str, ground_truth: pd.DataFrame, padding: int):
   [Output]
   - file: a updated dataframe with average hsv values appended
   '''
-  # Read csv file to append average hsv
-  file = pd.read_csv(ground_truth)
+
   file = ground_truth
   
   # Set files_path

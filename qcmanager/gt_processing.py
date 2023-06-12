@@ -130,5 +130,4 @@ class GT_processing():
                     file_df['bbox_top'].iloc[i], file_df['bbox_bottom'].iloc[i] = float(y1), float(y2)
                   else:
                     continue
-    self.save_csv(file_df, gt_csv)
     return file_df
