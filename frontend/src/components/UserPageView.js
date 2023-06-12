@@ -23,16 +23,18 @@ function UserPageView({user_name, uploadedRows, transactRows, UserInfo, onAddUse
       formData.append('user_name',user_name)
       formData.append('d_id', rowId)
       console.log(rowId)
-
-
+      console.log(URows)
       await fetch('http://0.0.0.0:3000/delete', {
         method: 'POST',
         body: formData
       }).then(resp => {
-          setURows(prev => prev.filter( data => 
-               data!=rowId))
-    })
-    }
+        resp.json().then(data => {
+        if (data.success){
+          setURows(prev => prev.filter( data => data.d_id!=rowId))  
+        }
+      })
+      })
+  }
 
   // Buy 버튼 기능
   const [datasetName, setDatasetName] = useState('');

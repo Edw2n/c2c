@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 
 from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG
-from dbmanager.utils import initialize_db_structures, identify_user, copy_db, restore_db, create_download_file, _create_download_file, update_tx_availability
+from dbmanager.utils import initialize_db_structures, identify_user, copy_db, restore_db, create_download_file, _create_download_file, update_tx_availability, delete_dataset
 from utils.transaction_manager import TXManager
 from utils.upload_manager import UploadManager
 from utils.read_manager import ReadManager
@@ -50,7 +50,6 @@ def upload_data():
             description = request.form["description"]
 
             print("descriptions")
-            print(identify_user(db, user_name, pw, case = "upload"))
             try:
                 identify_user(db, user_name, pw, case = "upload")
             except Exception as e:
@@ -181,7 +180,6 @@ def check_user():
             user_name = request.form["user_name"]
             pw = request.form["pw"]
             print(user_name, pw)
-            print(identify_user(db, user_name, pw, case = "login"))
             if identify_user(db, user_name, pw, case = "login"):
                 valid = True
         except Exception as e:
@@ -198,7 +196,6 @@ def check_user():
         #TODO: get manage data of identified user and set success == True
         success_manage, manage_data = read_manager.read_manage_data(user_name)
 
-    print(manage_data)
     result = {
         "main_data": main_data,
         "manage_data": manage_data,
@@ -330,7 +327,7 @@ def download_dataset():
     return send_file(zip_filename, mimetype="zip",  as_attachment=True)
 
 @app.route("/delete",methods=["POST"])
-def delete_dataset():
+def delete_uploaded_dataset():
     '''
     delete dataset in uploaded dataset / transaction dataset?
 
@@ -343,7 +340,23 @@ def delete_dataset():
         - "success_main": main_data 읽어온 결과 성공여부 (bool),
         - "success_manage": manage_data 읽어온 결과 성공여부 (bool),
     '''
-    pass
+    success = False
+
+    if request.method =="POST":
+        try:
+            d_id = request.form["d_id"]
+            user_name = request.form["user_name"]
+            print(d_id)
+
+            success = delete_dataset(db, d_id)
+        except Exception as e:
+            print("delete datasest error, ", e)
+    result = {
+        "success": success,
+    }
+
+    return json.dumps(result)
+
 
 @app.route("/feedback",methods=["POST"])
 def feedback_qc():
