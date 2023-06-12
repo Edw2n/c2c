@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 
 from dbmanager.crud import CRUD
 from dbmanager.configs import POSTGRES_CONFIG
-from dbmanager.utils import initialize_db_structures, identify_user, copy_db, restore_db, create_download_file, _create_download_file, update_tx_availability
+from dbmanager.utils import initialize_db_structures, identify_user, copy_db, restore_db, create_download_file, _create_download_file, update_tx_availability, delete_dataset
 from utils.transaction_manager import TXManager
 from utils.upload_manager import UploadManager
 from utils.read_manager import ReadManager
@@ -16,6 +16,8 @@ from shutil import copyfile
 import zipfile
 import glob
 import shutil
+
+import sys
 
 imgfile_path_list = []
 UPLOAD_ROOTDIR = "./uploads/"
@@ -50,7 +52,6 @@ def upload_data():
             description = request.form["description"]
 
             print("descriptions")
-            print(identify_user(db, user_name, pw, case = "upload"))
             try:
                 identify_user(db, user_name, pw, case = "upload")
             except Exception as e:
@@ -68,7 +69,9 @@ def upload_data():
                     "PW": pw,
                     "TITLE": title,
                     "DESCRIPTIONS": description,
-                } 
+                }
+
+                print("f:", f) 
 
                 if upload_manager.upload_dataset(f, target_temp_dataset_info):
                     success = True
@@ -118,15 +121,16 @@ def service_data():
     success = False
     if request.method =="POST":
         print("*******     read info     ********")
-
+        cf = None
         try:
             #TODO: get custom file
             
             # read data from db (read all data)
             if "keyword" in request.form.keys(): # if query is not None
-                read_manager.encode_formdata(request.form, "search")
-                
-            success, datasets = read_manager.read_searched_data(query)
+                # custom file save
+                query = read_manager.encode_formdata(request.form, "search")
+                cf = read_manager.read_custom_filter(request)
+            success, datasets = read_manager.read_searched_data(query, custom_filtering=cf)
 
             # for debugging
             '''
@@ -169,6 +173,7 @@ def check_user():
         try:
             user_name = request.form["user_name"]
             pw = request.form["pw"]
+            print(user_name, pw)
             if identify_user(db, user_name, pw, case = "login"):
                 valid = True
         except Exception as e:
@@ -185,7 +190,6 @@ def check_user():
         #TODO: get manage data of identified user and set success == True
         success_manage, manage_data = read_manager.read_manage_data(user_name)
 
-    print(manage_data)
     result = {
         "main_data": main_data,
         "manage_data": manage_data,
@@ -316,6 +320,62 @@ def download_dataset():
     # 다운로드 링크 제공
     return send_file(zip_filename, mimetype="zip",  as_attachment=True)
 
+@app.route("/delete",methods=["POST"])
+def delete_uploaded_dataset():
+    '''
+    delete dataset in uploaded dataset / transaction dataset?
+
+    [input]
+    - user_name, dataset_id
+
+    returns: jsonified dictionary with below items
+        - "main_data": list/search view에 뿌릴 리스트 데이터 (홈페이지 처음 받으면 받던 데이터), list of dict
+        - "manage_data": user identify 성공시 각 list 뷰에 뿌릴 manage_data, 실패시 빈 list (will be updated)
+        - "success_main": main_data 읽어온 결과 성공여부 (bool),
+        - "success_manage": manage_data 읽어온 결과 성공여부 (bool),
+    '''
+    success = False
+
+    if request.method =="POST":
+        try:
+            d_id = request.form["d_id"]
+            user_name = request.form["user_name"]
+            print(d_id)
+
+            success = delete_dataset(db, d_id)
+        except Exception as e:
+            print("delete datasest error, ", e)
+    result = {
+        "success": success,
+    }
+
+    return json.dumps(result)
+
+
+@app.route("/feedback",methods=["POST"])
+def feedback_qc():
+    '''
+    feedback qc score from user (front alert: 피드백 감사합니다!)
+
+    [input]
+    - qc_feedback
+    - txp_id
+    - user_id
+
+    returns: jsonified dictionary with below items
+        - success:
+    '''
+    result = {
+        "success": True
+    }
+    return json.dumps(result)
+
+@app.route('/image/<path:image_path>')
+def get_image(image_path):
+    print(image_path)
+    with open(image_path, 'rb') as f:
+        return send_file(f, mimetype='image/png')
+
 def connect_db(initialize=False, copy=False, restore=False):
     '''
     db connection + db object 생성, db structure initailization
@@ -344,6 +404,7 @@ def connect_db(initialize=False, copy=False, restore=False):
     # if needed, init db
     if restore:
         restore_db(db)
+        success = True
     elif initialize:
         if(initialize_db_structures(db)):
             success = True

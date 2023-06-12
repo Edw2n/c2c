@@ -15,44 +15,46 @@ function App() {
     setMode(e.currentTarget.id)
   }
   
-  // 장바구니
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [SelectedImgIds, setSelectedImgIds] = useState([]);
-
-  const onAddToCart = (rows) => {
-    setSelectedRows((prevSelectedRows) => [...prevSelectedRows,...rows]);
-  };
-
-  const onAddToCart_img = (newList) => {
-    setSelectedImgIds((prevList) => [...prevList,...newList])
-  }
-
-  // 로그인 정보
-  const [LoggedIn, setLoggedIn] = useState('false');
-  const onAddLoggedIn = () => {
-    setLoggedIn('true');
-  }
-
-  const [UserInfo, setUserInfo] = useState({username: '', pw: '', cash: 0})
-  const onAddUserInfo = (userName, pw, cash) => {
-     setUserInfo({username: userName, pw: pw, cash: cash});
-  };
+  
   
   // 로그아웃
   const handleLogout = () => {
-    setLoggedIn('false');
-    setUserInfo({username: '', pw: '', cash: 0});
+    setManages(prev => (
+      {...prev,
+       login: 'false',
+       userInfo: {username: '', pw: '', cash: 0},
+      }
+    ));
   }
 
-  // Upload & Transaction rows => 페이지 바뀔 때마다 불러오는 용도
-  const [URows, setURows] = useState([]);
-  const [TRows, setTRows] = useState([]);
-  const handleURowsChange = (data) => {
-    setURows(data);
-  };
-  const handleTRowsChange = (data) => {
-    setTRows(data);
-  };
+  const [Manages, setManages] = useState({
+    uploads: [],
+    transactions: [],
+    login: 'false',
+    userInfo: {
+      username: '',
+      pw: '',
+      cash: '',
+    }
+  });
+
+  const handleManagesChanges = (data) => {
+    console.log("print",data)
+    setManages(data)
+    // setManages(prev => (
+    //   {...prev,
+    //     uploads: data.uploaded.rows,
+    //     transctions: data.transactions.rows,
+    //   }));
+  }
+
+
+  // const handleURowsChange = (data) => {
+  //   setURows(data);
+  // };
+  // const handleTRowsChange = (data) => {
+  //   setTRows(data);
+  // };
 
   // app 화면
   return (
@@ -61,7 +63,7 @@ function App() {
         <p style={{gridColumn: '3'}}>
           C2C
         </p>
-        {LoggedIn === 'true' && (
+        {Manages.login === 'true' && (
           <span style={{gridColumn: '4', 
                         justifySelf: 'end', 
                         alignSelf: 'center', 
@@ -70,9 +72,9 @@ function App() {
                         display: 'block',
                         textAlign: 'right',
                         marginTop: '5px'}}>
-            {`Hello, ${UserInfo.username} !`}
+            {`Hello, ${Manages.userInfo.username} !`}
             <br />
-            {`Current Points: ${UserInfo.cash}`}
+            {`Current Points: ${Manages.userInfo.cash}`}
             <br />
             <button 
               variant="outline-secondary"
@@ -111,12 +113,12 @@ function App() {
         />
       </CButtonGroup>
       </div>
-      {mode=='search' ? <SearchView onAddToCart={onAddToCart} onAddToCart_img={onAddToCart_img}/> 
-                      : <ManageView cartList={selectedRows} cartList_img={SelectedImgIds} 
-                                    LoggedIn={LoggedIn} onAddLoggedIn={onAddLoggedIn} 
-                                    UserInfo={UserInfo} onAddUserInfo={onAddUserInfo}
-                                    URows={URows} onURowsChange={handleURowsChange}
-                                    TRows={TRows} onTRowsChange={handleTRowsChange}/>}
+      {mode=='search' ? <SearchView userName={Manages.userInfo.username} onManagesChange={handleManagesChanges}/> 
+                      : <ManageView  
+                                    LoggedIn={Manages.login} 
+                                    UserInfo={Manages.userInfo} 
+                                    URows={Manages.uploads} 
+                                    TRows={Manages.transctions} onManagesChange={handleManagesChanges}/>}
     </div>
   );
 }

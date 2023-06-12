@@ -6,7 +6,7 @@ import { Button, Checkbox } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import CardView from './CardView';
 
-function DatasetListView({listInfo, onAddToCart, onAddToCart_img}) {
+function DatasetListView({listInfo, userName, onManagesInfo}) {
   console.log("listinfo: ", listInfo)
 
   const [RowsInfo, setRowsInfo] = useState(listInfo);
@@ -79,29 +79,15 @@ function DatasetListView({listInfo, onAddToCart, onAddToCart_img}) {
   const columns = [
     { field: 'Uploader', headerName: 'Uploader', width: 65},
     { field: 'Title', headerName: 'Dataset Name', width: 90},
-    { field: 'Description', headerName: 'Description', width: 130},
+    { field: 'Description', headerName: 'Description', width: 200},
     { field: 'QCstate', headerName: 'QC State', width: 80},
     { field: 'QCscore', headerName: 'QC Score', width: 70},
-    { field: 'Objects', headerName: 'Objects', width: 160},
-    { field: 'UploadDate', headerName: 'Upload Date', width: 80},
+    { field: 'Objects', headerName: 'Objects', width: 320},
+    { field: 'UploadDate', headerName: 'Upload Date', width: 150},
     { field: 'SalesCount', headerName: 'Sales Count', width: 80},
-    { field: 'Likes', headerName: 'Likes', width: 50},
     { field: 'MatchedData', headerName: 'Matched Data', width: 90},
     { field: 'Price', headerName: 'Price($)', width: 80},
     { field: 'PricePerImage', headerName: 'Avg. Price($)', width: 110},
-    { field: 'LikeButton', headerName: '', width:'80',
-      renderCell: (params) => (
-        <strong>
-          <Button
-            variant="contained"
-            color="primary"
-            size="small"
-            style={{fontSize: '0.6rem'}}>
-            Like
-          </Button>
-        </strong>
-      )
-    },
     {
       ...GRID_CHECKBOX_SELECTION_COL_DEF,
       width: '80',
@@ -225,22 +211,22 @@ function DatasetListView({listInfo, onAddToCart, onAddToCart_img}) {
   }
 
   const columns_listview = [
-    { field: 'id', headerName: 'Image ID', width: 90},
+    { field: 'id', headerName: 'Image ID', width: 70},
     { field: 'QCstate', headerName: 'QC State', width: 70},
     { field: 'QCscore', headerName: 'QC Score', width: 80},
-    { field: 'Objects', headerName: 'Objects', width: 130},
-    { field: 'roll', headerName: 'Roll', width: 60},
-    { field: 'pitch', headerName: 'Pitch', width: 60},
-    { field: 'yaw', headerName: 'Yaw', width: 60},
-    { field: 'wx', headerName: 'Wx', width: 60},
-    { field: 'wy', headerName: 'Wy', width: 60},
-    { field: 'wz', headerName: 'Wz', width: 60},
-    { field: 'vf', headerName: 'Vf', width: 60},
-    { field: 'vl', headerName: 'Vl', width: 60},
-    { field: 'vu', headerName: 'Vu', width: 60},
-    { field: 'ax', headerName: 'Ax', width: 60},
-    { field: 'ay', headerName: 'Ay', width: 60},
-    { field: 'az', headerName: 'Az', width: 60},
+    { field: 'Objects', headerName: 'Objects', width: 270},
+    { field: 'roll', headerName: 'Roll', width: 65},
+    { field: 'pitch', headerName: 'Pitch', width: 65},
+    { field: 'yaw', headerName: 'Yaw', width: 65},
+    { field: 'wx', headerName: 'Wx', width: 65},
+    { field: 'wy', headerName: 'Wy', width: 65},
+    { field: 'wz', headerName: 'Wz', width: 65},
+    { field: 'vf', headerName: 'Vf', width: 65},
+    { field: 'vl', headerName: 'Vl', width: 65},
+    { field: 'vu', headerName: 'Vu', width: 65},
+    { field: 'ax', headerName: 'Ax', width: 65},
+    { field: 'ay', headerName: 'Ay', width: 65},
+    { field: 'az', headerName: 'Az', width: 65},
     { field: 'Price', headerName: 'Price($)', width: 70},
     {
       ...GRID_CHECKBOX_SELECTION_COL_DEF,
@@ -275,15 +261,50 @@ function DatasetListView({listInfo, onAddToCart, onAddToCart_img}) {
       alert('Please select at least one item!');
     }
     else {
-      alert('Added to Cart!');
-      onAddToCart(selectedRows);
+      const formData = new FormData();
+      
 
-      selectedRows.forEach((row) => {
-        const imgIds = row.items.listview.map((item) => item.img_id);
-        console.log('img_ids: ', imgIds)
-        onAddToCart_img(imgIds);
-      })
+      const rowsItems = selectedRows
+                                .map((row) => row.items.listview
+                                .map((row)=> row.img_id)
+                                );                                
+      const selected = selectedRow_img.concat(...rowsItems)
+      console.log("selected:", selected)
+      var keyword = document.getElementById("user-defined").value ? `${document.getElementById("user-defined").value}` : 'dataset';
+      formData.append('user_name',userName)
+      formData.append('items',selected)
+      formData.append('dataset-name',keyword) // todo update
+
+      const buy = async () => {
+        await fetch('http://127.0.0.1:3000/buy', {
+          method: 'POST',
+          body: formData
+        }).then(resp => {
+          resp.json().then(data => {
+            let success = data['success_transaction']
+            if (!success){
+              alert('failed!!!')
+            }else{
+              alert('success!!!')
+              onManagesInfo(prev => (
+                {...prev,
+                  uploads: data.manage_data.uploaded.rows,
+                  transctions: data.manage_data.transactions.rows,
+                  login: 'true',
+                  userInfo: {
+                    username: userName,
+                    pw: prev.userInfo.pw,
+                    cash: data.manage_data.cachecash,
+                  }
+                }))
+  
+            }
+          })
+        })
+      }
+      buy();
     }
+    
   };
  
   // 리스트뷰 표시 부분
@@ -300,13 +321,16 @@ function DatasetListView({listInfo, onAddToCart, onAddToCart_img}) {
           style={{fontSize: '0.7rem'}}
 
         />
-
-        <div style={{display: 'grid', gridTemplateColumns: '30% 30% 10% 22% 8%', justifyItems: 'end', marginTop: '5px'}}>
-            <span style={{fontSize: '0.8rem', fontWeight: 'bold', gridColumn: '4', justifySelf: 'end', marginTop: '5px', marginRight: '5px'}}>Price for Selected Items : {totalPrice} $</span>
+        <div style={{display: 'grid', gridTemplateColumns: '40% 17% 23% 12% 8%', justifyItems: 'end', marginTop: '5px'}}>
+            <span style={{fontSize: '0.8rem', fontWeight: 'bold', gridColumn: '3', justifySelf: 'end', marginTop: '5px', marginRight: '5px' }}>Price for Selected Items : {totalPrice} $</span>
+            <input 
+              type="text" id="user-defined" placeholder="user defined dataset-name"
+              style={{width: '100%', height: '60%', fontSize: '0.75rem', gridColumn: '4',}}>
+            </input>
             <CButton type="button" color="secondary" className="mb-3" variant="outline" id="button-addon2" 
-              style={{width: '90%', height: '60%', gridColumn: '5', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgb(38, 73, 132)'}}
+              style={{width: '100%', height: '60%', gridColumn: '5', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgb(38, 73, 132)'}}
               onClick={handleAddToCart}>
-                <span style={{fontSize: '0.7rem', color: 'white', fontWeight: 'bold'}}>Add to Cart</span>
+                <span style={{fontSize: '0.7rem', color: 'white', fontWeight: 'bold'}}>Buy</span>
             </CButton>
         </div> 
         {showDetail && (

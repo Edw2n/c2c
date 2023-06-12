@@ -1,6 +1,9 @@
-from dbmanager.utils import load_list_view, load_detailed_view, load_list_view_search, get_user_point
+from dbmanager.utils import load_list_view, load_detailed_view, load_list_view_search, get_user_point, load_list_view_tx
 import pandas as pd
 import os
+from werkzeug.utils import secure_filename
+import zipfile
+import sys
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 DATASET_LISTVIEW_SPEC = FILE_DIR + "/specs/dataset_listview_spec.csv"
@@ -35,7 +38,7 @@ class ReadManager():
             df = pd.read_csv(DETAIL_LISTVIEW_SPEC)  
             self.db2front_detail_list = dict(zip(df["db"], df["front"]))
     
-    def read_searched_data(self, query):
+    def read_searched_data(self, query, custom_filtering=None):
         '''
         read listview data searched following user query
 
@@ -55,22 +58,28 @@ class ReadManager():
 
         df_result = None
         success = False
+
         try:
-            if query:
+            if len(query)>0:
                 print("query is not none")
                 try:
                     datasets["max_page_num"], df_result = load_list_view_search(self.db, query)
+                    print(df_result)
+                    if custom_filtering:
+                        df_result = custom_filtering(self.db, df_result)
+                        print(df_result)
+                        # not calculated max page num
                 except Exception as e:
                     print("query search error:", e)
             else: # read all
                 try:
-                    print("load list view result", load_list_view(self.db))
                     datasets["max_page_num"], df_result = load_list_view(self.db)
                 except Exception as e:
                     print("query default load error:", e)
             
             try:
                 if df_result is not None:
+                    print("df_result:", df_result)
                     datasets["rows"] = self.get_listview_form(df_result)
             except Exception as e:
                 print("load front form error", e)
@@ -80,7 +89,7 @@ class ReadManager():
             print("read data error:", e)
         return success, datasets
     
-    def get_listview_form(self, df_result):
+    def get_listview_form(self, df_result, tx=False):
         '''
         append detail view data for datasets in df_result(dataset list) to rows
 
@@ -95,36 +104,54 @@ class ReadManager():
         listview_data = None
 
         # load detail view data
+        if df_result is None:
+            return rows
         try:
-            cardview_data, listview_data = load_detailed_view(self.db, df_result)
+            # print('detailview error',df_result)
+            if not tx:
+                cardview_data, listview_data = load_detailed_view(self.db, df_result)
         except Exception as e:
             print("db access for detailview data error,", e)
         
         # make data as front listview form
         df_result.rename(columns=self.db2front_dataset_list, inplace=True)
         df_result["Objects"] = df_result.apply(lambda x: f"{x.object_count} objects: {x.object_info_in_detail}", axis=1)
-        df_result["UploadDate"] = df_result.apply(lambda x: x.UploadDate.strftime("%Y-%m-%d %H:%M:%S"), axis=1)
+        if not tx:
+            df_result["UploadDate"] = df_result.apply(lambda x: x.UploadDate.strftime("%Y-%m-%d %H:%M:%S"), axis=1)
+        else:
+            df_result["Date"] = df_result.apply(lambda x: x.date.strftime("%Y-%m-%d %H:%M:%S"), axis=1)
         df_result["items"] = None
         
         rows = df_result.to_dict("records")
+        
+        if tx:
+            print("==============tx rows==============")
+            for row in rows:
+                row["d_id"] = row["id"]
+
 
         #add items for detailview (listview, cardview data for each datasets)
-        try:
-            for row in rows:
-                d_id = row["d_id"]
-                cv_data = cardview_data[d_id]
-                lv_data = listview_data[d_id]
+        
+        if rows and not tx:
+            try:
+                for row in rows:
+                    d_id = row["d_id"]
+                    cv_data = cardview_data[d_id]
+                    lv_data = listview_data[d_id]
 
-                # make detail_list data as front listview form
-                lv_data.rename(columns=self.db2front_detail_list, inplace=True)
-                lv_data["Objects"] = lv_data.apply(lambda x: f"{x.object_count} objects: {x.object_info_in_detail}", axis=1)
-                cv_data["Objects"] = cv_data.apply(lambda x: f"{str(x.object_info_in_detail).translate({ord('{'): None, ord('}'): None})}", axis=1)
-                row["items"] = {
-                    "cardview": cv_data.to_dict("records"),
-                    "listview": lv_data.to_dict("records"),
-                }
-        except Exception as e:
-            print("get detail view data error", e)
+                    # print('lv', lv_data)
+                    # print('cv', cv_data)
+
+                    # make detail_list data as front listview form
+                    lv_data.rename(columns=self.db2front_detail_list, inplace=True)
+                    lv_data["Objects"] = lv_data.apply(lambda x: f"{x.object_count} objects: {x.object_info_in_detail}", axis=1)
+                    cv_data["Objects"] = cv_data.apply(lambda x: f"{str(x.object_info_in_detail).translate({ord('{'): None, ord('}'): None})}", axis=1)
+                    row["items"] = {
+                        "cardview": cv_data.to_dict("records"),
+                        "listview": lv_data.to_dict("records"),
+                    }
+            except Exception as e:
+                print("get detail view data error", e)
         return rows
     
     def transform_data(self, v):
@@ -217,10 +244,78 @@ class ReadManager():
         
         # TODO: update transactions
         try:
-            data["transactions"]["max_page_num"], df_result = load_list_view(self.db, user_idName=user_name)
+            data["transactions"]["max_page_num"], df_result = load_list_view_tx(self.db, user_idName=user_name)
             if df_result is not None:
-                data["transactions"]["rows"] = self.get_listview_form(df_result)
+                data["transactions"]["rows"] = self.get_listview_form(df_result, tx=True)
             success = True
         except Exception as e:
             print("read transaction data error:", e)
         return success, data 
+
+    def set_custom_filtering(self, f):
+        CUSTOM_DIR = './downloads-temporal'
+        file_path = CUSTOM_DIR + secure_filename(f.filename)
+        f.save(file_path)
+
+        target_zip = zipfile.ZipFile(file_path)
+        # 첫번쨰가 dir name이라 가정하겠음
+        dir_name = target_zip.namelist()[0]
+
+        zip_file = zipfile.ZipFile(file_path)
+        zip_file.extractall(file_path)
+        zip_file.close()
+
+        unzip_dir="./custom-filtering/"
+
+        extracted_dir = unzip_dir + dir_name
+        filenames = os.listdir(extracted_dir)
+        print("contents:", filenames)
+
+        #압축 풀고나면 zip 파일 삭제하기
+        try:
+            os.remove(file_path)
+        except Exception as e:
+            print("zip file is not deleted", e)
+
+
+        # 파일 경로
+        module_path = extracted_dir + './custom.py'
+
+        # 경로에 있는 모듈을 import
+        if module_path not in sys.path:
+            sys.path.append(module_path)
+
+        # from my_module import my_function
+
+
+    def read_custom_filter(self, request):
+        try:
+            print("form data",request.files)
+            unzip_dir="./custom-filtering/"
+            UPLOAD_ROOTDIR = "./uploads/"
+
+            f = request.files["custom_script"]
+            file_path = UPLOAD_ROOTDIR + secure_filename(f.filename)
+            f.save(file_path)
+
+            target_zip = zipfile.ZipFile(file_path)
+            # 첫번쨰가 dir name이라 가정하겠음
+            dir_name = target_zip.namelist()[0]
+
+            zip_file = zipfile.ZipFile(file_path)
+            zip_file.extractall(unzip_dir)
+            zip_file.close()
+
+            extracted_dir = unzip_dir + dir_name
+            filenames = os.listdir(extracted_dir)
+            print("contents:", filenames)
+
+            sys.path.append(extracted_dir)
+
+            # 모듈을 import
+            from custom import custom_filter
+        except Exception as e:
+            print("no custom script!", e)
+            return None
+        
+        return custom_filter
