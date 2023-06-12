@@ -36,6 +36,8 @@ downloads-temporal/*
 qcmanager/ckpt_koniq10k.pt
 qcmanager/yolov3-kitti.weights
 
+frontend/public/images/*
+
 !uploads/.gitkeep
 !temporal-datasets/.gitkeep
 !images/.gitkeep

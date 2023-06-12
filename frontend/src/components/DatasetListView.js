@@ -4,6 +4,7 @@ import { CInputGroup, CFormSelect, CButtonGroup, CButton, CFormCheck } from '@co
 import { DataGrid, GRID_CHECKBOX_SELECTION_COL_DEF } from '@mui/x-data-grid';
 import { Button, Checkbox } from '@mui/material';
 import React, { useEffect, useState } from 'react';
+import CardView from './CardView';
 
 function DatasetListView({listInfo, onAddToCart, onAddToCart_img}) {
   console.log("listinfo: ", listInfo)
@@ -147,11 +148,11 @@ function DatasetListView({listInfo, onAddToCart, onAddToCart_img}) {
     } else {
       const current_row = RowsInfo.filter((rows) => rows.d_id === param.row.id);
       const selectedDetailListview = current_row[0].items.listview;
-      // const selectedDetailCardview = current_row[0].items.view;
+      const selectedDetailCardview = current_row[0].items.cardview;
       setSelectedForDetail(param.row.id);
       setShowDetail(true);
       setDetailListview(selectedDetailListview);
-      // setDetailCardview(selectedDetailCardview);
+      setDetailCardview(selectedDetailCardview);
     }
   }
 
@@ -351,9 +352,7 @@ function DatasetListView({listInfo, onAddToCart, onAddToCart_img}) {
               style={{fontSize: '0.7rem'}}
             />
             ) : (
-              <div>
-                <text>No results yet</text>
-              </div>
+              <CardView cardviewInfo={DetailCardview}/>
             )}
           </div>
         )}
