@@ -15,28 +15,7 @@ function App() {
     setMode(e.currentTarget.id)
   }
   
-  // 장바구니
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [SelectedImgIds, setSelectedImgIds] = useState([]);
-
-  const onAddToCart = (rows) => {
-    setSelectedRows((prevSelectedRows) => [...prevSelectedRows,...rows]);
-  };
-
-  const onAddToCart_img = (newList) => {
-    setSelectedImgIds((prevList) => [...prevList,...newList])
-  }
-
-  // 로그인 정보
-  // const [LoggedIn, setLoggedIn] = useState('false');
-  // const onAddLoggedIn = () => {
-  //   setLoggedIn('true');
-  // }
-
-  // const [UserInfo, setUserInfo] = useState({username: '', pw: '', cash: 0})
-  // const onAddUserInfo = (userName, pw, cash) => {
-  //    setUserInfo({username: userName, pw: pw, cash: cash});
-  // };
+  
   
   // 로그아웃
   const handleLogout = () => {
@@ -47,10 +26,6 @@ function App() {
       }
     ));
   }
-
-  // Upload & Transaction rows => 페이지 바뀔 때마다 불러오는 용도
-  // const [URows, setURows] = useState([]);
-  // const [TRows, setTRows] = useState([]);
 
   const [Manages, setManages] = useState({
     uploads: [],
@@ -139,7 +114,7 @@ function App() {
       </CButtonGroup>
       </div>
       {mode=='search' ? <SearchView userName={Manages.userInfo.username} onManagesChange={handleManagesChanges}/> 
-                      : <ManageView cartList={selectedRows} cartList_img={SelectedImgIds} 
+                      : <ManageView  
                                     LoggedIn={Manages.login} 
                                     UserInfo={Manages.userInfo} 
                                     URows={Manages.uploads} 
