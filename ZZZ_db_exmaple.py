@@ -186,6 +186,8 @@ if __name__ == "__main__":
     ################################
     #### Testing insert_tx_info ####
     ################################
+    
+    print('------insert tx data -----')
 
     buyer_id = 'jeongsik'
     img_id_list = [1,3,5,7,9,40,45]

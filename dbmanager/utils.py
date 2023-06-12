@@ -429,7 +429,7 @@ def insert_draft_dataset(db, unzipped_dataset_info):
         data_from_GT_csv = list(df_GT.iloc[i])
         db.insertDB(schema=schema_name, 
                     table=table_name[0],
-                    columns=column_list[0][1:-4],
+                    columns=column_list[0][1:],
                     data=data_from_GT_csv)
     print('GT table is updated')
 
@@ -519,7 +519,7 @@ def _load_list_view_default(db, page=1, item_per_page=10, user_idName = None):
     item_start = 0 + item_per_page * (page - 1)
     if user_idName is not None:
         condition_id = f"where u.user_idName = '{user_idName}' and f.not_show = FALSE"
-    else: condition_id = ""
+    else: condition_id = "where f.not_show = FALSE"
 
     sql = f"select res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date \
             from( \
@@ -1360,6 +1360,17 @@ def insert_tx_info(db, buyer_name, img_id_list, buyer_defined_dataset_name):
     seller_id_list = df_tmp['seller_id'].unique()
     sellers_dict = dict()
 
+    # 3-b. update dataset_selction_cnt
+    dataset_list = list(df_tmp2['dataset_id'].unique())
+
+    sql = f"select * from datasetinfo d "
+    data = db.execute(sql)
+    ds_sel_cnt = pd.DataFrame(data=data, columns = ['dataset_id', 'dataset_name', 'dataset_description', 'dataset_selection_cnt'])
+    for i, id in enumerate(dataset_list):
+        value = int(ds_sel_cnt[ds_sel_cnt['dataset_id']==id]['dataset_selection_cnt'] + 1)
+        sql_tmp = f"update public.datasetinfo set dataset_selection_cnt = {value} where dataset_id='{id}'"
+        db.execute(sql_tmp)
+
     # 4. make sellers_dict {'seller_id': 'img_id'}
     for s_id in seller_id_list:
         s_img_list = list(df_tmp[df_tmp['seller_id']==s_id]['img_id'])
@@ -1928,3 +1939,19 @@ def delete_dataset(db, dataset_id):
     success = db.updateDB(schema=schema, table=table, column='not_show', value=True, condition=condition)
 
     return success 
+
+
+def find_img_id_with_dataset_id(db, list_of_dataset_id):
+    if len(list_of_dataset_id) == 0:
+        condition = ""
+    elif len(list_of_dataset_id) == 1:
+        condition = f"where f.dataset_id = '{list_of_dataset_id[0]}'"
+    else:
+        condition = f"where f.dataset_id in {tuple(list_of_dataset_id)}"
+    sql = f"select f.img_id, f.dataset_id from features f {condition};"
+    data = db.execute(sql)
+    dataset_id_with_img_id = pd.DataFrame(data=data, columns=['dataset_id', 'img_id'])
+
+    return dataset_id_with_img_id
+
+
