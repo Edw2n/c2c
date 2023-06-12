@@ -17,6 +17,8 @@ import zipfile
 import glob
 import shutil
 
+import sys
+
 imgfile_path_list = []
 UPLOAD_ROOTDIR = "./uploads/"
 app = Flask(__name__)
@@ -119,24 +121,16 @@ def service_data():
     success = False
     if request.method =="POST":
         print("*******     read info     ********")
+        cf = None
         try:
             #TODO: get custom file
             
             # read data from db (read all data)
             if "keyword" in request.form.keys(): # if query is not None
                 # custom file save
-                try:
-                    print("form data",request.files)
-                    f = request.files["custom_script"]
-                    file_path = UPLOAD_ROOTDIR + secure_filename(f.filename)
-                    f.save(file_path)
-
-                    # 저 쿼리 뒤에 커스텀 파일 처리 넣기
-                except Exception as e:
-                    print("no custom script!", e)
-                read_manager.encode_formdata(request.form, "search")
-                
-            success, datasets = read_manager.read_searched_data(query)
+                query = read_manager.encode_formdata(request.form, "search")
+                cf = read_manager.read_custom_filter(request)
+            success, datasets = read_manager.read_searched_data(query, custom_filtering=cf)
 
             # for debugging
             '''

@@ -38,7 +38,7 @@ class ReadManager():
             df = pd.read_csv(DETAIL_LISTVIEW_SPEC)  
             self.db2front_detail_list = dict(zip(df["db"], df["front"]))
     
-    def read_searched_data(self, query):
+    def read_searched_data(self, query, custom_filtering=None):
         '''
         read listview data searched following user query
 
@@ -58,16 +58,21 @@ class ReadManager():
 
         df_result = None
         success = False
+
         try:
-            if query:
+            if len(query)>0:
                 print("query is not none")
                 try:
                     datasets["max_page_num"], df_result = load_list_view_search(self.db, query)
+                    print(df_result)
+                    if custom_filtering:
+                        df_result = custom_filtering(self.db, df_result)
+                        print(df_result)
+                        # not calculated max page num
                 except Exception as e:
                     print("query search error:", e)
             else: # read all
                 try:
-                    # print("load list view result", load_list_view(self.db))
                     datasets["max_page_num"], df_result = load_list_view(self.db)
                 except Exception as e:
                     print("query default load error:", e)
@@ -109,7 +114,6 @@ class ReadManager():
             print("db access for detailview data error,", e)
         
         # make data as front listview form
-        # print("get list view in df", df_result)
         df_result.rename(columns=self.db2front_dataset_list, inplace=True)
         df_result["Objects"] = df_result.apply(lambda x: f"{x.object_count} objects: {x.object_info_in_detail}", axis=1)
         if not tx:
@@ -282,3 +286,36 @@ class ReadManager():
             sys.path.append(module_path)
 
         # from my_module import my_function
+
+
+    def read_custom_filter(self, request):
+        try:
+            print("form data",request.files)
+            unzip_dir="./custom-filtering/"
+            UPLOAD_ROOTDIR = "./uploads/"
+
+            f = request.files["custom_script"]
+            file_path = UPLOAD_ROOTDIR + secure_filename(f.filename)
+            f.save(file_path)
+
+            target_zip = zipfile.ZipFile(file_path)
+            # 첫번쨰가 dir name이라 가정하겠음
+            dir_name = target_zip.namelist()[0]
+
+            zip_file = zipfile.ZipFile(file_path)
+            zip_file.extractall(unzip_dir)
+            zip_file.close()
+
+            extracted_dir = unzip_dir + dir_name
+            filenames = os.listdir(extracted_dir)
+            print("contents:", filenames)
+
+            sys.path.append(extracted_dir)
+
+            # 모듈을 import
+            from custom import custom_filter
+        except Exception as e:
+            print("no custom script!", e)
+            return None
+        
+        return custom_filter
