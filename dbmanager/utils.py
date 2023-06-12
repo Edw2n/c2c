@@ -429,7 +429,7 @@ def insert_draft_dataset(db, unzipped_dataset_info):
         data_from_GT_csv = list(df_GT.iloc[i])
         db.insertDB(schema=schema_name, 
                     table=table_name[0],
-                    columns=column_list[0][1:],
+                    columns=column_list[0][1:-4],
                     data=data_from_GT_csv)
     print('GT table is updated')
 
@@ -1747,6 +1747,18 @@ def _load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = None):
     result = db.execute(sql)
     columns = ['dataset_id', 'dataset_name', 'price_total', 'image_count', 'avg_price_per_image', 'sales_count', 'like_count' ,'qc_state' ,'qc_score', 'uploader' ,'upload_date', 'availability', 'buyer_defined_dataset_name', 'product_path']
     df_result = pd.DataFrame(data = result, columns=columns)
+
+    to_process_qcState = list(df_result['qc_state'])
+
+    for i in range(len(to_process_qcState)):
+        if to_process_qcState[i] == 'uploaded':
+            to_process_qcState[i] = 'Pending'
+        elif to_process_qcState[i] == 'QC_start':
+            to_process_qcState[i] = 'In Progress'
+        elif to_process_qcState[i] in ('QC_end','QC_end+obj_cnt','QC_end+obj_cnt+duplicate'):
+            to_process_qcState[i] = 'Done'
+
+    df_result['qc_state'] = to_process_qcState
 
     target_dataset_id = tuple(df_result['dataset_id'])
     

@@ -220,7 +220,7 @@ if __name__ == "__main__":
     print("buyer is Jeongsik")
     page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'jeongsik')
     # print(page_num)
-    # print(result)
+    print(result)
     # print(result.columns)
     # print()
 
