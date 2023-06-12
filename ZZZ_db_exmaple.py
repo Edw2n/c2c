@@ -84,8 +84,7 @@ if __name__ == "__main__":
     data = [[1, 'path_1', 12, 13, 1, '2023-05-01 11:11:11', 12, 13, '2023-05-01 22:22:22', 1, 1000], 
             [2, 'path_2', 22, 23, 2, '2023-05-02 11:11:11', 22, 23, '2023-05-02 22:22:22', 2, 2000],
             [3, 'path_3', 32, 33, 3, '2023-05-03 11:11:11', 32, 33, '2023-05-03 22:22:22', 3, 3000],
-            [40, 'path_3', 42, 43, 40, '2023-05-03 11:11:11', 42, 43, '2023-05-03 22:22:22', 40, 40000],
-
+            [40, 'path_3', 42, 43, 40, '2023-05-03 11:11:11', 42, 43, '2023-05-03 22:22:22', 40, 40000]
            ]
     df = pd.DataFrame(data=data, columns=cols)    
     #### FOR TEST ONLY ####
@@ -221,7 +220,7 @@ if __name__ == "__main__":
     print("buyer is Jeongsik")
     page_num, result = load_list_view_tx(db, page=1, item_per_page=10, user_idName = 'jeongsik')
     # print(page_num)
-    # print(result)
+    print(result)
     # print(result.columns)
     # print()
 

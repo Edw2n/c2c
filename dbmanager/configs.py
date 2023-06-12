@@ -15,7 +15,8 @@ ALL_COLUMNS = [[
                     'gt_Xordinate', 'gt_Yordinate', 'gt_Zordinate',
                     'gt_Xrotate', 'gt_Yrotate', 'gt_Zrotate', 'gt_state', 
                     'gt_occlusion', 'gt_occlusion_kf','gt_truncation',
-                    'gt_amt_occlusion', 'gt_amt_occlusion_kf', 'gt_amt_border_l', 'gt_amt_border_r', 'gt_amt_border_kf'
+                    'gt_amt_occlusion', 'gt_amt_occlusion_kf', 'gt_amt_border_l', 'gt_amt_border_r', 'gt_amt_border_kf',
+                    'bbox_left', 'bbox_right', 'bbox_top','bbox_bottom'
                 ],
                 [
                     'product_id', 'price', 'sold_count' 
@@ -85,7 +86,11 @@ GROUNDTRUTH_COLUMNS_INFO = {
     "gt_amt_occlusion_kf": "numeric NULL",
     "gt_amt_border_l":     "numeric NULL",
     "gt_amt_border_r":     "numeric NULL",
-    "gt_amt_border_kf":    "numeric NULL"
+    "gt_amt_border_kf":    "numeric NULL",
+    "bbox_left":           "numeric NULL",
+    "bbox_right":          "numeric NULL",
+    "bbox_top":            "numeric NULL",
+    "bbox_bottom":         "numeric NULL",
 }
 
 # ProductInfo

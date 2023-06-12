@@ -1,9 +1,55 @@
 import pandas as pd
+from dbmanager.configs import SCHEMA_NAME, ALL_COLUMNS
 import cv2
 import os
 import numpy as np
 
-def hsv(img_path_list: str, ground_truth: str, padding: int)->None:
+def hsv(db, df):
+  '''
+  calculate the hsv
+
+  [input]
+  - target db object (CRUD)
+  - df: pd.DataFrame - ['img_id', 'image_path', 'image_width', 'image_height',
+                        'qc_id', 'qc_start_date', 'qc_score', 'object_count', 'qc_end_date', 'product_id', 'price']
+  
+  [output]
+  - result = ('average_hue', 'average_saturation', 'average_value')
+  '''
+
+  schema_name = SCHEMA_NAME
+  
+  img_path_list = df['image_path']
+  img_id_list = df['img_id']
+
+  df_tmp3 = df[['image_path', 'img_id']]
+
+  col_gt = [*ALL_COLUMNS[0], *ALL_COLUMNS[2], *ALL_COLUMNS[7]]
+  sql_gt = f"select * from {schema_name}.GroundTruth g \
+              left join {schema_name}.QC q on q.qc_id = g.img_id \
+              left join {schema_name}.object o on o.gt_object_id = g.gt_object_id \
+              where g.img_id in {tuple(img_id_list)};"
+  res_gt = db.execute(sql_gt)
+  df_gt = pd.DataFrame(data=res_gt, columns=col_gt)
+
+  df_gt = pd.merge(df_gt, df_tmp3, how='left', on='img_id')
+
+  target_col_gt = ['image_path', 'gt_object', 'gt_height', 'gt_width', 'gt_length',
+      'gt_Xordinate', 'gt_Yordinate', 'gt_Zordinate', 'gt_Xrotate',
+      'gt_Yrotate', 'gt_Zrotate', 'gt_state', 'gt_occlusion',
+      'gt_occlusion_kf', 'gt_truncation', 'gt_amt_occlusion',
+      'gt_amt_occlusion_kf', 'gt_amt_border_l', 'gt_amt_border_r',
+      'gt_amt_border_kf', 'qc_score', 'object_count', 
+      'bbox_left', 'bbox_right', 'bbox_top','bbox_bottom']
+
+  df_gt = df_gt[target_col_gt]
+
+  file = _hsv(img_path_list=img_path_list, ground_truth=df_gt, padding = 10)
+  result = (file['average_hue'], file['average_saturation'], file['average_value'])
+  return result
+
+
+def _hsv(img_path_list: str, ground_truth: pd.DataFrame, padding: int):
   '''
   Return the average of hsv of the image.
   
@@ -17,6 +63,7 @@ def hsv(img_path_list: str, ground_truth: str, padding: int)->None:
   '''
   # Read csv file to append average hsv
   file = pd.read_csv(ground_truth)
+  file = ground_truth
   
   # Set files_path
   image_file_list = os.listdir(img_path_list)

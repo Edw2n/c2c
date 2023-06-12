@@ -429,7 +429,7 @@ def insert_draft_dataset(db, unzipped_dataset_info):
         data_from_GT_csv = list(df_GT.iloc[i])
         db.insertDB(schema=schema_name, 
                     table=table_name[0],
-                    columns=column_list[0][1:],
+                    columns=column_list[0][1:-4],
                     data=data_from_GT_csv)
     print('GT table is updated')
 
@@ -1179,7 +1179,8 @@ def update_multiple_columns(db, df, mode):
 
     [inputs]
     - target db object (CRUD)
-    - df: pd.DataFrame
+    - df: pd.DataFrame - ['img_id', 'image_path', 'image_width', 'image_height',
+                          'qc_id', 'qc_start_date', 'qc_score', 'object_count', 'qc_end_date', 'product_id', 'price']
     - mode: string, the mode should be one of ["img_path", "img_WH", "start_QC", "QC_score", "object_count", "end_QC", "price"]
             if mode is start_QC     : qd_status in DB becomes "QC_start"
             if mode is QC_score     : qd_status in DB becomes "QC_end"
@@ -1746,6 +1747,18 @@ def _load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = None):
     result = db.execute(sql)
     columns = ['dataset_id', 'dataset_name', 'price_total', 'image_count', 'avg_price_per_image', 'sales_count', 'like_count' ,'qc_state' ,'qc_score', 'uploader' ,'upload_date', 'availability', 'buyer_defined_dataset_name', 'product_path']
     df_result = pd.DataFrame(data = result, columns=columns)
+
+    to_process_qcState = list(df_result['qc_state'])
+
+    for i in range(len(to_process_qcState)):
+        if to_process_qcState[i] == 'uploaded':
+            to_process_qcState[i] = 'Pending'
+        elif to_process_qcState[i] == 'QC_start':
+            to_process_qcState[i] = 'In Progress'
+        elif to_process_qcState[i] in ('QC_end','QC_end+obj_cnt','QC_end+obj_cnt+duplicate'):
+            to_process_qcState[i] = 'Done'
+
+    df_result['qc_state'] = to_process_qcState
 
     target_dataset_id = tuple(df_result['dataset_id'])
     
