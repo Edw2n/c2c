@@ -99,7 +99,6 @@ function SearchView( {onAddToCart, onAddToCart_img} ) {
           alert('upload failed!!!')  
         } else {
           alert('upload complete!!!')  
-          search();
             // if you want values of response, check!!
             // console.log("data", data.datasets)
             // console.log("user identification", data.valid)
@@ -115,7 +114,7 @@ function SearchView( {onAddToCart, onAddToCart_img} ) {
     search()
   },[])
 
-  
+
   const search = async () => {
     const formData = new FormData();
   
@@ -534,7 +533,7 @@ function SearchView( {onAddToCart, onAddToCart_img} ) {
         </h5>
         
         {/* Part 3-2: 리스트뷰 창 */}
-        {listInfo.length>0 ? <DatasetListView listInfo={listInfo} onAddToCart={onAddToCart} onAddToCart_img={onAddToCart_img}/> : 'No results'}
+        {listInfo.length>0 ? <DatasetListView listInfo={listInfo}/> : 'No results'}
 
       </div>
 
