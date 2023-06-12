@@ -16,19 +16,23 @@ function UserPageView({user_name, uploadedRows, transactRows, UserInfo, onAddUse
   const [TRows,setTransactRows] = useState(transactRows || [])
 
   // Delete 버튼 기능
-  const deleteSelected = async (e) => {
+  const deleteSelected = async (rowId) => {
 
       const formData = new FormData();
-      formData.append('aid_list',JSON.stringify(selectedIDs))
+
+      formData.append('user_name',user_name)
+      formData.append('d_id', rowId)
+      console.log(rowId)
+
 
       await fetch('http://0.0.0.0:3000/delete', {
         method: 'POST',
         body: formData
       }).then(resp => {
-        
           setURows(prev => prev.filter( data => 
-              !(selectedIDs.includes(data.id))))
-  })}
+               data!=rowId))
+    })
+    }
 
   // Buy 버튼 기능
   const [datasetName, setDatasetName] = useState('');
@@ -46,14 +50,13 @@ function UserPageView({user_name, uploadedRows, transactRows, UserInfo, onAddUse
   const columns_uploaded = [
     { field: 'Uploader', headerName: 'Uploader', width: 65},
     { field: 'Title', headerName: 'Dataset Name', width: 90},
-    { field: 'Description', headerName: 'Description', width: 130},
-    { field: 'QCstate', headerName: 'QC State', width: 80},
-    { field: 'QCscore', headerName: 'QC Score', width: 70},
-    { field: 'Objects', headerName: 'Objects', width: 130},
-    { field: 'UploadDate', headerName: 'Upload Date', width: 80},
-    { field: 'Likes', headerName: 'Likes', width: 60},
-    { field: 'SalesCount', headerName: 'Sales Count', width: 80},
-    { field: 'MatchedData', headerName: 'Matched Data', width: 90},
+    { field: 'Description', headerName: 'Description', width: 190},
+    { field: 'QCstate', headerName: 'QC State', width: 100},
+    { field: 'QCscore', headerName: 'QC Score', width: 100},
+    { field: 'Objects', headerName: 'Objects', width: 270},
+    { field: 'UploadDate', headerName: 'Upload Date', width: 140},
+    { field: 'SalesCount', headerName: 'Sales', width: 40},
+    { field: 'MatchedData', headerName: 'Data', width: 40},
     { field: 'Price', headerName: 'Price($)', width: 80},
     { field: 'PricePerImage', headerName: 'Avg. Price($)', width: 110},
     { field: 'Delete', headerName: '', width:'80',
@@ -63,6 +66,7 @@ function UserPageView({user_name, uploadedRows, transactRows, UserInfo, onAddUse
           variant="contained"
           color="primary"
           size="small"
+          onClick={() => deleteSelected(params.row.id)}
           style={{fontSize: '0.6rem'}}>
           Delete
         </Button>
@@ -145,15 +149,13 @@ function UserPageView({user_name, uploadedRows, transactRows, UserInfo, onAddUse
   };
 
   const columns_transaction = [
+    { field: 'Flag', headerName: 'TX_Type', width: 90},
     { field: 'Title', headerName: 'Dataset Name', width: 90},
-    { field: 'Description', headerName: 'Description', width: 120},
-    { field: 'QCstate', headerName: 'QC State', width: 80},
-    { field: 'QCscore', headerName: 'QC Score', width: 70},
-    { field: 'Objects', headerName: 'Objects', width: 130},
-    { field: 'UploadDate', headerName: 'Upload Date', width: 80},
-    { field: 'Likes', headerName: 'Likes', width: 60},
-    { field: 'SalesCount', headerName: 'Sales Count', width: 80},
-    { field: 'MatchedData', headerName: 'Matched Data', width: 90},
+    { field: 'QCstate', headerName: 'QC State', width: 100},
+    { field: 'QCscore', headerName: 'QC Score', width: 100},
+    { field: 'Objects', headerName: 'Objects', width: 270},
+    { field: 'Date', headerName: 'Transaction Date', width: 140},
+    { field: 'MatchedData', headerName: 'Data', width: 40},
     { field: 'Price', headerName: 'Price($)', width: 80},
     { field: 'PricePerImage', headerName: 'Avg. Price($)', width: 90},
     { field: 'Download', headerName: '', width:'100',
@@ -189,8 +191,8 @@ function UserPageView({user_name, uploadedRows, transactRows, UserInfo, onAddUse
     },
   ];
   const rows_transaction = TRows.map((row) => (
-    {id: row.d_id, Uploader: row.Uploader, Title: row.Title, Description: row.Description,
-      QCstate: row.QCstate, QCscore: row.QCscore, Objects: row.Objects, UploadDate: row.UploadDate, 
+    {Flag: row.flag, id: row.d_id, Uploader: row.Uploader, Title: row.Title, 
+      QCstate: row.QCstate, QCscore: row.QCscore, Objects: row.Objects, Date: row.Date, 
       Likes: row.Likes, SalesCount: row.SalesCount, MatchedData: row.MatchedData, Price: row.Price,  PricePerImage: row.PricePerImage}
   ));
 

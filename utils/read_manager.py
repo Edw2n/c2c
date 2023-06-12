@@ -1,4 +1,4 @@
-from dbmanager.utils import load_list_view, load_detailed_view, load_list_view_search, get_user_point
+from dbmanager.utils import load_list_view, load_detailed_view, load_list_view_search, get_user_point, load_list_view_tx
 import pandas as pd
 import os
 from werkzeug.utils import secure_filename
@@ -67,7 +67,7 @@ class ReadManager():
                     print("query search error:", e)
             else: # read all
                 try:
-                    print("load list view result", load_list_view(self.db))
+                    # print("load list view result", load_list_view(self.db))
                     datasets["max_page_num"], df_result = load_list_view(self.db)
                 except Exception as e:
                     print("query default load error:", e)
@@ -84,7 +84,7 @@ class ReadManager():
             print("read data error:", e)
         return success, datasets
     
-    def get_listview_form(self, df_result):
+    def get_listview_form(self, df_result, tx=False):
         '''
         append detail view data for datasets in df_result(dataset list) to rows
 
@@ -102,30 +102,41 @@ class ReadManager():
         if df_result is None:
             return rows
         try:
-            print('detailview error', df_result)
-            cardview_data, listview_data = load_detailed_view(self.db, df_result)
+            # print('detailview error',df_result)
+            if not tx:
+                cardview_data, listview_data = load_detailed_view(self.db, df_result)
         except Exception as e:
             print("db access for detailview data error,", e)
         
         # make data as front listview form
-        print("get list view in df", df_result)
+        # print("get list view in df", df_result)
         df_result.rename(columns=self.db2front_dataset_list, inplace=True)
         df_result["Objects"] = df_result.apply(lambda x: f"{x.object_count} objects: {x.object_info_in_detail}", axis=1)
-        df_result["UploadDate"] = df_result.apply(lambda x: x.UploadDate.strftime("%Y-%m-%d %H:%M:%S"), axis=1)
+        if not tx:
+            df_result["UploadDate"] = df_result.apply(lambda x: x.UploadDate.strftime("%Y-%m-%d %H:%M:%S"), axis=1)
+        else:
+            df_result["Date"] = df_result.apply(lambda x: x.date.strftime("%Y-%m-%d %H:%M:%S"), axis=1)
         df_result["items"] = None
         
         rows = df_result.to_dict("records")
+        
+        if tx:
+            print("==============tx rows==============")
+            for row in rows:
+                row["d_id"] = row["id"]
+
 
         #add items for detailview (listview, cardview data for each datasets)
-        if rows:
+        
+        if rows and not tx:
             try:
                 for row in rows:
                     d_id = row["d_id"]
                     cv_data = cardview_data[d_id]
                     lv_data = listview_data[d_id]
 
-                    print('lv', lv_data)
-                    print('cv', cv_data)
+                    # print('lv', lv_data)
+                    # print('cv', cv_data)
 
                     # make detail_list data as front listview form
                     lv_data.rename(columns=self.db2front_detail_list, inplace=True)
@@ -229,9 +240,9 @@ class ReadManager():
         
         # TODO: update transactions
         try:
-            data["transactions"]["max_page_num"], df_result = load_list_view(self.db, user_idName=user_name)
+            data["transactions"]["max_page_num"], df_result = load_list_view_tx(self.db, user_idName=user_name)
             if df_result is not None:
-                data["transactions"]["rows"] = self.get_listview_form(df_result)
+                data["transactions"]["rows"] = self.get_listview_form(df_result, tx=True)
             success = True
         except Exception as e:
             print("read transaction data error:", e)

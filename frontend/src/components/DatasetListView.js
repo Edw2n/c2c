@@ -261,7 +261,6 @@ function DatasetListView({listInfo, userName, onManagesInfo}) {
       alert('Please select at least one item!');
     }
     else {
-      alert('Added to Cart!');
       const formData = new FormData();
       
 
@@ -298,15 +297,7 @@ function DatasetListView({listInfo, userName, onManagesInfo}) {
                     cash: data.manage_data.cachecash,
                   }
                 }))
-              // console.log("bought data: ", data.manage_data.transactions.rows)
-              // const newRows = data.manage_data.transactions.rows
-              // setTransactRows(prevRows => [...prevRows,...newRows]);
-              // console.log("trows: ", TRows)
-              // setShowInput(false);
-              // // 캐시 추가되면 주석 해제 처리할 것
-              // const cash_remain = data.manage_data.cache;
-              // console.log("cash: ", cash_remain)
-              // onAddUserInfo(userName, UserInfo.pw, cash_remain)
+  
             }
           })
         })
