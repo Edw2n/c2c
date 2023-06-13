@@ -51,17 +51,16 @@ def hsv(db, dataset_id_list):
   df_gt = df_gt[target_col_gt]
   img_path_list = list(df_gt['image_path'])
 
-  file = _hsv(img_path_list=img_path_list, ground_truth=df_gt, padding = 10)
+  file = _hsv(ground_truth=df_gt, padding = 10)
   return file
 
 
-def _hsv(img_path_list: str, ground_truth: pd.DataFrame, padding: int):
+def _hsv(ground_truth: pd.DataFrame, padding: int):
   '''
   Return the average of hsv of the image.
   
   [Input]
-  - img_path_list: a list of paths(or dirs) that contains user's images
-  - ground_truth: a csv file of grouth truth of images in the img_path_list
+  - ground_truth: pd.DataFrame, generated from DB's groundtruth
   - padding: edge of the images to pad
 
   [Output]
@@ -71,14 +70,12 @@ def _hsv(img_path_list: str, ground_truth: pd.DataFrame, padding: int):
   file = ground_truth
   
   # Set files_path
-  image_file_list = os.listdir(img_path_list)
   
   hue = []
   saturation = []
   value = []
   for i in range(len(file)):
-    file_path = str(file['filename'][i])
-    img_path = img_path_list + '/' + file_path
+    img_path= str(file['image_path'][i])
     img = cv2.imread(img_path, cv2.IMREAD_COLOR) 
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
