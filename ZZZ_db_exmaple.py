@@ -6,6 +6,7 @@ from dbmanager.utils import initialize_db_structures, insert_user, insert_draft_
     copy_db, restore_db, get_user_point, update_like_count, delete_dataset
 import pandas as pd
 import numpy as np
+from qcmanager.hsv import *
 
 #######################
 # This is just for test
@@ -245,3 +246,6 @@ if __name__ == "__main__":
         
     print(("------- update_like_count -------"))
     delete_dataset(db,dataset_id = 1)
+    dataset_id_list = [1,2]
+    test = hsv(db, dataset_id_list)
+    print(test)
