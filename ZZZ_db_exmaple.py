@@ -47,7 +47,7 @@ if __name__ == "__main__":
     print()
 
 
-    unzipped_dataset_info = {"PATH": '../../04_sampledata/',
+    unzipped_dataset_info = {"PATH": '../../04_sampledata/sample01/',
                              "USER_NAME": 'tester',
                              "PW": '123',
                              "TITLE": 'kitti_1',
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     
     inserted_info1 = insert_draft_dataset(db=db, unzipped_dataset_info=unzipped_dataset_info)
 
-    unzipped_dataset_info = {"PATH": '../../04_sampledata/',
+    unzipped_dataset_info = {"PATH": '../../04_sampledata/sample01/',
                              "USER_NAME": 'SeongGu',
                              "PW": '123',
                              "TITLE": 'kitti_2',
@@ -194,7 +194,7 @@ if __name__ == "__main__":
     buyer_defined_dataset_name = 'jeongsik'
     insert_tx_info(db, buyer_id, img_id_list, buyer_defined_dataset_name)
 
-    unzipped_dataset_info = {"PATH": '../../04_sampledata/',
+    unzipped_dataset_info = {"PATH": '../../04_sampledata/sample01/',
                              "USER_NAME": 'SeongGu',
                              "PW": '123',
                              "TITLE": 'kitti_2',

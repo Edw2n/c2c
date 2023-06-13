@@ -423,6 +423,7 @@ def insert_draft_dataset(db, unzipped_dataset_info):
        'Yordinate', 'Zordinate', 'Xrotate', 'Yrotate', 'Zrotate', 'state',
        'occlusion', 'occlusion_kf', 'truncation', 'amt_occulsion',
        'amt_occulsion_kt', 'amt_border_l', 'amt_border_r', 'amt_border_kf',
+       'bbox_left', 'bbox_right', 'bbox_top','bbox_bottom',
        ]
     df_GT = df_GT[gt_col_sorted]
     for i in range(num_row_GT):
