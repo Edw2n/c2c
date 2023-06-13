@@ -114,7 +114,6 @@ function SearchView( {userName, onManagesChange} ) {
     search()
   },[userName])
 
-
   const search = async () => {
     const formData = new FormData();
   
@@ -468,7 +467,7 @@ function SearchView( {userName, onManagesChange} ) {
           <div className='HighLevelGroup' 
             style={{gridRow: '1', borderBottom: '2px solid white'}}>
             <text style={{marginLeft: '5px', fontSize: '0.8rem'}}>
-              Basic Info
+              Basic Informations
             </text>
           </div>
           {f1_titles}
@@ -478,7 +477,7 @@ function SearchView( {userName, onManagesChange} ) {
           <div className='HighLevelGroup' 
             style={{gridRow: '2', borderBottom: '2px solid white'}}>  
             <text style={{marginLeft: '5px', fontSize: '0.8rem'}}>
-              Quality Info
+              Quality Informations
             </text>
           </div>
           {f2category_titles}
@@ -489,7 +488,7 @@ function SearchView( {userName, onManagesChange} ) {
           <div className='HighLevelGroup' 
             style={{gridRow: '3', borderBottom: '2px solid white'}}>  
             <text style={{marginLeft: '5px', fontSize: '0.8rem'}}>
-              Sensor Info
+              Sensor Informations
             </text>
           </div>
           {f3category_titles}

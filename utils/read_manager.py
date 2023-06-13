@@ -60,7 +60,7 @@ class ReadManager():
         success = False
 
         try:
-            if len(query)>0:
+            if query and len(query)>0:
                 print("query is not none")
                 try:
                     datasets["max_page_num"], df_result = load_list_view_search(self.db, query)

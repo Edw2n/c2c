@@ -206,7 +206,7 @@ class ObjectCounter():
       'class_path': FILE_DIR + "/utils/kitti.names",
       'img_size': 416,
       # checkpoint path
-      "ckpt_path": FILE_DIR + "/yolov3-kitti.weights",
+      "ckpt_path": FILE_DIR + "/yolov3.weights",
    }
 
    def __init__(self, configs=None) -> None:
