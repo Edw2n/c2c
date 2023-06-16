@@ -76,9 +76,9 @@ class ReadManager():
                     datasets["max_page_num"], df_result = load_list_view(self.db)
                 except Exception as e:
                     print("query default load error:", e)
-            
+                    print(load_list_view(self.db))
             try:
-                if df_result is not None:
+                if df_result is not None and not df_result.empty:
                     print("df_result:", df_result)
                     datasets["rows"] = self.get_listview_form(df_result)
             except Exception as e:
@@ -107,11 +107,12 @@ class ReadManager():
         if df_result is None:
             return rows
         try:
-            # print('detailview error',df_result)
             if not tx:
                 cardview_data, listview_data = load_detailed_view(self.db, df_result)
         except Exception as e:
             print("db access for detailview data error,", e)
+            print('df_result in detailview error:',df_result)
+            return rows
         
         # make data as front listview form
         df_result.rename(columns=self.db2front_dataset_list, inplace=True)
@@ -131,7 +132,6 @@ class ReadManager():
 
 
         #add items for detailview (listview, cardview data for each datasets)
-        
         if rows and not tx:
             try:
                 for row in rows:
@@ -236,7 +236,7 @@ class ReadManager():
         #update uploaded data
         try:
             data["uploaded"]["max_page_num"], df_result = load_list_view(self.db, user_idName=user_name)
-            if df_result is not None:
+            if df_result is not None and not df_result.empty:
                 data["uploaded"]["rows"] = self.get_listview_form(df_result)
             success = True
         except Exception as e:
@@ -245,7 +245,7 @@ class ReadManager():
         # TODO: update transactions
         try:
             data["transactions"]["max_page_num"], df_result = load_list_view_tx(self.db, user_idName=user_name)
-            if df_result is not None:
+            if df_result is not None and not df_result.empty:
                 data["transactions"]["rows"] = self.get_listview_form(df_result, tx=True)
             success = True
         except Exception as e:
