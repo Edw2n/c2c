@@ -41,20 +41,7 @@ function App() {
   const handleManagesChanges = (data) => {
     console.log("print",data)
     setManages(data)
-    // setManages(prev => (
-    //   {...prev,
-    //     uploads: data.uploaded.rows,
-    //     transctions: data.transactions.rows,
-    //   }));
   }
-
-
-  // const handleURowsChange = (data) => {
-  //   setURows(data);
-  // };
-  // const handleTRowsChange = (data) => {
-  //   setTRows(data);
-  // };
 
   // app 화면
   return (
@@ -113,7 +100,7 @@ function App() {
         />
       </CButtonGroup>
       </div>
-      {mode=='search' ? <SearchView userName={Manages.userInfo.username} onManagesChange={handleManagesChanges}/> 
+      {mode=='search' ? <SearchView userName={ Manages.login === 'true'? Manages.userInfo.username : ''} onManagesChange={handleManagesChanges}/> 
                       : <ManageView  
                                     LoggedIn={Manages.login} 
                                     UserInfo={Manages.userInfo} 

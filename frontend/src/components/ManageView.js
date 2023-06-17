@@ -36,7 +36,7 @@ function ManageView( {LoggedIn, UserInfo,
             alert('not valid!!!')
           }else{
             alert('valid')
-            const current_cash = data.manage_data.cache
+            const current_cash = data.manage_data.cash
             onManagesChange(prev => (
                 {...prev,
                   uploads: data.manage_data.uploaded.rows,
@@ -49,15 +49,8 @@ function ManageView( {LoggedIn, UserInfo,
                   }
                 })
               )
-            // onURowsChange(data.manage_data.uploaded.rows)
-            // onTRowsChange(data.manage_data.transactions.rows)
             console.log("URows: ", URows)
             console.log("TRows: ", TRows)
-            // console.log(data.manage_data.transactions.rows)
-            
-            // setUserName(userName)
-            // onAddLoggedIn('true');
-            // onAddUserInfo(userName, pw, current_cash)
           }
         })
       })

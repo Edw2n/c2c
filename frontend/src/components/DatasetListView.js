@@ -294,7 +294,7 @@ function DatasetListView({listInfo, userName, onManagesInfo}) {
                   userInfo: {
                     username: userName,
                     pw: prev.userInfo.pw,
-                    cash: data.manage_data.cachecash,
+                    cash: data.manage_data.cash,
                   }
                 }))
   

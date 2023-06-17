@@ -64,10 +64,8 @@ class ReadManager():
                 print("query is not none")
                 try:
                     datasets["max_page_num"], df_result = load_list_view_search(self.db, query)
-                    print(df_result)
                     if custom_filtering:
                         df_result = custom_filtering(self.db, df_result)
-                        print(df_result)
                         # not calculated max page num
                 except Exception as e:
                     print("query search error:", e)
@@ -79,7 +77,6 @@ class ReadManager():
                     print(load_list_view(self.db))
             try:
                 if df_result is not None and not df_result.empty:
-                    print("df_result:", df_result)
                     datasets["rows"] = self.get_listview_form(df_result)
             except Exception as e:
                 print("load front form error", e)
@@ -111,7 +108,9 @@ class ReadManager():
                 cardview_data, listview_data = load_detailed_view(self.db, df_result)
         except Exception as e:
             print("db access for detailview data error,", e)
+            pd.set_option('display.max_columns', None)
             print('df_result in detailview error:',df_result)
+            pd.set_option('display.max_columns', 6)
             return rows
         
         # make data as front listview form
@@ -216,7 +215,7 @@ class ReadManager():
             - "max_page_num": ax page number of queried data
         '''
         data = {
-            "cache": 0,
+            "cash": 0,
             "uploaded": {
                 "rows":[],
                 "max_page_num": 0
@@ -230,8 +229,8 @@ class ReadManager():
         df_result = None
         success = False
         
-        #update cache
-        data["cache"] = get_user_point(self.db, user_name)['user_point'][0]
+        #update cash
+        data["cash"] = get_user_point(self.db, user_name)['user_point'][0]
 
         #update uploaded data
         try:
@@ -250,6 +249,7 @@ class ReadManager():
             success = True
         except Exception as e:
             print("read transaction data error:", e)
+        
         return success, data 
 
     def set_custom_filtering(self, f):
