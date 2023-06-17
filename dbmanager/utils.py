@@ -987,13 +987,13 @@ def load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_i
         pass
 
     if user_idName is not None:
-        string_id = f"u.user_idName = '{user_idName}'"
+        string_id = f"u.user_idName = '{user_idName}' and f.not_show = FALSE"
         condition_list.append(string_id)
 
     if not condition_list:
-        condition = " "
+        condition = "where f.not_show = FALSE"
     else: 
-        condition = "WHERE "+" and ".join(condition_list)
+        condition = "WHERE f.not_show = FALSE and "+" and ".join(condition_list)
 
     # 1. total rows cnt
     sql = f"select res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date \
