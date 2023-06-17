@@ -42,7 +42,6 @@ def initialize_db_structures(db):
                            )
     #지금은 스키마만 있는상태에서 만드는건데, 아예 스키마 존재하면 삭제하고 스키마 생성후 주루룩 하는거도 괜찮아 보임
     # 0. Object
-    # print('----Object table')
     objects= ['Car', 'Van', 'Truck', 'Pedestrian', 'Person (sitting)', 'Cyclist', 'Tram', 'Misc']
 
     for i in range(len(objects)):
@@ -341,8 +340,7 @@ def insert_draft_dataset(db, unzipped_dataset_info):
     user_info = check_user(db=db, unzipped_dataset_info=unzipped_dataset_info)
     user_info = user_info[0]
     user_id = user_info[0]
-    print()
-    print(f"Uploading {user_info[1]}(user_id : {user_id})'s file")
+    print(f"\nUploading {user_info[1]}(user_id : {user_id})'s file")
 
     # 2. DatasetInfo
     dataset_name = unzipped_dataset_info["TITLE"]
@@ -534,7 +532,6 @@ def _load_list_view_default(db, page=1, item_per_page=10, user_idName = None):
                 ) res \
             group by res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date;"
     total_cnt = db.execute(sql)
-    # print("###############################", total_cnt)
     total_cnt = len(total_cnt)
     if total_cnt == 0:
         return total_cnt, None
@@ -707,6 +704,8 @@ def load_detailed_view(db, df, K = 10):
     # 4. read DB with filtering
     for dataset in dataset_id_and_img_id_list:
         img_ids_tuple = tuple(dataset[2])
+        if len(img_ids_tuple) == 0:
+            continue
         condition_ft = f"features.img_id IN {img_ids_tuple}"
         columns = ['image_path']
         result_ft_tmp = db.readDB_join_filtering(schema = schema_name, table = 'Features', columns = '*', join=join, condition=condition_ft )
@@ -992,7 +991,6 @@ def load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_i
         condition_list.append(string_id)
 
     if not condition_list:
-        # print("#####", condition_list)
         condition = " "
     else: 
         condition = "WHERE "+" and ".join(condition_list)
@@ -1011,7 +1009,6 @@ def load_list_view_search(db, condition_filter, page=1, item_per_page=10, user_i
                 ) res \
             group by res.dataset_id, res.dataset_name, res.qc_status, res.user_idname, res.upload_date;"
     total_cnt = db.execute(sql)
-    # print(total_cnt)
     total_cnt = len(total_cnt)
     if total_cnt == 0:
         return total_cnt, pd.DataFrame()
@@ -1447,36 +1444,32 @@ def load_list_view_tx(db, page=1, item_per_page=10, user_idName=None):
     
     cnt_buy, df_buy = _load_list_view_tx_buyer(db, page, item_per_page, user_idName)
     col_buy = ['txp_id', 'dataset_name', 'price_total', 'image_count',
-            'avg_price_per_image','sales_count', 'like_count',
-            'qc_state', 'qc_score', 'uploader', 'upload_date', 'availability',
-            'object_list', 'object_count', 'object_info_in_detail', 'product_path']
+               'avg_price_per_image','sales_count', 'like_count',
+               'qc_state', 'qc_score', 'uploader', 'upload_date', 'availability',
+               'object_list', 'object_count', 'object_info_in_detail', 'product_path']
 
-    if df_buy is not None:
+    if df_buy is not None and not df_buy.empty:
         df_buy = df_buy[col_buy]
         df_buy['flag'] = 'buy'
     else:
         df_buy = pd.DataFrame(columns=[*col_buy, 'flag'])
     df_buy.columns = col
-#    print(df_buy)
 
     cnt_sell, df_sell = _load_list_view_tx_seller(db, page, item_per_page, user_idName)
     col_sell = ['dataset_id', 'dataset_name', 'price_total', 'image_count',
-            'avg_price_per_image', 'sales_count', 'like_count',
-            'qc_state', 'qc_score', 'uploader', 'upload_date', 'availability',
-            'object_list','object_count', 'object_info_in_detail', 'product_path']
-    if df_sell is not None:
+                'avg_price_per_image', 'sales_count', 'like_count',
+                'qc_state', 'qc_score', 'uploader', 'upload_date', 'availability',
+                'object_list','object_count', 'object_info_in_detail', 'product_path']
+    if df_sell is not None and not df_sell.empty:
         df_sell = df_sell[col_sell]
         df_sell['flag'] = 'sell'
     else:
         df_sell = pd.DataFrame(columns=[*col_sell, 'flag'])
     df_sell.columns = col
-#    print(df_sell)
-
+    
     df_concat = pd.concat([df_buy, df_sell], axis=0)
     df_concat.columns = col
 
- #   print(df_concat)
-    
     return cnt_buy+cnt_sell, df_concat
 
 def _load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
@@ -1503,7 +1496,7 @@ def _load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
             (e.g., {'Cyclist': 1, 'Pedestrian': 1, 'Van': 2})
     '''
     # 1. initial setting and total rows cnt
-    result = None
+    result = pd.DataFrame()
     item_start = 0 + item_per_page * (page - 1)
     if user_idName is not None:
         condition_id = f"where q.qc_status not in ('uploaded', 'QC_start') and u.user_idname = '{user_idName}'"
@@ -1516,18 +1509,26 @@ def _load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
             from public.transaction t \
             left join public.user u on u.user_id=t.buyer_id \
             left join public.user u2 on u2.user_id=t.seller_id {condition_id_tmp};"
-    total_cnt = db.execute(sql)
+    try:
+        total_cnt = db.execute(sql)
+    except Exception as e:
+        print("[sql qeury error]total count,", e)
+        
     total_cnt = len(total_cnt)
     if total_cnt == 0:
-        return total_cnt, None
+        return total_cnt, result
     
     ## 1.1 find img_id_list
     sql = f"select tp.txp_id, t.img_id_list\
             from transaction t \
             left join transactionproduct tp on t.txp_id=tp.txp_id \
-            left join \"user\" u on u.user_id = t.buyer_id \
+            left join public.user u on u.user_id = t.buyer_id \
             {condition_id_tmp};"
-    img_id_list = db.execute(sql)
+    
+    try:
+        img_id_list = db.execute(sql)
+    except Exception as e:
+        print("[sql query erro]txp id => img id list,", e)
     
     # 2. make txp_id list 
     df_tmp = pd.DataFrame(data = img_id_list, columns=['txp_id', 'img_id'])
@@ -1536,21 +1537,16 @@ def _load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
     txp_id_and_img_id_list = []
     # 2. Create img_ids list and randomly select K images 
     for id in txp_id_list:
-        # 2-1. Create img_ids list of the dataset_id
-        condition = f"dataset_id = '{id}'"
-        img_ids = db.readDB_with_filtering(schema = 'public', table = 'Features', columns = ['img_id'], condition = condition)
-        img_ids = list(sum(img_ids, ()))
-        # 2-4. make dataset_id_and_img_id_list
-        txp_id_and_img_id_list.append([id, img_ids])
+        img_ids_list_loop = df_tmp[df_tmp['txp_id']==id]['img_id'].values
+        img_ids_list_loop = eval(img_ids_list_loop[0])
+        txp_id_and_img_id_list.append([id, img_ids_list_loop])
 
     img_id_list_fin=[]
     for i in txp_id_and_img_id_list:
         img_id_list_fin = [*img_id_list_fin, *i[1]]
 
-    # print(img_id_list_fin)
 
-    condition_img_id_list = f"where q.qc_status not in ('uploaded', 'QC_start') and u.user_idname = '{user_idName}' and f.img_id in {tuple(img_id_list_fin)}"
-
+    condition_img_id_list = f"where u.user_idname = '{user_idName}' and f.img_id in {tuple(img_id_list_fin)}"
     # 2. dataset information
     sql = f"select res.txp_id,\
                 sum(res.price) as price_total,\
@@ -1577,10 +1573,13 @@ def _load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
             group by res.txp_id, res.qc_status, res.tx_date, res.availability, res.buyer_defined_dataset_name, res.product_path \
             order by res.txp_id limit {item_per_page} offset {item_start};"
 
-    result = db.execute(sql)
+    try:
+        result = db.execute(sql)
+    except Exception as e:
+        print("[sql qeury error] load dataset information,", e)
+        
     columns = ['txp_id', 'price_total', 'image_count', 'avg_price_per_image', 'sales_count', 'like_count' ,'qc_state' ,'qc_score','upload_date', 'availability', 'dataset_name', 'product_path']
     result_df = pd.DataFrame(data = result, columns=columns)
-    # print(result_df)
 
     to_process_qcState = list(result_df['qc_state'])
 
@@ -1598,11 +1597,12 @@ def _load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
     # 3. object information
     ## a. df for final result and condition settting 
     df_obj_list_split_by_dataset = pd.DataFrame(columns = ['txp_id', 'object_list', 'object_count', 'object_info_in_detail'])
-
     target_txp_id = tuple(result_df['txp_id'])
 
     if len(target_txp_id) == 0:
-        return result_df
+        total_cnt == 0
+        result_df = pd.DataFrame()
+        return total_cnt, result_df
     elif len(target_txp_id) == 1:
         condition = f"where dataset.dataset_id = '{target_txp_id[0]}'"
     else:
@@ -1626,10 +1626,14 @@ def _load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
             ) res \
             group by res.txp_id, res.gt_object \
             order by res.txp_id; "    
-    result_obj = db.execute(sql)
+    
+    try:
+        result_obj = db.execute(sql)
+    except Exception as e:
+        print("[sql qeury error] object information encdoing,", e)
+
     col_obj = ['txp_id', 'gt_object', 'count']
     df_obj = pd.DataFrame(data = result_obj, columns= col_obj)
-    # print(df_obj)
     
     ## c. update column dataset_ids
     df_obj_unique_dataset_id = df_obj['txp_id'].unique()
@@ -1658,8 +1662,6 @@ def _load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
     df_obj_list_split_by_dataset['object_list'] = tmp_list_for_object_list
     df_obj_list_split_by_dataset['object_info_in_detail'] = tmp_list_for_detail
 
-    # print(df_obj_list_split_by_dataset)
-
     result_df = pd.merge(result_df,
                          df_obj_list_split_by_dataset,
                          on='txp_id',
@@ -1669,15 +1671,17 @@ def _load_list_view_tx_buyer(db, page=1, item_per_page=10, user_idName = None):
 
     # 4. uploader list
     sql = f"select t.tx_id, t.seller_id, txp_id, u.user_idname from transaction t left join public.user u on u.user_id = t.seller_id"
-    result = db.execute(sql)
+    try:
+        result = db.execute(sql)
+    except Exception as e:
+        print("[sql query error] find uploader,", e)
+
     result_uploader_df = pd.DataFrame(data = result, columns = ['tx_id', 'seller_id', 'txp_id', 'uploader']) 
 
-    # print(result_uploader_df)
     seller_df = pd.DataFrame(columns = ['txp_id', 'uploader'])
     id_tmp = []
     seller_tmp = []
     for i, id in enumerate(result_df['txp_id'].unique()):
-        # print(i, id)
         seller_list = list(result_uploader_df[result_uploader_df['txp_id']==id]['uploader'])
         id_tmp.append(id)
         seller_tmp.append("["+", ".join(seller_list) + "]")
@@ -1725,7 +1729,7 @@ def _load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = None):
             (e.g., {'Cyclist': 1, 'Pedestrian': 1, 'Van': 2})
     '''
     # 1. initial setting and total rows cnt
-    result = None
+    result = pd.DataFrame()
     item_start = 0 + item_per_page * (page - 1)
     if user_idName is not None:
         condition_id = f"where q.qc_status not in ('uploaded', 'QC_start') and u2.user_idname = '{user_idName}'"
@@ -1741,7 +1745,7 @@ def _load_list_view_tx_seller(db, page=1, item_per_page=10, user_idName = None):
     total_cnt = db.execute(sql)
     total_cnt = len(total_cnt)
     if total_cnt == 0:
-        return total_cnt, None
+        return total_cnt, result
 
     # 2. dataset information
     sql = f"select res.dataset_id, res.dataset_name,\
