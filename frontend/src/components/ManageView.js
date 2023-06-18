@@ -8,6 +8,8 @@ function ManageView( {LoggedIn, UserInfo,
                       URows, TRows, onManagesChange} ) 
 {
   const [userName, setUserName] = useState('')
+  console.log(LoggedIn)
+  console.log(UserInfo)
 
   const getUserPost = (e) => {
 

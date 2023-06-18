@@ -187,7 +187,6 @@ def check_user():
         print("read data error after check user pipeline:", e)
 
     if valid:
-        #TODO: get manage data of identified user and set success == True
         success_manage, manage_data = read_manager.read_manage_data(user_name)
 
     result = {

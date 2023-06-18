@@ -43,6 +43,8 @@ function App() {
     setManages(data)
   }
 
+  console.log(Manages)
+
   // app 화면
   return (
     <div className="App">
