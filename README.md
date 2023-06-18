@@ -1,4 +1,9 @@
 # Our Awesome C2C!
+# Team C2C (Chimps2Champs)
+- Edw2n (Eunsu Baek, Architecture Designer, dev/backend manager)
+- OfficialTable (Jeonsik Pyo, PO/DB manager)
+- holinessnine (Sungu Shin, UI/UX developer)
+- sehyunpark99 (Sehyun Park, QC Processing/ML manager)
 
 # Server (flask)
 Python 3.9.6
